@@ -1,0 +1,25 @@
+software.name=metazoa
+software.version=20
+url=http://metazoa.ensembl.org/biomart/martservice?
+organism=caenorhabditis elegans
+databaseName=metazoa
+datasetName=celegans_eg_gene
+mySqlDbName=caenorhabditis_elegans
+mySqlDbUrl=mysql.ebi.ac.uk:4157
+types=ensgene,enstranscript,ensprotein
+property.description=description
+property.embl=embl
+property.ensgene=ensembl_gene_id
+property.ensprotein=ensembl_peptide_id
+property.enstranscript=ensembl_transcript_id
+property.entrezgene=entrezgene
+property.go=go_accession
+property.goterm=go_name_1006
+property.interpro=interpro_id
+property.interproterm=interpro_description
+property.refseq=refseq_mrna,refseq_ncrna,refseq_peptide
+property.symbol=external_gene_id
+property.unigene=unigene
+property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+arrayDesign.A-AFFY-60=affy_c_elegans
+

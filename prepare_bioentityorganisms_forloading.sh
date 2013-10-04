@@ -1,0 +1,29 @@
+# This script retrieves organisms for all bioenentities in ensembl (via ensgene) and mirbase (via hairpin) directories 
+outputDir=$1
+if [[ -z "$outputDir" ]]; then
+    echo "[ERROR] Usage: outputDir"
+fi
+
+today="`eval date +%Y-%m-%d`"
+aux="/tmp/prepare_bioentityorganisms_forloading.${today}.$$.aux"
+rm -rf $aux
+rm -rf $outputDir/bioentityOrganism.dat
+
+pushd $outputDir/mirbase
+for f in $(ls *.hairpin.tsv); do echo $f | awk -F"." '{print $1}' >> $aux ; done
+popd
+pushd $outputDir/ensembl
+for f in $(ls *.ensgene.tsv); do echo $f| awk -F"." '{print $1}' >> $aux ; done
+popd
+
+i=1
+for organism in $(cat $aux | sort | uniq); do
+  # Upper-case the first letter and replace underscrores with spaces in organism
+  prettyOrganism=`echo "$organism" | sed 's/.*/\u&/' | tr "_" " "`
+  echo -e "$i\t$prettyOrganism" >> $outputDir/bioentityOrganism.dat
+  i=$[$i+1]
+done
+
+# Remove auxiliary file(s)
+rm -rf $aux
+exit 0
