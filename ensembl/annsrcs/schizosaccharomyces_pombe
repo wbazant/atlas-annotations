@@ -7,6 +7,7 @@ datasetName=spombe_eg_gene
 mySqlDbName=schizosaccharomyces_pombe
 mySqlDbUrl=mysql.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
+chromosomeName=I,II,III,MT
 property.description=description
 property.ensgene=ensembl_gene_id
 property.ensprotein=ensembl_peptide_id

@@ -7,6 +7,7 @@ datasetName=agambiae_eg_gene
 mySqlDbName=anopheles_gambiae
 mySqlDbUrl=mysql.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
+chromosomeName=2L,2R,3L,3R,X
 property.description=description
 property.ensgene=ensembl_gene_id
 property.ensprotein=ensembl_peptide_id

@@ -7,6 +7,7 @@ datasetName=mmulatta_gene_ensembl
 mySqlDbName=macaca_mulatta
 mySqlDbUrl=ensembldb.ensembl.org:5306
 types=ensgene,enstranscript,ensprotein
+chromosomeName=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,X,MT
 property.description=description
 property.embl=embl
 property.ensfamily=family

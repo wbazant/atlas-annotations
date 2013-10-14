@@ -7,6 +7,7 @@ datasetName=athaliana_eg_gene
 mySqlDbName=arabidopsis_thaliana
 mySqlDbUrl=mysql.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
+chromosomeName=1,2,3,4,5,Mt,Pt
 property.description=description
 property.ensgene=ensembl_gene_id
 property.ensprotein=ensembl_peptide_id

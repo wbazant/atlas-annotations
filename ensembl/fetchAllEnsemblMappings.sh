@@ -19,17 +19,25 @@ function fetchProperties {
     datasetName=$3
     ensemblProperty1=$4
     ensemblProperty2=$5
+    chromosomeName=$6
+
     if [[ -z "$url" || -z "$serverVirtualSchema" || -z "$datasetName" || -z "$ensemblProperty1" ]]; then
 	echo "[ERROR] Usage: url serverVirtualSchema datasetName ensemblProperty1 (ensemblProperty2)"
 	exit 1
     fi
 
-    query="query=<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query><Query virtualSchemaName = \"${serverVirtualSchema}\" formatter = \"TSV\" header = \"1\" uniqueRows = \"1\" count = \"0\" ><Dataset name = \"${datasetName}\" interface = \"default\" ><Filter name = \"chromosome_name\" value = \"1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,X,Y,MT\"/><Attribute name = \"${ensemblProperty1}\" />"
+    if [ ! -z "$chromosomeName" ]; then
+	chromosomeFilter="<Filter name = \"chromosome_name\" value = \"${chromosomeName}\"/>"
+    else
+	chromosomeFilter=""
+    fi
+
+    query="query=<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query><Query virtualSchemaName = \"${serverVirtualSchema}\" formatter = \"TSV\" header = \"1\" uniqueRows = \"1\" count = \"0\" ><Dataset name = \"${datasetName}\" interface = \"default\" >${chromosomeFilter}<Attribute name = \"${ensemblProperty1}\" />"
     if [ ! -z "$ensemblProperty2" ]; then
 	query="$query<Attribute name = \"${ensemblProperty2}\" />"
     fi
     # In some cases a line '^\t$ensemblProperty2' is being returned (with $ensemblProperty1 missing), e.g. in the following call:
-    #curl -s -G -X GET --data-urlencode 'query=<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE Query><Query virtualSchemaName = "metazoa_mart_19" formatter = "TSV" header = "1" uniqueRows = "1" count = "0" ><Dataset name = "agambiae_eg_gene" interface = "default" ><Filter name = "chromosome_name" value = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,X,Y,MT"/> <Attribute name = "ensembl_peptide_id" /><Attribute name = "description" /></Dataset></Query>' "http://metazoa.ensembl.org/biomart/martservice" | grep AGAP005154
+    #curl -s -G -X GET --data-urlencode 'query=<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE Query><Query virtualSchemaName = "metazoa_mart_19" formatter = "TSV" header = "1" uniqueRows = "1" count = "0" ><Dataset name = "agambiae_eg_gene" interface = "default" >${chromosomeFilter} <Attribute name = "ensembl_peptide_id" /><Attribute name = "description" /></Dataset></Query>' "http://metazoa.ensembl.org/biomart/martservice" | grep AGAP005154
     # Until this is clarified, skip such lines with grep -vP '^\t'
     curl -s -G -X GET --data-urlencode "$query</Dataset></Query>" "$url" | tail -n +2 | sort -k 1 | grep -vP '^\t'
     # echo "curl -s -G -X GET --data-urlencode \"$query</Dataset></Query>\" \"$url\" | tail -n +2 | sort -k 1" > /dev/stderr
@@ -62,6 +70,7 @@ for organism in $(ls ${annSrcsDir}/); do
     mySqlDbHost=`echo $mySqlDbUrl | awk -F":" '{print $1}'`
     mySqlDbPort=`echo $mySqlDbUrl | awk -F":" '{print $2}'`
     atlasBioentityTypes=`grep '^types=' ${annSrcsDir}/$organism | awk -F"=" '{print $NF}' | tr "," " "`
+    chromosomeName=`grep '^chromosomeName=' ${annSrcsDir}/$organism | awk -F"=" '{print $NF}'`
 
     registry=~/tmp/${softwareName}.registry.$$
     curl -s -X GET "${url}?type=registry" | grep "database=\"${softwareName}_mart_${softwareVersion}" | tr " " "\n" > $registry
@@ -81,7 +90,7 @@ for organism in $(ls ${annSrcsDir}/); do
 	     rm -f $outFile
              for ensemblProperty in $ensemblProperties; do
                 echo "[INFO] Fetching $organism :: $atlasBioentityType : $ensemblBioentityType : $atlasProperty : $ensemblProperty"
-		fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblProperty >> $outFile
+		fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblProperty $chromosomeName >> $outFile
              done
           fi
        done
@@ -103,7 +112,7 @@ for organism in $(ls ${annSrcsDir}/); do
        echo "[INFO] Fetching $organism :: $atlasBioentityType : $ensemblBioentityType : $ensemblArrayDesign : $atlasArrayDesign"
        echo -e "$atlasBioentityType\tdesign_element" > ${outputDir}/${organism}.${atlasArrayDesign}.tsv 
        # Note removing of lines with trailing tab (i.e. with bioentity and no corresponding design element)
-       fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblArrayDesign | sed '/\t$/d' >> ${outputDir}/${organism}.${atlasArrayDesign}.tsv
+       fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblArrayDesign $chromosomeName | sed '/\t$/d' >> ${outputDir}/${organism}.${atlasArrayDesign}.tsv
     done
 done
 # Remove auxiliary Ensembl registry files

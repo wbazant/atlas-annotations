@@ -7,6 +7,7 @@ datasetName=dmelanogaster_eg_gene
 mySqlDbName=drosophila_melanogaster
 mySqlDbUrl=mysql.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
+chromosomeName=2L,2R,3L,3R,X,4,dmel_mitochondrion_genome
 property.description=description
 property.embl=embl
 property.ensgene=ensembl_gene_id
