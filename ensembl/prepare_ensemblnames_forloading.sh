@@ -10,6 +10,11 @@ rm -rf $out
 for f in $(ls *.ensgene.symbol.tsv); do
     prettyOrganism=`echo $f | awk -F"." '{print $1}' | sed 's/.*/\u&/' | tr "_" " "`
     organismId=`grep "${prettyOrganism}$" $dir/../bioentityOrganism.dat | awk -F"\t" '{print $1}'`
+    if [ -z "$organismId" ]; then
+	echo "ERROR: Could not retrieve organismid for '$prettyOrganism'"
+	exit 1
+    fi
+    
     # Skip lines when no mapping for gene identifier exists
     for l in $(cat $f); do
 	identifier=`echo $l | awk -F"\t" '{print $1}'`
