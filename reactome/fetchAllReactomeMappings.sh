@@ -17,7 +17,7 @@ IFS="
 "
 
 start=`date +%s`
-curl -s -G -X GET --data-urlencode "$query" "$url" | tail -n +2 | sort -k 1 | grep -vP '^\t' > aux
+curl -s -G -X GET --data-urlencode "$query" "$url" | tail -n +2 | sort -k 1,1 | grep -vP '^\t' > aux
 
 # Lower-case and replace space with underscore in all organism names; create files with headers for each organism
 cat aux | awk -F"\t" '{print $2}' | sort | uniq > aux.organisms

@@ -15,13 +15,13 @@ function removeDuplicateMappigs {
     f=$1
     cp $f ${f}.original
 
-    tail -n +2 ${f} | sort -k 1 | sort > ${f}.aux
-    cat ${f}.aux | awk '{print $2}' | sort | uniq -c | sort -k 1 --numeric | grep -v '^      1' | awk '{print $2}' | xargs -I % grep '%$' ${f}.aux | sort -k 1 > ${f}.duplicatemappings.aux
+    tail -n +2 ${f} | sort -k 1,1 | sort > ${f}.aux
+    cat ${f}.aux | awk '{print $2}' | sort | uniq -c | sort -k 1,1 --numeric | grep -v '^      1' | awk '{print $2}' | xargs -I % grep '%$' ${f}.aux | sort -k 1,1 > ${f}.duplicatemappings.aux
     head -1 ${f}.original > $f
     comm -3 ${f}.aux ${f}.duplicatemappings.aux | grep -v -P '^\t' >> $f
 
     # test that all design elements that map to multiple genes have in fact been removed; fail if not
-    numOfDups=`cat $f | awk '{print $2}' | sort | uniq -c | sort -k 1 --numeric | grep -v '^      1' | wc -l`
+    numOfDups=`cat $f | awk '{print $2}' | sort | uniq -c | sort -k 1,1 --numeric | grep -v '^      1' | wc -l`
     if [ $numOfDups != 0 ]; then
 	echo "ERROR: Failed to remove duplicates from $f"
 	exit 1
