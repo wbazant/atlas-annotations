@@ -1,5 +1,5 @@
 software.name=metazoa
-software.version=20
+software.version=21
 url=http://metazoa.ensembl.org/biomart/martservice?
 organism=caenorhabditis elegans
 databaseName=metazoa
@@ -8,6 +8,7 @@ mySqlDbName=caenorhabditis_elegans
 mySqlDbUrl=mysql.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
 chromosomeName=I,II,III,IV,V,X,MtDNA
+property.gene_biotype=gene_biotype
 property.description=description
 property.embl=embl
 property.ensgene=ensembl_gene_id

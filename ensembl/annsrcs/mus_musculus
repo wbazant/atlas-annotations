@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=73
+software.version=74
 url=http://www.ensembl.org/biomart/martservice?
 organism=mus musculus
 databaseName=ensembl

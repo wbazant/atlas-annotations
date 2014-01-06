@@ -1,5 +1,5 @@
 software.name=metazoa
-software.version=20
+software.version=21
 url=http://metazoa.ensembl.org/biomart/martservice?
 organism=drosophila melanogaster
 databaseName=metazoa
@@ -8,6 +8,7 @@ mySqlDbName=drosophila_melanogaster
 mySqlDbUrl=mysql.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
 chromosomeName=2L,2R,3L,3R,X,4,dmel_mitochondrion_genome
+property.gene_biotype=gene_biotype
 property.description=description
 property.embl=embl
 property.ensgene=ensembl_gene_id

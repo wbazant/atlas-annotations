@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=73
+software.version=74
 url=http://www.ensembl.org/biomart/martservice?
 organism=xenopus tropicalis
 databaseName=ensembl
@@ -7,6 +7,7 @@ datasetName=xtropicalis_gene_ensembl
 mySqlDbName=xenopus_tropicalis
 mySqlDbUrl=ensembldb.ensembl.org:5306
 types=ensgene,enstranscript,ensprotein
+property.gene_biotype=gene_biotype
 property.description=description
 property.embl=embl
 property.ensfamily=family

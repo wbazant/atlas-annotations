@@ -15,10 +15,10 @@ function removeDuplicateMappigs {
     f=$1
     cp $f ${f}.original
 
-    tail -n +2 ${f} | sort -k 1,1 | sort > ${f}.aux
-    cat ${f}.aux | awk '{print $2}' | sort | uniq -c | sort -k 1,1 --numeric | grep -v '^      1' | awk '{print $2}' | xargs -I % grep '%$' ${f}.aux | sort -k 1,1 > ${f}.duplicatemappings.aux
-    head -1 ${f}.original > $f
-    comm -3 ${f}.aux ${f}.duplicatemappings.aux | grep -v -P '^\t' >> $f
+    tail -n +2 ${f} | sort -k 1,1 > ${f}.aux
+    cat ${f}.aux | awk '{print $2}' | sort | uniq -c | sort -k 1,1 --numeric | grep -v '^      1' | awk '{print $2}' > ${f}.duplicatemappings.aux
+    for de in $(cat ${f}.duplicatemappings.aux); do sed "\|\t$de|d" ${f}.aux > ${f}.aux.tmp && mv ${f}.aux.tmp ${f}.aux ; done
+    mv ${f}.aux ${f}
 
     # test that all design elements that map to multiple genes have in fact been removed; fail if not
     numOfDups=`cat $f | awk '{print $2}' | sort | uniq -c | sort -k 1,1 --numeric | grep -v '^      1' | wc -l`
@@ -33,7 +33,7 @@ function removeDuplicateMappigs {
 
 pushd $outputDir/ensembl
 for f in $(ls *A-*.tsv); do 
-    echo "Removing desingn elements mapped to multiple genes from $f..."
+    echo "Removing design elements mapped to multiple genes from $f..."
     removeDuplicateMappigs $f
 done
 

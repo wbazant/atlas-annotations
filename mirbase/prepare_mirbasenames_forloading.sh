@@ -5,7 +5,7 @@ dir="/nfs/ma/home/atlas3-production/bioentity_properties/mirbase"
 IFS="
 "
 pushd $dir
-rm -rf bioentityName.dat
+rm -rf miRNAName.dat
 for f in $(ls *.*.tsv | grep -P 'mature|hairpin'); do
     prettyOrganism=`echo $f | awk -F"." '{print $1}' | sed 's/.*/\u&/' | tr "_" " "`
     type=`echo $f | awk -F"." '{print $2}'`"_miRNA"
