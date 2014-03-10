@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=74
+software.version=75
 url=http://www.ensembl.org/biomart/martservice?
 organism=dasypus novemcinctus
 databaseName=ensembl
