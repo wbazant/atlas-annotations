@@ -4,7 +4,7 @@
 
 annSrcsDir=$1
 if [[ -z "$annSrcsDir" ]]; then
-    echo "[ERROR] Usage: annSrcsDir"
+    echo "Usage: annSrcsDir" >&2
     exit 1
 fi
 
@@ -50,9 +50,9 @@ done
 if [ -z "$errors" ]; then
     echo "All annotation sources validate successfully against Ensembl"    
 else
-    echo "The following validation errors occurred:"
-    echo "$errors"
-    exit 1
+    echo "The following validation errors occurred:"  >&2
+    echo "$errors"  >&2
+    exit 1 
 fi
 popd
  

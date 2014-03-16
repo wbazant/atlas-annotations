@@ -11,7 +11,7 @@ for f in $(ls *.ensgene.symbol.tsv); do
     prettyOrganism=`echo $f | awk -F"." '{print $1}' | sed 's/.*/\u&/' | tr "_" " "`
     organismId=`grep "${prettyOrganism}$" $dir/../bioentityOrganism.dat | awk -F"\t" '{print $1}'`
     if [ -z "$organismId" ]; then
-	echo "ERROR: Could not retrieve organismid for '$prettyOrganism'"
+	echo "ERROR: Could not retrieve organismid for '$prettyOrganism'" >&2
 	exit 1
     fi
     

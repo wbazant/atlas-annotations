@@ -1,7 +1,7 @@
 # This script retrieves organisms for all bioenentities in ensembl (via ensgene) and mirbase (via hairpin) directories 
 outputDir=$1
 if [[ -z "$outputDir" ]]; then
-    echo "[ERROR] Usage: outputDir"
+    echo "Usage: $0 outputDir" >&2
     exit 1
 fi
 
@@ -21,7 +21,7 @@ function removeDuplicateMappigs {
     # test that all design elements that map to multiple genes have in fact been removed; fail if not
     numOfDups=`cat $f | awk '{print $2}' | sort | uniq -c | sort -k 1,1 --numeric | grep -v '^      1' | wc -l`
     if [ $numOfDups != 0 ]; then
-	echo "ERROR: Failed to remove duplicates from $f"
+	echo "ERROR: Failed to remove duplicates from $f" >&2
 	exit 1
     else
         rm -rf ${f}*.aux

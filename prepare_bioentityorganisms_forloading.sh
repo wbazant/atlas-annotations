@@ -1,7 +1,7 @@
 # This script retrieves organisms for all bioenentities in ensembl (via ensgene) and mirbase (via hairpin) directories 
 outputDir=$1
 if [[ -z "$outputDir" ]]; then
-    echo "[ERROR] Usage: outputDir"
+    echo "Usage: $0 outputDir" >&2
 fi
 
 today="`eval date +%Y-%m-%d`"

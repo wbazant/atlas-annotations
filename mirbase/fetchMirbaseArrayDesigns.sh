@@ -5,12 +5,12 @@
 arrayDesign=$1
 outputDir=$2
 if [[ -z "$arrayDesign" || -z "$outputDir" ]]; then
-    echo "[ERROR] Usage: arrayDesign outputDir"
+    echo "Usage: $0 arrayDesign outputDir" >&2
     exit 1
 fi
 
 if [ ! -e  ${outputDir}/idprefix_to_organism.tsv ]; then
-    echo "ERROR: ${outputDir}/idprefix_to_organism.tsv does not exist - exiting"
+    echo "ERROR: ${outputDir}/idprefix_to_organism.tsv does not exist" >&2
     exit 1
 fi
 

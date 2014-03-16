@@ -4,7 +4,7 @@
 
 outputDir=$1
 if [[ -z "$outputDir" ]]; then
-    echo "[ERROR] Usage: outputDir"
+    echo "Usage: $0 outputDir"  >&2
     exit 1
 fi
 
@@ -49,7 +49,7 @@ for l in $(grep -P '^ID|^AC|\/accession="|\/product="' ${outputDir}/miRNA.dat); 
     elif [[ $l == FT*/product=* ]]; then	
 	matureIdentifier=`echo $l | awk -F"=" '{print $2}' | sed '$s/"$//' |  sed '$s/^"//'`
 	if [ -z "$hairpinAccession" -o -z "$hairpinIdentifier" -o -z "$matureAccession" -o -z "$matureIdentifier" ]; then
-	    echo STDERR "[ERROR] One of the values is missing in : "$hairpinAccession\t$hairpinIdentifier\t$matureAccession\t$matureIdentifier""
+	    echo "ERROR: One of the values is missing in : "$hairpinAccession\t$hairpinIdentifier\t$matureAccession\t$matureIdentifier"" >&2
 	    exit 1
         fi
 	echo -e "$hairpinAccession\t$hairpinIdentifier\t$matureAccession\t$matureIdentifier" >> ${outputDir}/hairpin_to_mature.tsv
@@ -70,7 +70,7 @@ for f in mature hairpin; do
 	   # TODO: handle multiple hairpin_ids for a single mature miRNA correctly - the current logic ignores all bu the first corresponding hairpin
 	   hairpinIdentifier=`grep "$mirbase_id$" ${outputDir}/hairpin_to_mature.tsv | head -1 | awk -F"\t" '{print $2}'`
 	   if [[ -z "$hairpinIdentifier" ]]; then
-		  echo STDERR "[ERROR] Unable to retrieve hairpinIdentifier for mature miRNA: $mirbase_id"
+		  echo "ERROR: Unable to retrieve hairpinIdentifier for mature miRNA: $mirbase_id" >&2
 	          exit 1
 	   fi 
 	   # Note the removal of any dots at the end of the species name - as this breaks that file parsing later (e.g. 'Saccharum ssp.')

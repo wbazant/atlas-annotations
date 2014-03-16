@@ -8,7 +8,7 @@ query="query=<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query><Query vi
 
 outputDir=$1
 if [[ -z "$outputDir" ]]; then
-    echo "[ERROR] Usage: outputDir"
+    echo "Usage: $0 outputDir" >&2
     exit 1
 fi
 

@@ -7,7 +7,7 @@
 annSrcsDir=$1
 outputDir=$2
 if [[ -z "$annSrcsDir" || -z "$outputDir" ]]; then
-    echo "[ERROR] Usage: annSrcsDir outputDir"
+    echo "Usage: annSrcsDir outputDir" >&2
     exit 1
 fi
 
@@ -22,7 +22,7 @@ function fetchProperties {
     chromosomeName=$6
 
     if [[ -z "$url" || -z "$serverVirtualSchema" || -z "$datasetName" || -z "$ensemblProperty1" ]]; then
-	echo "[ERROR] Usage: url serverVirtualSchema datasetName ensemblProperty1 (ensemblProperty2)"
+	echo "ERROR: Usage: url serverVirtualSchema datasetName ensemblProperty1 (ensemblProperty2)" >&2
 	exit 1
     fi
 
@@ -51,7 +51,7 @@ function fetchGeneSynonyms {
     softwareVersion=$5
     latestReleaseDB=`mysql -s -u anonymous -h "$mySqlDbHost" -P "$mySqlDbPort" -e "SHOW DATABASES LIKE '${mySqlDbName}_core_${softwareVersion}%'" | grep "^${mySqlDbName}_core_${softwareVersion}"`
     if [ -z "$latestReleaseDB" ]; then
-	echo "[ERROR] for $annSrc: Failed to retrieve then database name for release number: $softwareVersion"
+	echo "ERROR: for $annSrc: Failed to retrieve then database name for release number: $softwareVersion" >&2
 	exit 1
     else 
         mysql -s -u anonymous -h $mySqlDbHost -P $mySqlDbPort -e "use ${latestReleaseDB}; SELECT DISTINCT gene.stable_id, external_synonym.synonym FROM gene, xref, external_synonym WHERE gene.display_xref_id = xref.xref_id AND external_synonym.xref_id = xref.xref_id ORDER BY gene.stable_id" | sort -k 1,1
