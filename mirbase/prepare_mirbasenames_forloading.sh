@@ -10,12 +10,12 @@ for f in $(ls *.*.tsv | grep -P 'mature|hairpin'); do
     prettyOrganism=`echo $f | awk -F"." '{print $1}' | sed 's/.*/\u&/' | tr "_" " "`
     type=`echo $f | awk -F"." '{print $2}'`"_miRNA"
     organismId=`grep "${prettyOrganism}$" $dir/../bioentityOrganism.dat | awk -F"\t" '{print $1}'`
-    # Skip lines when no mapping for gene identifier exists
-    for l in $(tail -n +2 $f); do
-	identifier=`echo $l | awk -F"\t" '{print $1}'`
-	symbol=`echo $l | awk -F"\t" '{print $3}'`
-	echo -e "${identifier}\t${organismId}\t${type}\t${symbol}" >> miRNAName.dat
-    done
-done
+    IFS=$'\t'
+    tail -n +2 $f | while read identifier ignore name ignore ignore ignore; do 
+	echo -e "${identifier}\t${organismId}\t${type}\t${name}"
+    done 
+    IFS="
+"
+done > miRNAName.dat
 popd
 exit 0

@@ -1,5 +1,5 @@
 software.name=plants
-software.version=21
+software.version=22
 url=http://plants.ensembl.org/biomart/martservice?
 organism=vitis vinifera
 databaseName=plants

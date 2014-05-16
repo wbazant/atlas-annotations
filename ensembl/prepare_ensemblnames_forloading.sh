@@ -15,16 +15,16 @@ for f in $(ls *.ensgene.symbol.tsv); do
 	exit 1
     fi
     
-    # Skip lines when no mapping for gene identifier exists
-    for l in $(cat $f); do
-	identifier=`echo $l | awk -F"\t" '{print $1}'`
-	name=`echo $l | awk -F"\t" '{print $2}'`
-	if [ ! -z "$name" ]; then
-	   echo -e "${identifier}\t${organismId}\tgene\t${name}" >> $out
-	else
-	   echo -e "${identifier}\t${organismId}\tgene" >> $out
-	fi 
+    IFS=$'\t'
+    cat $f | while read identifier name; do 
+	if [ ! -z "$name" ]; then 
+	    echo -e "${identifier}\t${organismId}\tgene\t${name}"
+	else 
+	    echo -e "${identifier}\t${organismId}\tgene"
+	fi
     done
-done
+    IFS="
+"
+done > $out
 popd
 exit 0
