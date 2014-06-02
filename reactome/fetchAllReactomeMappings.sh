@@ -24,12 +24,16 @@ cat aux | awk -F"\t" '{print $2}' | sort | uniq > aux.organisms
 for organism in $(cat aux.organisms); do
     newOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`
     perl -pi -e "s|$organism|$newOrganism|g" aux
+    rm -rf ${newOrganism}.reactome.tsv.gsea.aux
     echo -e "ensgene\tpathwayid\tpathwayname" > ${newOrganism}.reactome.tsv
  done
 
 # Append data retrieved from REACTOME into each of the species-specific files 
 # (each file contains the portion of the original data for the species in that file's name)
 awk -F"\t" '{print $1"\t"$3"\t"$4>>$2".reactome.tsv"}' aux
+
+# Prepare head-less ensgene to pathwayaname mapping files for the downstream GSEA analysis
+awk -F"\t" '{print $1"\t"$4>>$2".reactome.tsv.gsea.aux"}' aux
 
 rm -rf aux*
 end=`date +%s`

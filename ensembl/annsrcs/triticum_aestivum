@@ -1,10 +1,10 @@
 software.name=plants
 software.version=22
 url=http://plants.ensembl.org/biomart/martservice?
-organism=riticum aestivum
+organism=triticum aestivum
 databaseName=plants
 datasetName=taestivum_eg_gene
-mySqlDbName=riticum_aestivum
+mySqlDbName=triticum_aestivum
 mySqlDbUrl=mysql.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
 property.gene_biotype=gene_biotype
