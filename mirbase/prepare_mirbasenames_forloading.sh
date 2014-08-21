@@ -1,4 +1,4 @@
-# This script geneartes sqlloader file for bioentity_name table, containing miRBase miRNAs, using $dir/../bioentityOrganisms.dat as the organism reference
+# This script generates sqlloader file for bioentity_name table, containing miRBase miRNAs, using $dir/../bioentityOrganisms.dat as the organism reference
 
 dir="/nfs/ma/home/atlas3-production/bioentity_properties/mirbase"
 

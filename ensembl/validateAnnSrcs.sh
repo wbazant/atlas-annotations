@@ -40,7 +40,7 @@ for f in $(ls ); do
     grep -P '^property|arrayDesign\.'  $f | awk -F"=" '{print $NF}' | tr "," "\n" | sort | uniq > ${f}.annsrc.ensemblproperties
     numberOfPropsInAnnSrcAndNotInEnsembl=`comm -2 -3 ${f}.annsrc.ensemblproperties ${f}.ensemblproperties | wc -l`
     if [ $numberOfPropsInAnnSrcAndNotInEnsembl -ne 0 ]; then
-       errors="$errors${nl}ERROR: The following properties were not found in Ensembl for $f: "`comm -2 -3 ${f}.annsrc.ensemblproperties ${f}.ensemblproperties`
+       errors="$errors${nl}ERROR: The following properties were not found in Ensembl for $f:${nl}"`comm -2 -3 ${f}.annsrc.ensemblproperties ${f}.ensemblproperties`
     else
 	rm -f ${f}.ensemblproperties
 	rm -f ${f}.annsrc.ensemblproperties

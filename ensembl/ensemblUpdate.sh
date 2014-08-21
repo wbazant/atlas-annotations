@@ -4,9 +4,9 @@ source ${ATLAS_PROD}/sw/atlasprod/bash_util/generic_routines.sh
 
 getPctComplete() {
     numSubmittedJobs=$1
-    lsfOutFilePattern=$2
-    successful=`grep Successfully $lsfOutFilePattern | wc -l`
-    failed=`grep 'Exited with' $lsfOutFilePattern | wc -l` 
+    decorationType=$2
+    successful=`grep Successfully ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
+    failed=`grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
     if [ -z "$successful" ]; then
 	successful=0
     fi
@@ -15,18 +15,20 @@ getPctComplete() {
     fi
     done=$[$successful+$failed]
     pctComplete=`echo "scale=0; $(($done*100/$numSubmittedJobs))" | bc`
+    echo $pctComplete
 }
 
 monitor_decorate_lsf_submission() {
     numSubmittedJobs=$1
-    lsfOutFilePattern=$2
-    pctComplete=`getPctComplete $numSubmittedJobs $lsfOutFilePattern`
-    while [ "$getPctComplete" -lt "100" ]; do
+    decorationType=$2
+    pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
+    while [ "$pctComplete" -lt "100" ]; do
 	sleep 60
-	pctComplete=`getPctComplete $numSubmittedJobs $lsfOutFilePattern`	
+	pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
+	echo "$pctComplete% complete - waiting for 1 min..."
     done 
     # Return number of failed jobs
-    echo `grep 'Exited with' $lsfOutFilePattern`
+    echo `grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out`
 }
 
 
@@ -88,12 +90,12 @@ pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 
 echo "Archive the previous Ensembl Data - if not done already"
 if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
-    mkdir $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
+    mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
     mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
 done
 
 echo "Obtain all the individual mapping files from Ensembl"
-${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh annsrcs . > ${tmp}/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/ensembl/annsrcs . > ${tmp}/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
 
 echo "Merge all individual property files into matrices"
 for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
@@ -151,7 +153,7 @@ rm -rf miRNAName.dat
 ${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/mirbase/prepare_mirbasenames_forloading.sh
 popd
 echo "... Generate Ensembl component"
-cd ${ATLAS_PROD}/bioentity_properties/ensembl
+pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 rm -rf geneName.dat
 ${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
 popd
@@ -161,7 +163,7 @@ cp ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat ${ATLAS_PROD}/bioent
 cat ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
 # Apply sanity test
 size=`wc -l bioentityName.dat | awk '{print $1}'`
-if [ "$size" -lt 800000 ]; then
+if [ "$size" -lt 1000000 ]; then
     echo "ERROR: Something went wrong with populating bioentityName.dat file - should have more than 800k rows"
     exit 1
 fi 
@@ -180,7 +182,7 @@ popd
 
 echo "Load bioentityOrganism.dat, organismEnsemblDB.dat, bioentityName.dat and designelementMapping.dat into staging Oracle schema"
 pushd ${ATLAS_PROD}/bioentity_properties
-for f in bioentityOrganism bioentityOrganism bioentityName bioentityName; do
+for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping; do
     rm -rf ${f}.log; rm -rf ${f}.bad
     sqlldr ${dbUser}/${dbPass}@${dbSID} control=${ATLAS_PROD}/sw/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
     if [ -s "${f}.bad" ]; then
@@ -218,7 +220,7 @@ awk -F"," $response '{print $1","$2"}'
 for decorationType in genenames tracks gsea R; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
     submitted=`${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
-    failed=`monitor_decorate_lsf_submission $submitted ${ATLAS_PROD}/analysis/*/*/*/*/$decorationType.out`
+    failed=`monitor_decorate_lsf_submission $submitted $decorationType`
     if [ "$failed" -gt 0 ]; then
 	echo "ERROR: $failed 'decorate_all_experiments.sh $decorationType' jobs failed"
 	exit 1

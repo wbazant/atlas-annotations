@@ -43,7 +43,7 @@
   mergePropertiesIntoMatrix.pl -indir <directory_with_files_to_merge> -species <species> -bioentity <bioentity type> -outdir <output directory>
 
   E.g. 
-  mergePropertiesIntoMatrix.pl -indir /nfs/ma/home/atlas3-production/bioentity_properties/ensembl/ -bioentity gene -species homo_sapiens -outdir ./
+  mergePropertiesIntoMatrix.pl -indir $ATLAS_PROD/bioentity_properties/ensembl/ -bioentity gene -species homo_sapiens -outdir ./
 
 =cut
 

@@ -1,11 +1,11 @@
 software.name=metazoa
-software.version=22
+software.version=23
 url=http://metazoa.ensembl.org/biomart/martservice?
 organism=anopheles gambiae
 databaseName=metazoa
 datasetName=agambiae_eg_gene
 mySqlDbName=anopheles_gambiae
-mySqlDbUrl=mysql.ebi.ac.uk:4157
+mySqlDbUrl=mysql-eg-mirror.ebi.ac.uk:4157
 types=ensgene,enstranscript,ensprotein
 chromosomeName=2L,2R,3L,3R,X
 property.gene_biotype=gene_biotype

@@ -26,7 +26,7 @@ for l in $(cat $aux); do
     if [ ! -z "$organismId" ]; then
 	echo -e "${organismId}\t${ensemblDB}" >> $outputDir/organismEnsemblDB.dat
     else
-	echo "ERROR: Failed to retrieve organismId from $outputDir/bioentityOrganism.dat"
+	echo "ERROR: Failed to retrieve organismId: $organismId for $bioentityOrganism from $outputDir/bioentityOrganism.dat"
 	exit 1
     fi
 done

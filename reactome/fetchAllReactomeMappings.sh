@@ -3,8 +3,7 @@
 # Author: rpetry@ebi.ac.uk
 
 # Change reactomedev.oicr.on.ca to reactomerelease.oicr.on.ca when the latter one is up again
-url="http://reactomedev.oicr.on.ca:5555/biomart/martservice"
-query="query=<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query><Query virtualSchemaName = \"default\" formatter = \"TSV\" header = \"1\" uniqueRows = \"1\" count = \"\" datasetConfigVersion = \"0.6\"><Dataset name = \"pathway\" interface = \"default\" ><Attribute name = \"referencedatabase_ensembl\"/><Attribute name = \"referencednasequence__dm_species__displayname\"/><Attribute name = \"stableidentifier_identifier\"/><Attribute name = \"_displayname\"/></Dataset></Query>"
+url="http://www.reactome.org/download/current/Ensembl2Reactome.txt"
 
 outputDir=$1
 if [[ -z "$outputDir" ]]; then
@@ -17,7 +16,7 @@ IFS="
 "
 
 start=`date +%s`
-curl -s -G -X GET --data-urlencode "$query" "$url" | tail -n +2 | sort -k 1,1 | grep -vP '^\t' > aux
+curl -s -X GET "$url" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux
 
 # Lower-case and replace space with underscore in all organism names; create files with headers for each organism
 cat aux | awk -F"\t" '{print $2}' | sort | uniq > aux.organisms
@@ -32,8 +31,16 @@ for organism in $(cat aux.organisms); do
 # (each file contains the portion of the original data for the species in that file's name)
 awk -F"\t" '{print $1"\t"$3"\t"$4>>$2".reactome.tsv"}' aux
 
-# Prepare head-less ensgene to pathwayaname mapping files for the downstream GSEA analysis
+# Prepare head-less ensgene to pathway name mapping files for the downstream GSEA analysis
 awk -F"\t" '{print $1"\t"$4>>$2".reactome.tsv.gsea.aux"}' aux
+
+# Prepare head-less pathway name to pathway accession mapping files, used to decorate the *.gsea.tsv files produced by the downstream GSEA analysis
+awk -F"\t" '{print $4"\t"$3>>$2".reactome.tsv.decorate.aux"}' aux
+# Retain only unique rows in *.reactome.tsv.decorate.aux
+for f in $(ls *.reactome.tsv.decorate.aux); do
+    cat $f | sort | uniq > $f.tmp
+    mv $f.tmp $f
+done
 
 rm -rf aux*
 end=`date +%s`
