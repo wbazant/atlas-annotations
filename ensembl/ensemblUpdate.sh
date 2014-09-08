@@ -217,7 +217,7 @@ done
 awk -F"," $response '{print $1","$2"}'
 
 # Decorate all experiments
-for decorationType in genenames tracks gsea R; do 
+for decorationType in genenames tracks gsea R cluster; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
     submitted=`${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
     failed=`monitor_decorate_lsf_submission $submitted $decorationType`

@@ -36,9 +36,9 @@ awk -F"\t" '{print $1"\t"$4>>$2".reactome.tsv.gsea.aux"}' aux
 
 # Prepare head-less pathway name to pathway accession mapping files, used to decorate the *.gsea.tsv files produced by the downstream GSEA analysis
 awk -F"\t" '{print $4"\t"$3>>$2".reactome.tsv.decorate.aux"}' aux
-# Retain only unique rows in *.reactome.tsv.decorate.aux
+# Retain only unique rows in *.reactome.tsv.decorate.aux; and do final sort
 for f in $(ls *.reactome.tsv.decorate.aux); do
-    cat $f | sort | uniq > $f.tmp
+    cat $f | uniq | sort -k1,1 -t$'\t' > $f.tmp
     mv $f.tmp $f
 done
 
