@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=76
+software.version=77
 url=http://www.ensembl.org/biomart/martservice?
 organism=sus scrofa
 databaseName=ensembl

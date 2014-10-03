@@ -97,9 +97,20 @@ my $arrayDesignsFTPsite = $atlasSiteConfig->get_array_designs_ftp_site
 # Path to directory to write mappings into.
 my $writeDirectory = $atlasSiteConfig->get_mirbase_mappings_write_directory
 	or $logger->logdie( "Could not find mirbase_mappings_write_directory in YAML config." );
-
 # Add atlas prod directory to path for writing.
 $writeDirectory = File::Spec->catdir( $atlasProdDir, $writeDirectory );
+
+# Path to file containing miRBase species abbreviations.
+my $mirbaseSpeciesAbbrevFile = $atlasSiteConfig->get_mirbase_species_abbreviations
+	or $logger->logdie( "Could not find mirbase_species_abbreviations in YAML config." );
+# Add atlas prod directory.
+$mirbaseSpeciesAbbrevFile = File::Spec->catfile( $atlasProdDir, $mirbaseSpeciesAbbrevFile );
+
+# Get the miRBase species abbreviation mappings.
+my $mirbaseSpeciesAbbreviations = &parseSpeciesAbbrev( $mirbaseSpeciesAbbrevFile );
+
+# Get the species name for each miRBase accession in the aliases file.
+my $mirbaseAccsToSpecies = &getMirbaseAccessionSpecies( $args->{ "mirbase_aliases_file" }, $mirbaseSpeciesAbbreviations );
 
 # Go through the array design accessions...
 foreach my $arrayDesignAccession ( @{ $arrayDesignAccessions } ) {
@@ -111,13 +122,25 @@ foreach my $arrayDesignAccession ( @{ $arrayDesignAccessions } ) {
 	
 	# Get reporter names and miRBase IDs from the ADF.
 	my $reporterNamesToMirbaseIds = &getAdfReportersAndMirbaseIds( $parsedADF );
-	
-	# Map the reporter names to the correct miRBase accessions.
-	my $mappedReporters = &mapReportersToMirbase( $reporterNamesToMirbaseIds );
 
-	# Write out the mappings.
-	&writeMappings( $writeDirectory, $arrayDesignAccession, $mappedReporters );
+	# Map the reporter names to the correct miRBase accessions.
+	my $mappedReporters = &mapReportersToMirbase( $reporterNamesToMirbaseIds, $mirbaseAliases );
 	
+	# Map the reporters to the correct species.
+	my $mappedReportersBySpecies = &sortBySpecies( $mappedReporters, $mirbaseAccsToSpecies );
+
+	# Write out the mappings for each species (human and mouse only for now).
+	foreach my $species ( keys %{ $mappedReportersBySpecies } ) {
+		
+		# Skip unless species is human or mouse.
+		unless( grep { /^$species$/ } ( "homo_sapiens", "mus_musculus" ) ) { next; }
+
+		# Get the hash of reporters to accessions for this species.
+		my $speciesMappedReporters = $mappedReportersBySpecies->{ $species };
+
+		# Write them to a file.
+		&writeMappings( $writeDirectory, $arrayDesignAccession, $speciesMappedReporters, $species );
+	}
 }
 # end
 #####
@@ -233,6 +256,74 @@ sub make_mirbase_aliases {
 }
 
 
+sub parseSpeciesAbbrev {
+
+	my ( $mirbaseSpeciesAbbrevFile ) = @_;
+
+	$logger->info( "Reading miRBase species abbreviations..." );
+
+	my $mirbaseSpeciesAbbreviations = {};
+
+	# Open the file.
+	open( my $fh, "<", $mirbaseSpeciesAbbrevFile )
+		or $logger->logdie( "Cannot open miRBase species abbreviations mapping file $mirbaseSpeciesAbbrevFile: $!" );
+	
+	while( defined( my $line = <$fh> ) ) {
+		chomp $line;
+		
+		my @splitLine = split "\t", $line;
+
+		$mirbaseSpeciesAbbreviations->{ $splitLine[0] } = $splitLine[1];
+	}
+
+	$logger->info( "Successfully read miRBase species abbreviations." );
+
+	return $mirbaseSpeciesAbbreviations;
+	
+}
+
+
+sub getMirbaseAccessionSpecies {
+	
+	my ( $mirbaseAliasesFile, $mirbaseSpeciesAbbreviations ) = @_;
+	
+	my $mirbaseAccsToSpecies = {};
+
+	open( my $fh, "<", $mirbaseAliasesFile)
+		or $logger->logdie( "Cannot open miRBase aliases file $mirbaseAliasesFile: $!" );
+
+	while( defined( my $line = <$fh> ) ) {
+		
+		# Remove newline
+		chomp $line;
+		
+		# Split on tabs.
+		my @splitLine = split "\t", $line;
+
+		# The accession is the first element.
+		my $accession = $splitLine[0];
+		
+		# The identifiers are the rest, split them on semicolons.
+		my @identifiers = split ";", $splitLine[1];
+
+		# Get the latest identifier.
+		my $latest = $identifiers[-1];
+
+		# Get the species abbreviation from the latest identifier, as this is
+		# what's used in the miRBase species abbreviations mapping.
+		( my $speciesAbbrev = $latest ) =~ s/^(\w+)-\w+.*/$1/;
+		
+		# Get the full species for this abbreviaion.
+		my $fullSpecies = $mirbaseSpeciesAbbreviations->{ $speciesAbbrev };
+		
+		# Add the full species to the hash under the accession.
+		$mirbaseAccsToSpecies->{ $accession } = $fullSpecies;
+	}
+
+	return $mirbaseAccsToSpecies;
+}
+
+
 sub getParsedADF {
 	
 	my ( $arrayDesignAccession, $arrayDesignsFTPsite ) = @_;
@@ -343,9 +434,38 @@ sub getAdfReportersAndMirbaseIds {
 }
 
 
+sub sortBySpecies {
+
+	my ( $mappedReporters, $mirbaseAccsToSpecies ) = @_;
+	
+	my $mappedReportersBySpecies = {};
+
+	# Now go through the reporters mapped to miRBase accessions, and map them
+	# to their species based on the miRBase species abbreviations.
+	foreach my $reporterName ( keys %{ $mappedReporters } ) {
+
+		# Get the miRBase accession.
+		my $mirbaseAcc = $mappedReporters->{ $reporterName };
+
+		# Get the species for this accession.
+		my $species = $mirbaseAccsToSpecies->{ $mirbaseAcc };
+		
+		# Log a warning if we didn't find a species for this accession.
+		if( !$species ) { $logger->warn( "No species found for $mirbaseAcc" ); }
+		
+		else {
+			# Add the reporter-accession mapping to the new hash, under the key for this species.
+			$mappedReportersBySpecies->{ $species }->{ $reporterName } = $mirbaseAcc;
+		}
+	}
+
+	return $mappedReportersBySpecies;
+}
+
+
 sub mapReportersToMirbase {
 
-	my ( $reporterNamesToMirbaseIds ) = @_;
+	my ( $reporterNamesToMirbaseIds, $mirbaseAliases ) = @_;
 
 	# Count how many reporter names we start with.
 	my $beforeMappingCount = (keys %{ $reporterNamesToMirbaseIds } );
@@ -386,7 +506,7 @@ sub mapReportersToMirbase {
 					$adfMirbaseId,
 					"\" (reporter name \"",
 					$reporterName,
-					"\""
+					"\")"
 				);
 				
 				delete $reporterNamesToMirbaseIds->{ $reporterName };
@@ -408,7 +528,7 @@ sub mapReportersToMirbase {
 
 sub writeMappings {
 
-	my ( $writeDirectory, $arrayDesignAccession, $mappedReporters ) = @_;
+	my ( $writeDirectory, $arrayDesignAccession, $mappedReporters, $species ) = @_;
 
 	# Directory to write mappings file to.
 	my $arrayDesignDirectory = File::Spec->catfile( $writeDirectory, $arrayDesignAccession );
@@ -420,7 +540,7 @@ sub writeMappings {
 	}
 	
 	# Create filename for output.
-	my $mappingFilename = $arrayDesignAccession . "_reporter_mirbase_probename.txt";
+	my $mappingFilename = join ".", ( $species, $arrayDesignAccession, "tsv" );
 	$mappingFilename = File::Spec->catfile( $arrayDesignDirectory, $mappingFilename );
 
 	$logger->info( "Writing mappings to $mappingFilename" );
@@ -429,7 +549,7 @@ sub writeMappings {
 	open( my $fh, ">", $mappingFilename ) or $logger->logdie( "Cannot create output file \"$mappingFilename\": $!" );
 
 	# Write headers.
-	printf $fh "mirna\tdesign_element";
+	print $fh "mirna\tdesign_element";
 
 	# Write the mappings.
 	foreach my $reporterName ( keys %{ $mappedReporters } ) {

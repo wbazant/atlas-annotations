@@ -2,9 +2,6 @@
 # This script retrieves Ensembl gene identifier - Reactome pathway identifier - Reactome pathway name triples and puts them in ${organism}.reactome.tsv files, depending on the organism of the Ensembl gene identifier
 # Author: rpetry@ebi.ac.uk
 
-# Change reactomedev.oicr.on.ca to reactomerelease.oicr.on.ca when the latter one is up again
-url="http://www.reactome.org/download/current/Ensembl2Reactome.txt"
-
 outputDir=$1
 if [[ -z "$outputDir" ]]; then
     echo "Usage: $0 outputDir" >&2
@@ -15,31 +12,71 @@ pushd $outputDir
 IFS="
 "
 
+# Clean up previous files
+rm -rf $outputDir/*.reactome.tsv*
+rm -rf $outputDir/aux*
+
 start=`date +%s`
-curl -s -X GET "$url" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux
+# Retrieved columns are in order: ensembl gene identifier/Uniprot accession, organism, Reactome pathway accession, Reactome Pathway name
+for file in Ensembl2Reactome UniProt2Reactome; do
+    curl -s -X GET "http://www.reactome.org/download/current/${file}_All_Pathways.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux.$file
+    # Ensembl2Reactome appears to map to pathways a combination of gene and transcript identifiers (I've seen evidence of a gene and its transcript
+    # being mapped to the same pathway in separate lines of the same file). Exluding transcript identifers to avoid Solr index (that consumes these files)
+    # from being corrupted.
+    if [ "$file" == "Ensembl2Reactome" ]; then 
+	grep -vP '^ENST' aux.$file > aux.$file.tmp
+	mv aux.$file.tmp aux.$file
+    fi
 
-# Lower-case and replace space with underscore in all organism names; create files with headers for each organism
-cat aux | awk -F"\t" '{print $2}' | sort | uniq > aux.organisms
-for organism in $(cat aux.organisms); do
-    newOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`
-    perl -pi -e "s|$organism|$newOrganism|g" aux
-    rm -rf ${newOrganism}.reactome.tsv.gsea.aux
-    echo -e "ensgene\tpathwayid\tpathwayname" > ${newOrganism}.reactome.tsv
- done
+    # Lower-case and replace space with underscore in all organism names; create files with headers for each organism
+    awk -F"\t" '{print $2}' aux.$file | sort | uniq > aux.$file.organisms
+    for organism in $(cat aux.$file.organisms); do
+       lcOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`
+       perl -pi -e "s|$organism|$lcOrganism|g" aux.$file
+    done
 
-# Append data retrieved from REACTOME into each of the species-specific files 
-# (each file contains the portion of the original data for the species in that file's name)
-awk -F"\t" '{print $1"\t"$3"\t"$4>>$2".reactome.tsv"}' aux
+    # Append data retrieved from REACTOME into each of the species-specific files 
+    # (each file contains the portion of the original data for the species in that file's name)
+    if [ "$file" == "Ensembl2Reactome" ]; then 
+	awk -F"\t" '{print $1"\t"$3"\t"$4>>$2".reactome.tsv"}' aux.$file
+    else
+	# For UniProt file we first need to map UniProt accessions to Ensembl identifiers,
+	# before appending the data to ${lcOrganism}.reactome.tsv
+	for organism in $(cat aux.$file.organisms); do
+	    lcOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`	
+	    # First prepare the ${lcOrganism} portion of Uniprot2Reactome
+	    grep -P "\t$lcOrganism\t" aux.$file | awk -F"\t" '{print $1"\t"$3"\t"$4}' | sort -k1,1 | uniq > aux.${lcOrganism}.reactome.tsv
+	    # Now prepare Ensembl's UniProt to Ensembl mapping file - in the right order, ready for joining with the $lcOrganism portion of Ensembl2Reactome
+	    grep -vP '\t$' $ATLAS_PROD/bioentity_properties/ensembl/${lcOrganism}.ensgene.uniprot.tsv | awk -F"\t" '{print $2"\t"$1}' | sort -k1,1 | uniq > aux.${lcOrganism}.ensembl.tsv
+	    if [ -s aux.${lcOrganism}.ensembl.tsv ]; then 
+	        # Join to Ensmebl mapping file, then remove protein accessions before appending the UniProt only-annotated pathways to ${lcOrganism}.reactome.tsv
+		join -t $'\t' -1 1 -2 1 aux.${lcOrganism}.ensembl.tsv aux.${lcOrganism}.reactome.tsv | awk -F"\t" '{print $2"\t"$3"\t"$4}' >> ${lcOrganism}.reactome.tsv
+		# Finally, remove any duplicate rows
+		echo -e "ensgene\tpathwayid\tpathwayname" > ${lcOrganism}.reactome.tsv.tmp
+		sort  -k1,1 -t$'\t' ${lcOrganism}.reactome.tsv | uniq >> ${lcOrganism}.reactome.tsv.tmp
+		mv ${lcOrganism}.reactome.tsv.tmp ${lcOrganism}.reactome.tsv
+	    fi
+	done
+    fi
+done
 
 # Prepare head-less ensgene to pathway name mapping files for the downstream GSEA analysis
+cat aux.Ensembl2Reactome > aux
+cat aux.Uniprot2Reactome >> aux
 awk -F"\t" '{print $1"\t"$4>>$2".reactome.tsv.gsea.aux"}' aux
+# Remove any duplicate rows
+for f in $(ls *.reactome.tsv.gsea.aux); do
+    sort  -k1,1 -t$'\t' $f | uniq > $f.tmp
+    mv $f.tmp $f
+done
+
 
 # Prepare head-less pathway name to pathway accession mapping files, used to decorate the *.gsea.tsv files produced by the downstream GSEA analysis
 awk -F"\t" '{print $4"\t"$3>>$2".reactome.tsv.decorate.aux"}' aux
-# Retain only unique rows in *.reactome.tsv.decorate.aux; and do final sort
+# Remove any duplicate rows
 for f in $(ls *.reactome.tsv.decorate.aux); do
-    cat $f | uniq | sort -k1,1 -t$'\t' > $f.tmp
-    mv $f.tmp $f
+   cat $f | sort -k1,1 -t$'\t' | uniq > $f.tmp
+   mv $f.tmp $f
 done
 
 rm -rf aux*

@@ -10,7 +10,7 @@ if [[ -z "$arrayDesign" || -z "$outputDir" ]]; then
 fi
 
 if [ ! -e  ${outputDir}/idprefix_to_organism.tsv ]; then
-    echo "ERROR: ${outputDir}/idprefix_to_organism.tsv does not exist" >&2
+    echo "ERROR: ${outputDir}/idprefix_to_organism.txt does not exist" >&2
     exit 1
 fi
 
@@ -19,7 +19,7 @@ IFS="
 adFile="/nfs/ma/home/atlas3-production/arraydesigns/microRNA/$arrayDesign/$arrayDesign.tsv"
 for l in $(tail -n +2 $adFile); do
     prefix=`echo $l | awk -F"-" '{print $1}'`
-    organism=`grep "^$prefix" ${outputDir}/idprefix_to_organism.tsv | awk -F"\t" '{print $NF}'`
+    organism=`grep "^$prefix" ${outputDir}/idprefix_to_organism.txt | awk -F"\t" '{print $NF}'`
     if [ ! -e  ${outputDir}/${organism}.${arrayDesign}.tsv ]; then
 	head -1 $adFile > ${outputDir}/${organism}.${arrayDesign}.tsv
     fi
