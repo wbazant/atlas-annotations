@@ -1,0 +1,24 @@
+software.name=plants
+software.version=23
+url=http://plants.ensembl.org/biomart/martservice?
+organism=brassica oleracea
+databaseName=plants
+datasetName=boleracea_eg_gene
+mySqlDbName=brassica_oleracea
+mySqlDbUrl=mysql-eg-mirror.ebi.ac.uk:4157
+types=ensgene,enstranscript,ensprotein
+chromosomeName=C1,C2,C3,C4,C5,C6,C7,C8,C9
+property.gene_biotype=gene_biotype
+property.description=description
+property.ensgene=ensembl_gene_id
+property.ensprotein=ensembl_peptide_id
+property.enstranscript=ensembl_transcript_id
+property.entrezgene=entrezgene
+property.go=goslim_goa_accession
+property.goterm=goslim_goa_description
+property.interpro=interpro_id
+property.interproterm=interpro_description
+property.refseq=refseq_peptide
+property.symbol=external_gene_id
+property.uniprot=uniprot_sptrembl
+

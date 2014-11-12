@@ -38,8 +38,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ $# -lt 5 ]; then
-  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL RELEASE_TYPE dbUser dbSID"
+if [ $# -lt 8 ]; then
+  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL RELEASE_TYPE dbUser dbSID stagingTomcatAdmin"
   echo "e.g. $0 75 21 75 22 ensemblgenomes atlasprd3 ATLASREL"
   exit 1
 fi 
@@ -51,10 +51,13 @@ NEW_ENSEMBLGENOMES_REL=$4
 RELEASE_TYPE=$5
 dbUser=$6
 dbSID=$7
+stagingTomcatAdmin=$8
 
 
 tmp="/nfs/public/rw/homes/fg_atlas/tmp"
 dbPass=`get_dbpass $dbUser`
+dbPass=`get_dbpass $dbUser`
+stagingTomcatAdminPass=`get_dbpass $stagingTomcatAdmin`
 stagingServer=ves-hx-76
 
 # Annotation release will always be either for just Ensembl or just for Ensembl Genomes, but never for both - as the latter always releases some time after the former
@@ -192,15 +195,24 @@ for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping;
 done
 popd
 
+echo "Fetching the latest Reactome mappings..."
+# This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
+# gene ids - we need to use the mapping files we've just retrieved from Ensembl
+${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the latest Reactome mappings" >&2
+    exit 1
+fi 
+
 echo "Re-build Solr index on the staging Atlas instance"
 # First submit Solr build
-response=`curl -s "http://${stagingServer}:8080/gxa/admin/buildIndex"`
+response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "http://${stagingServer}:8080/gxa/admin/buildIndex"`
 if [ -z "$response" ]; then
     echo "ERROR: Got empty response from http://${stagingServer}:8080/gxa/admin/buildIndex" >&2
     exit 1
 fi 
 echo $response | grep "^STARTED" > /dev/null
-if [ $? -eq 0 ]; then
+if [ $? -ne 0 ]; then
     echo "ERROR: Incorrect response from: http://${stagingServer}:8080/gxa/admin/buildIndex - expected: STARTED; got: '$response'" >&2
     exit 1
 fi 
@@ -208,13 +220,13 @@ fi
 echo $response | grep '^COMPLETED' > /dev/null
 while [ $? -ne 0  ]; do
     # E.g. PROCESSING, total time elapsed: 0 minutes, estimated progress: 1%, estimated minutes to completion: 35, file being processed
-    awk -F"," $response '{print $1","$2","$3","$4}'
+    echo $response | awk -F"," '{print $1","$2","$3","$4}'
     sleep 60 
-    response=`curl -s "http://${stagingServer}:8080/gxa/admin/buildIndex/status"`
+    response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "http://${stagingServer}:8080/gxa/admin/buildIndex/status"`
     echo $response | grep '^COMPLETED' > /dev/null
 done
 # Report success and time taken 
-awk -F"," $response '{print $1","$2"}'
+echo $response | awk -F"," '{print $1","$2"}'
 
 # Decorate all experiments
 for decorationType in genenames tracks gsea R cluster; do 
