@@ -19,7 +19,7 @@ rm -rf $outputDir/aux*
 start=`date +%s`
 # Retrieved columns are in order: ensembl gene identifier/Uniprot accession, organism, Reactome pathway accession, Reactome Pathway name
 for file in Ensembl2Reactome UniProt2Reactome; do
-    curl -s -X GET "http://www.reactome.org/download/current/${file}_All_Pathways.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux.$file
+    curl -s -X GET "http://www.reactome.org/download/current/${file}_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux.$file
     # Ensembl2Reactome appears to map to pathways a combination of gene and transcript identifiers (I've seen evidence of a gene and its transcript
     # being mapped to the same pathway in separate lines of the same file). Exluding transcript identifers to avoid Solr index (that consumes these files)
     # from being corrupted.
@@ -62,8 +62,8 @@ done
 
 # Prepare head-less ensgene to pathway name mapping files for the downstream GSEA analysis
 cat aux.Ensembl2Reactome > aux
-cat aux.Uniprot2Reactome >> aux
-awk -F"\t" '{print $1"\t"$4>>$2".reactome.tsv.gsea.aux"}' aux
+cat aux.UniProt2Reactome >> aux
+awk -F"\t" '{print $1"\t"$3>>$2".reactome.tsv.gsea.aux"}' aux
 # Remove any duplicate rows
 for f in $(ls *.reactome.tsv.gsea.aux); do
     sort  -k1,1 -t$'\t' $f | uniq > $f.tmp
@@ -72,7 +72,7 @@ done
 
 
 # Prepare head-less pathway name to pathway accession mapping files, used to decorate the *.gsea.tsv files produced by the downstream GSEA analysis
-awk -F"\t" '{print $4"\t"$3>>$2".reactome.tsv.decorate.aux"}' aux
+awk -F"\t" '{print $3"\t"$4>>$2".reactome.tsv.decorate.aux"}' aux
 # Remove any duplicate rows
 for f in $(ls *.reactome.tsv.decorate.aux); do
    cat $f | sort -k1,1 -t$'\t' | uniq > $f.tmp

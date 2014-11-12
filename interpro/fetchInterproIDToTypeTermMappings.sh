@@ -36,7 +36,7 @@ done | grep '' -n > interpro.id.type.aux
 perl -pi -e 's|(^\d+):|$1\t|g' interpro.term.aux
 perl -pi -e 's|(^\d+):|$1\t|g' interpro.id.type.aux
 join -t $'\t' -1 1 -2 1 interpro.term.aux interpro.id.type.aux | awk -F"\t" '{print $2"\t"$3"\t"$4}' > interproIDToTypeTerm.tsv
-cat interproIDToTypeTerm.tsv | awk -F"\t" '{print $1"\t"$2}' | sort -k1,1 -t$'\t' > interproIDToTypeTerm.tsv.decorate.aux
+cat interproIDToTypeTerm.tsv | awk -F"\t" '{print $2"\t"$1}' | sort -k1,1 -t$'\t' > interproIDToTypeTerm.tsv.decorate.aux
 
 rm -rf interpro.*.aux
 popd
