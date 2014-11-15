@@ -10,7 +10,7 @@ rm -rf $aux
 rm -rf $outputDir/bioentityOrganism.dat
 
 pushd $outputDir/mirbase
-for f in $(ls *.hairpin.tsv); do echo $f | awk -F"." '{print $1}' >> $aux ; done
+for f in $(ls *.mature.tsv); do echo $f | awk -F"." '{print $1}' >> $aux ; done
 popd
 pushd $outputDir/ensembl
 for f in $(ls *.ensgene.tsv); do echo $f| awk -F"." '{print $1}' >> $aux ; done

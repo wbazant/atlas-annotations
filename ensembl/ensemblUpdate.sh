@@ -25,7 +25,6 @@ monitor_decorate_lsf_submission() {
     while [ "$pctComplete" -lt "100" ]; do
 	sleep 60
 	pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
-	echo "$pctComplete% complete - waiting for 1 min..."
     done 
     # Return number of failed jobs
     echo `grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out`
@@ -229,9 +228,10 @@ done
 echo $response | awk -F"," '{print $1","$2"}'
 
 # Decorate all experiments
-for decorationType in genenames tracks gsea R cluster; do 
+for decorationType in genenames tracks R cluster gsea; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
     submitted=`${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
+    echo "About to call: monitor_decorate_lsf_submission $submitted $decorationType"
     failed=`monitor_decorate_lsf_submission $submitted $decorationType`
     if [ "$failed" -gt 0 ]; then
 	echo "ERROR: $failed 'decorate_all_experiments.sh $decorationType' jobs failed"

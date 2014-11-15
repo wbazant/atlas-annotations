@@ -1,5 +1,5 @@
 software.name=plants
-software.version=23
+software.version=24
 url=http://plants.ensembl.org/biomart/martservice?
 organism=populus trichocarpa
 databaseName=plants
