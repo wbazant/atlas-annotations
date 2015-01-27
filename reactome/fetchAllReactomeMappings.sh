@@ -18,8 +18,13 @@ rm -rf $outputDir/aux*
 
 start=`date +%s`
 # Retrieved columns are in order: ensembl gene identifier/Uniprot accession, organism, Reactome pathway accession, Reactome Pathway name
-for file in Ensembl2Reactome UniProt2Reactome; do
-    curl -s -X GET "http://www.reactome.org/download/current/${file}_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux.$file
+for file in Ensembl2Reactome UniProt2Reactome UniProt2PlantReactome; do
+    if [ "$file" == "UniProt2PlantReactome" ]; then
+	# Please note that UniProt2PlantReactome.txt is currently provided manually by Justin Preece from Gramene project
+	cat ${file}_All_Levels.txt | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux.$file
+    else 
+	curl -s -X GET "http://www.reactome.org/download/current/${file}_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > aux.$file
+    fi
     # Ensembl2Reactome appears to map to pathways a combination of gene and transcript identifiers (I've seen evidence of a gene and its transcript
     # being mapped to the same pathway in separate lines of the same file). Exluding transcript identifers to avoid Solr index (that consumes these files)
     # from being corrupted.
@@ -63,6 +68,7 @@ done
 # Prepare head-less ensgene to pathway name mapping files for the downstream GSEA analysis
 cat aux.Ensembl2Reactome > aux
 cat aux.UniProt2Reactome >> aux
+cat aux.UniProt2PlantReactome >> aux
 awk -F"\t" '{print $1"\t"$3>>$2".reactome.tsv.gsea.aux"}' aux
 # Remove any duplicate rows
 for f in $(ls *.reactome.tsv.gsea.aux); do

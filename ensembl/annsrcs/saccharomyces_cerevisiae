@@ -1,5 +1,5 @@
 software.name=fungi
-software.version=24
+software.version=25
 url=http://fungi.ensembl.org/biomart/martservice?
 organism=saccharomyces cerevisiae
 databaseName=fungi

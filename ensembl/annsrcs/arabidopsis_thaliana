@@ -1,5 +1,5 @@
 software.name=plants
-software.version=24
+software.version=25
 url=http://plants.ensembl.org/biomart/martservice?
 organism=arabidopsis thaliana
 databaseName=plants
@@ -16,6 +16,8 @@ property.enstranscript=ensembl_transcript_id
 property.entrezgene=entrezgene
 property.go=go_accession
 property.goterm=go_name_1006
+property.po=po_id
+property.poterm=po_name_1006
 property.interpro=interpro_id
 property.interproterm=interpro_description
 property.refseq=refseq_peptide

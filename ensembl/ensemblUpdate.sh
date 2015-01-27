@@ -25,7 +25,6 @@ monitor_decorate_lsf_submission() {
     while [ "$pctComplete" -lt "100" ]; do
 	sleep 60
 	pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
-	echo "$pctComplete% complete - waiting for 1 min..."
     done 
     # Return number of failed jobs
     echo `grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out`
@@ -122,13 +121,6 @@ for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
     done 
 done
 
-echo "Copy all files to the other public data directories"
-pushd ${ATLAS_PROD}/bioentity_properties/
-   for dir in mirbase reactome go interpro; do
-       cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
-   done
-popd
-
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat sqlloader file for loading into the staging DB instance"
 pushd ${ATLAS_PROD}/bioentity_properties
 ${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
@@ -204,6 +196,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi 
 
+echo "Copy all files to the other public data directories"
+pushd ${ATLAS_PROD}/bioentity_properties/
+   for dir in mirbase reactome go interpro; do
+       cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
+   done
+popd
+
 echo "Re-build Solr index on the staging Atlas instance"
 # First submit Solr build
 response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "http://${stagingServer}:8080/gxa/admin/buildIndex"`
@@ -216,17 +215,34 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Incorrect response from: http://${stagingServer}:8080/gxa/admin/buildIndex - expected: STARTED; got: '$response'" >&2
     exit 1
 fi 
-# Now keeping checking status every 60 secs until the process is complete; then report success and time taken
+# Now keeping checking status every 5 mins until the process is complete; then report success and time taken
 echo $response | grep '^COMPLETED' > /dev/null
 while [ $? -ne 0  ]; do
     # E.g. PROCESSING, total time elapsed: 0 minutes, estimated progress: 1%, estimated minutes to completion: 35, file being processed
     echo $response | awk -F"," '{print $1","$2","$3","$4}'
-    sleep 60 
+    sleep 300 
     response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "http://${stagingServer}:8080/gxa/admin/buildIndex/status"`
     echo $response | grep '^COMPLETED' > /dev/null
 done
 # Report success and time taken 
-echo $response | awk -F"," '{print $1","$2"}'
+echo $response | awk -F"," '{print $1","$2}'
+
+
+echo "Rebuild the multi-term autocomplete index"
+# c.f. step 3 on https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?title=Building+the+solr+indices&spaceKey=GXA
+# First submit Solr build
+response=`curl -s "http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true"`
+if [ -z "$response" ]; then
+    echo "ERROR: Got empty response from http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true" >&2
+    exit 1
+fi 
+echo $response | grep '<int name="status">0</int>' > /dev/null
+if [ $? -ne 0 ]; then
+    echo "ERROR: Incorrect response from: http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true - expected: STARTED; got: '$response'" >&2
+    exit 1
+else 
+    echo "'http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true' has completed successfully"
+fi 
 
 # Decorate all experiments
 for decorationType in genenames tracks R cluster gsea; do 
