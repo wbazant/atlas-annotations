@@ -12,7 +12,7 @@ pushd $outputDir/ensembl
 for f in $(ls *A-*.tsv); do 
     echo "Removing design elements mapped to multiple genes from $f..."
     head -1 $f > ${f}.aux
-    scala ${ATLAS_PROD}/sw/atlasprod/bioentity_annotations/ProbesetToMultipleGenesEliminator.scala $f >> ${f}.aux
+    scala ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/ProbesetToMultipleGenesEliminator.scala $f >> ${f}.aux
     mv ${f}.aux ${f}
 done
 

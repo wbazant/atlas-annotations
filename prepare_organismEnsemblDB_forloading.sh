@@ -4,14 +4,14 @@ if [[ -z "$outputDir" ]]; then
     echo "Usage: $0 outputDir" >&2
 fi
 
-source ${ATLAS_PROD}/sw/atlasprod/bash_util/generic_routines.sh
+source ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bash_util/generic_routines.sh
 
 today="`eval date +%Y-%m-%d`"
 aux="/tmp/prepare_organismEnsemblDB_forloading.${today}.$$.aux"
 rm -rf $aux
 rm -rf $outputDir/organismEnsemblDB.dat
 
-grep 'databaseName=' $ATLAS_PROD/sw/atlasprod/bioentity_annotations/ensembl/annsrcs/*  | awk -F"/" '{print $NF}' | sed 's|:databaseName=| |' | sort | uniq > $aux
+grep 'databaseName=' $ATLAS_PROD/sw/atlasinstall_prod/atlasprod/bioentity_annotations/ensembl/annsrcs/*  | awk -F"/" '{print $NF}' | sed 's|:databaseName=| |' | sort | uniq > $aux
 
 if [ ! -s "$outputDir/bioentityOrganism.dat" ]; then 
     echo "ERROR: $outputDir/bioentityOrganism.dat does not exist ir is empty - cannot map EnsemblDBs in $aux to organism ids"

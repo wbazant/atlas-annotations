@@ -2,7 +2,7 @@
 # This script retrieves all properties for each bioentity type for each annotation source config file defined in ${annSrcsDir}/ 
 # Author: rpetry@ebi.ac.uk
 
-source ${ATLAS_PROD}/sw/atlasprod/bash_util/generic_routines.sh
+source ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bash_util/generic_routines.sh
 
 # Get directory containing annotation source files and the output directory for bioentity property output files
 annSrcsDir=$1
