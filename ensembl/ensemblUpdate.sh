@@ -1,6 +1,9 @@
 #!/bin/bash     
 
-source ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bash_util/generic_routines.sh
+# Source script from the same (prod or test) Atlas environment as this script
+scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source ${scriptDir}/../../bash_util/generic_routines.sh
+atlasEnv=`atlas_env`
 
 getPctComplete() {
     numSubmittedJobs=$1
@@ -79,7 +82,7 @@ elif [ "$RELEASE_TYPE" == "ensemblgenomes" ]; then
 fi 
 
 echo "Validate all Ensembl annotation sources against the release specified in them"
-pushd ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/ensembl
+pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl
 git pull -v && git clean -f
 ./validateAnnSrcs.sh annsrcs
 if [ $? -ne 0 ]; then
@@ -97,12 +100,12 @@ if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_$
 fi
 
 echo "Obtain all the individual mapping files from Ensembl"
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/ensembl/annsrcs . > ${tmp}/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ${tmp}/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
 
 echo "Merge all individual property files into matrices"
 for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
    for bioentity in ensgene enstranscript ensprotein; do 
-      ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
+      ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
    done 
 done 
 
@@ -123,7 +126,7 @@ done
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat sqlloader file for loading into the staging DB instance"
 pushd ${ATLAS_PROD}/bioentity_properties
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
 size=`wc -l bioentityOrganism.dat | awk '{print $1}'`
 if [ "$size" -lt 200 ]; then
@@ -132,7 +135,7 @@ if [ "$size" -lt 200 ]; then
 fi 
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/organismEnsemblDB.dat sqlloader file for loading into the staging DB instance"
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/prepare_organismEnsemblDB_forloading.sh ${ATLAS_PROD}/bioentity_properties
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_organismEnsemblDB_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
 size=`wc -l organismEnsemblDB.dat | awk '{print $1}'`
 if [ "$size" -lt 30 ]; then
@@ -145,12 +148,12 @@ echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityName.dat sqlloader fi
 echo "... Generate miRBase component"
 pushd ${ATLAS_PROD}/bioentity_properties/mirbase
 rm -rf miRNAName.dat
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/mirbase/prepare_mirbasenames_forloading.sh
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/mirbase/prepare_mirbasenames_forloading.sh
 popd
 echo "... Generate Ensembl component"
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 rm -rf geneName.dat
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
 popd
 
 echo "Merge miRNAName.dat and geneName.dat into bioentityName.dat"
@@ -166,7 +169,7 @@ fi
 echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat sqlloader file for loading into the staging DB instance"
 pushd ${ATLAS_PROD}/bioentity_properties
 rm -rf designelementMapping.dat
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
 size=`wc -l designelementMapping.dat | awk '{print $1}'`
 if [ "$size" -lt 2000000 ]; then
@@ -179,7 +182,7 @@ echo "Load bioentityOrganism.dat, organismEnsemblDB.dat, bioentityName.dat and d
 pushd ${ATLAS_PROD}/bioentity_properties
 for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping; do
     rm -rf ${f}.log; rm -rf ${f}.bad
-    sqlldr ${dbUser}/${dbPass}@${dbSID} control=${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
+    sqlldr ${dbUser}/${dbPass}@${dbSID} control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
     if [ -s "${f}.bad" ]; then
 	echo "ERROR: Failed to load ${f} into ${dbUser}@${dbSID}"
 	exit 1
@@ -190,7 +193,7 @@ popd
 echo "Fetching the latest Reactome mappings..."
 # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
 # gene ids - we need to use the mapping files we've just retrieved from Ensembl
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest Reactome mappings" >&2
     exit 1
@@ -247,7 +250,7 @@ fi
 # Decorate all experiments
 for decorationType in genenames tracks R cluster gsea; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
-    submitted=`${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
+    submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
     echo "About to call: monitor_decorate_lsf_submission $submitted $decorationType"
     failed=`monitor_decorate_lsf_submission $submitted $decorationType`
     if [ ! -z "$failed" ]; then
@@ -255,7 +258,7 @@ for decorationType in genenames tracks R cluster gsea; do
 	exit 1
     fi 
     echo "Copy all $decorationType decorated files to the staging area"
-    ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
+    ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
 done
 
 popd
