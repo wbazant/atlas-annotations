@@ -36,7 +36,7 @@ get_ontology_id2term_mappings() {
 
 # This is just for GO (i.e. not PO)
 get_ontology_id2Depth_mappings() {
-    echo "SELECT DISTINCT term.acc, graph_path.distance FROM term INNER JOIN graph_path ON (term.id=graph_path.term2_id) INNER JOIN term AS ancestor ON (ancestor.id=graph_path.term1_id) AND ancestor.is_root=1" | mysql --silent -hmysql-amigo.ebi.ac.uk -ugo_select -pamigo -P4085 go_latest | grep '^GO:'  | sort -t$'\t' -k1,1
+    echo "SELECT term.acc, term.term_type, min(graph_path.distance) FROM term INNER JOIN graph_path ON (term.id=graph_path.term2_id) INNER JOIN term AS ancestor ON (ancestor.id=graph_path.term1_id) AND ancestor.is_root=1 group by term.acc, term.term_type" | mysql --silent -hmysql-amigo.ebi.ac.uk -ugo_select -pamigo -P4085 go_latest | grep '^GO:'  | sort -t$'\t' -k1,1
 }
 
 get_ontology_id2term_mappings go "http://geneontology.org/ontology/go.owl" $outputDir
@@ -47,7 +47,7 @@ get_ontology_id2term_mappings po "http://palea.cgrb.oregonstate.edu/viewsvn/Poc/
 if [ $? -ne 0 ]; then
    exit 1
 fi
-get_ontology_id2Depth_mapping > $outputDir/goIDToDepth.tsv
+get_ontology_id2Depth_mappings > $outputDir/goIDToDepth.tsv
 if [ $? -ne 0 ]; then
    exit 1
 fi
@@ -58,4 +58,4 @@ rm -rf $outputDir/poIDToTerm.tsv
 
 join -t $'\t' -a 1 -1 1 -2 1 $outputDir/goIDToTerm.tsv $outputDir/goIDToDepth.tsv > $outputDir/goIDToTermDepth.tsv
 rm -rf $outputDir/goIDToDepth.tsv
-rm -rf $outputDir/goIDToTerm.tsv
+mv $outputDir/goIDToTermDepth.tsv $outputDir/goIDToTerm.tsv
