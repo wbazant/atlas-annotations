@@ -123,7 +123,10 @@ for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
     done 
 done
 
+popd
+
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat sqlloader file for loading into the staging DB instance"
+
 pushd ${ATLAS_PROD}/bioentity_properties
 ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
@@ -155,6 +158,7 @@ rm -rf geneName.dat
 ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
 popd
 
+pushd ${ATLAS_PROD}/bioentity_properties
 echo "Merge miRNAName.dat and geneName.dat into bioentityName.dat"
 cp ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
 cat ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
@@ -166,7 +170,6 @@ if [ "$size" -lt 1000000 ]; then
 fi 
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat sqlloader file for loading into the staging DB instance"
-pushd ${ATLAS_PROD}/bioentity_properties
 rm -rf designelementMapping.dat
 ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
@@ -175,10 +178,8 @@ if [ "$size" -lt 2000000 ]; then
     echo "ERROR: Something went wrong with populating designelementMapping.dat file - should have more than 2mln rows"
     exit 1
 fi 
-popd
 
 echo "Load bioentityOrganism.dat, organismEnsemblDB.dat, bioentityName.dat and designelementMapping.dat into staging Oracle schema"
-pushd ${ATLAS_PROD}/bioentity_properties
 for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping; do
     rm -rf ${f}.log; rm -rf ${f}.bad
     sqlldr ${dbUser}/${dbPass}@${dbSID} control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
@@ -187,7 +188,6 @@ for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping;
 	exit 1
     fi
 done
-popd
 
 echo "Fetching the latest Reactome mappings..."
 # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
@@ -199,10 +199,9 @@ if [ $? -ne 0 ]; then
 fi 
 
 echo "Copy all files to the other public data directories"
-pushd ${ATLAS_PROD}/bioentity_properties/
-   for dir in mirbase reactome go interpro; do
+for dir in mirbase reactome go interpro; do
        cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
-   done
+done
 popd
 
 echo "Re-build Solr index on the staging Atlas instance"
@@ -259,5 +258,3 @@ for decorationType in genenames tracks R cluster gsea; do
     echo "Copy all $decorationType decorated files to the staging area"
     ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
 done
-
-popd
