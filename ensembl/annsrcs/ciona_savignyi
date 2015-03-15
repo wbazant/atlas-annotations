@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=78
+software.version=79
 url=http://www.ensembl.org/biomart/martservice?
 organism=ciona savignyi
 databaseName=ensembl
@@ -24,5 +24,5 @@ property.mirbase_id=mirbase_id
 property.ortholog=btaurus_homolog_ensembl_gene,celegans_homolog_ensembl_gene,cfamiliaris_homolog_ensembl_gene,cintestinalis_homolog_ensembl_gene,dmelanogaster_homolog_ensembl_gene,drerio_homolog_ensembl_gene,ecaballus_homolog_ensembl_gene,ggallus_homolog_ensembl_gene,hsapiens_homolog_ensembl_gene,mmulatta_homolog_ensembl_gene,mmusculus_homolog_ensembl_gene,rnorvegicus_homolog_ensembl_gene,scerevisiae_homolog_ensembl_gene,sscrofa_homolog_ensembl_gene,xtropicalis_homolog_ensembl_gene
 property.symbol=external_gene_name
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+property.uniprot=uniprot_sptrembl,uniprot_swissprot
 

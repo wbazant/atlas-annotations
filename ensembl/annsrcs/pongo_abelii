@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=78
+software.version=79
 url=http://www.ensembl.org/biomart/martservice?
 organism=pongo abelii
 databaseName=ensembl
@@ -28,5 +28,5 @@ property.ortholog=btaurus_homolog_ensembl_gene,celegans_homolog_ensembl_gene,cfa
 property.refseq=refseq_mrna,refseq_ncrna,refseq_peptide
 property.symbol=external_gene_name
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+property.uniprot=uniprot_sptrembl,uniprot_swissprot
 

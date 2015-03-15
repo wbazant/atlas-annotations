@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=78
+software.version=79
 url=http://www.ensembl.org/biomart/martservice?
 organism=rattus norvegicus
 databaseName=ensembl
@@ -29,7 +29,7 @@ property.rgd=rgd
 property.rgd_symbol=rgd_symbol
 property.symbol=external_gene_name
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+property.uniprot=uniprot_sptrembl,uniprot_swissprot
 arrayDesign.A-AFFY-18=affy_rg_u34a
 arrayDesign.A-AFFY-19=affy_rg_u34b
 arrayDesign.A-AFFY-20=affy_rg_u34c

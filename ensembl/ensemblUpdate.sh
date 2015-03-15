@@ -83,7 +83,6 @@ fi
 
 echo "Validate all Ensembl annotation sources against the release specified in them"
 pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl
-git pull -v && git clean -f
 ./validateAnnSrcs.sh annsrcs
 if [ $? -ne 0 ]; then
     echo "ERROR: Validation of annotation sources failed - please check notes on validation source failures on http://bar.ebi.ac.uk:8080/trac/wiki/BioentityAnnotationUpdates; fix and re-run"

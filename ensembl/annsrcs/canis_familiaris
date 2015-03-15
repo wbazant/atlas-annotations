@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=78
+software.version=79
 url=http://www.ensembl.org/biomart/martservice?
 organism=canis familiaris
 databaseName=ensembl
@@ -26,6 +26,6 @@ property.mirbase_id=mirbase_id
 property.ortholog=btaurus_homolog_ensembl_gene,celegans_homolog_ensembl_gene,cintestinalis_homolog_ensembl_gene,csavignyi_homolog_ensembl_gene,dmelanogaster_homolog_ensembl_gene,drerio_homolog_ensembl_gene,ecaballus_homolog_ensembl_gene,ggallus_homolog_ensembl_gene,hsapiens_homolog_ensembl_gene,mmulatta_homolog_ensembl_gene,mmusculus_homolog_ensembl_gene,rnorvegicus_homolog_ensembl_gene,scerevisiae_homolog_ensembl_gene,sscrofa_homolog_ensembl_gene,xtropicalis_homolog_ensembl_gene
 property.refseq=refseq_mrna,refseq_peptide
 property.symbol=external_gene_name
-property.uniprot=uniprot_swissprot_accession
+property.uniprot=uniprot_swissprot
 arrayDesign.A-AFFY-149=affy_canine_2
 

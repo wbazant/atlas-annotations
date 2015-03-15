@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=78
+software.version=79
 url=http://www.ensembl.org/biomart/martservice?
 organism=homo sapiens
 databaseName=ensembl
@@ -28,7 +28,7 @@ property.ortholog=btaurus_homolog_ensembl_gene,celegans_homolog_ensembl_gene,cfa
 property.refseq=refseq_mrna,refseq_ncrna,refseq_peptide
 property.symbol=external_gene_name
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+property.uniprot=uniprot_sptrembl,uniprot_swissprot
 arrayDesign.A-AFFY-1=affy_hg_u95av2
 arrayDesign.A-AFFY-10=affy_hg_u95b
 arrayDesign.A-AFFY-11=affy_hg_u95c

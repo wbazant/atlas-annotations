@@ -20,6 +20,6 @@ property.interpro=interpro_id
 property.interproterm=interpro_description
 property.refseq=refseq_peptide
 property.symbol=external_gene_id
-property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+property.uniprot=uniprot_sptrembl,uniprot_swissprot
 arrayDesign.A-AFFY-77=affy_maize
 

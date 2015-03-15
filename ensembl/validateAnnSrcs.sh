@@ -12,6 +12,9 @@ pushd $annSrcsDir
 
 errors=""
 nl=$'\n'
+# Tidy up files from previous validation
+rm *.ensemblproperties
+rm *.registry
 for f in $(ls ); do
     echo "Validating $f..."
     url=`grep '^url=' $f | awk -F"=" '{print $NF}'`
