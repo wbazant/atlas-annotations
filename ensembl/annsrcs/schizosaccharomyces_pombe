@@ -18,5 +18,5 @@ property.goterm=go_name_1006
 property.interpro=interpro_id
 property.interproterm=interpro_description
 property.symbol=external_gene_id
-property.uniprot=uniprot_sptrembl,uniprot_swissprot
+property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
 

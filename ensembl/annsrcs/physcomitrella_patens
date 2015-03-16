@@ -20,5 +20,5 @@ property.interproterm=interpro_description
 property.refseq=refseq_peptide
 property.symbol=external_gene_id
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot
+property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
 

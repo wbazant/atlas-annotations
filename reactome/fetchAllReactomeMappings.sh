@@ -51,16 +51,20 @@ for file in Ensembl2Reactome UniProt2Reactome UniProt2PlantReactome; do
 	    lcOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`	
 	    # First prepare the ${lcOrganism} portion of Uniprot2Reactome
 	    grep -P "\t$lcOrganism\t" aux.$file | awk -F"\t" '{print $1"\t"$3"\t"$4}' | sort -k1,1 | uniq > aux.${lcOrganism}.reactome.tsv
-	    # Now prepare Ensembl's UniProt to Ensembl mapping file - in the right order, ready for joining with the $lcOrganism portion of Ensembl2Reactome
-	    grep -vP '\t$' $ATLAS_PROD/bioentity_properties/ensembl/${lcOrganism}.ensgene.uniprot.tsv | awk -F"\t" '{print $2"\t"$1}' | sort -k1,1 | uniq > aux.${lcOrganism}.ensembl.tsv
-	    if [ -s aux.${lcOrganism}.ensembl.tsv ]; then 
-	        # Join to Ensmebl mapping file, then remove protein accessions before appending the UniProt only-annotated pathways to ${lcOrganism}.reactome.tsv
-		join -t $'\t' -1 1 -2 1 aux.${lcOrganism}.ensembl.tsv aux.${lcOrganism}.reactome.tsv | awk -F"\t" '{print $2"\t"$3"\t"$4}' >> ${lcOrganism}.reactome.tsv
-		# Finally, remove any duplicate rows
-		echo -e "ensgene\tpathwayid\tpathwayname" > ${lcOrganism}.reactome.tsv.tmp
-		sort  -k1,1 -t$'\t' ${lcOrganism}.reactome.tsv | uniq >> ${lcOrganism}.reactome.tsv.tmp
-		mv ${lcOrganism}.reactome.tsv.tmp ${lcOrganism}.reactome.tsv
-	    fi
+	    uniprotMapingFile=$ATLAS_PROD/bioentity_properties/ensembl/${lcOrganism}.ensgene.uniprot.tsv
+	    ls $uniprotMapingFile > /dev/null 2>&1
+	    if [ -s $uniprotMapingFile ]; then
+	       # Now prepare Ensembl's UniProt to Ensembl mapping file - in the right order, ready for joining with the $lcOrganism portion of Ensembl2Reactome
+	       grep -vP '\t$' $uniprotMapingFile | awk -F"\t" '{print $2"\t"$1}' | sort -k1,1 | uniq > aux.${lcOrganism}.ensembl.tsv
+	       if [ -s aux.${lcOrganism}.ensembl.tsv ]; then 
+	           # Join to Ensmebl mapping file, then remove protein accessions before appending the UniProt only-annotated pathways to ${lcOrganism}.reactome.tsv
+		   join -t $'\t' -1 1 -2 1 aux.${lcOrganism}.ensembl.tsv aux.${lcOrganism}.reactome.tsv | awk -F"\t" '{print $2"\t"$3"\t"$4}' >> ${lcOrganism}.reactome.tsv
+		   # Finally, remove any duplicate rows
+		   echo -e "ensgene\tpathwayid\tpathwayname" > ${lcOrganism}.reactome.tsv.tmp
+		   sort  -k1,1 -t$'\t' ${lcOrganism}.reactome.tsv | uniq >> ${lcOrganism}.reactome.tsv.tmp
+		   mv ${lcOrganism}.reactome.tsv.tmp ${lcOrganism}.reactome.tsv
+	       fi
+	    fi 
 	done
     fi
 done

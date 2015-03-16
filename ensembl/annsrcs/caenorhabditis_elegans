@@ -22,6 +22,6 @@ property.interproterm=interpro_description
 property.refseq=refseq_mrna,refseq_ncrna,refseq_peptide
 property.symbol=external_gene_id
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot
+property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
 arrayDesign.A-AFFY-60=affy_c_elegans
 
