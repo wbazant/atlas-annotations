@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=79
+software.version=80
 url=http://www.ensembl.org/biomart/martservice?
 organism=anolis carolinensis
 databaseName=ensembl

@@ -1,5 +1,5 @@
 software.name=plants
-software.version=25
+software.version=27
 url=http://plants.ensembl.org/biomart/martservice?
 organism=triticum aestivum
 databaseName=plants

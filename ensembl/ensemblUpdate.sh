@@ -8,7 +8,7 @@ atlasEnv=`atlas_env`
 getPctComplete() {
     numSubmittedJobs=$1
     decorationType=$2
-    successful=`grep Successfully ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
+    successful=`grep 'Successfully completed' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
     failed=`grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
     if [ -z "$successful" ]; then
 	successful=0
@@ -57,9 +57,9 @@ stagingTomcatAdmin=$8
 
 
 tmp="/nfs/public/rw/homes/fg_atlas/tmp"
-dbPass=`get_dbpass $dbUser`
-dbPass=`get_dbpass $dbUser`
-stagingTomcatAdminPass=`get_dbpass $stagingTomcatAdmin`
+dbPass=`get_pass $dbUser`
+dbPass=`get_pass $dbUser`
+stagingTomcatAdminPass=`get_pass $stagingTomcatAdmin`
 stagingServer=ves-hx-76
 
 # Annotation release will always be either for just Ensembl or just for Ensembl Genomes, but never for both - as the latter always releases some time after the former
@@ -211,7 +211,7 @@ if [ -z "$response" ]; then
     echo "ERROR: Got empty response from http://${stagingServer}:8080/gxa/admin/buildIndex" >&2
     exit 1
 fi 
-echo $response | grep "^STARTED" > /dev/null
+echo $response | grep -P '^STARTED|^PROCESSING' > /dev/null
 if [ $? -ne 0 ]; then
     echo "ERROR: Incorrect response from: http://${stagingServer}:8080/gxa/admin/buildIndex - expected: STARTED; got: '$response'" >&2
     exit 1
@@ -239,7 +239,7 @@ if [ -z "$response" ]; then
 fi 
 echo $response | grep '<int name="status">0</int>' > /dev/null
 if [ $? -ne 0 ]; then
-    echo "ERROR: Incorrect response from: http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true - expected: STARTED; got: '$response'" >&2
+    echo "ERROR: Incorrect response from: http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true - expected: <int name="status">0</int>; got: '$response'" >&2
     exit 1
 else 
     echo "'http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true' has completed successfully"
