@@ -204,16 +204,18 @@ for dir in mirbase reactome go interpro; do
 done
 popd
 
+####################
 echo "Re-build Solr index on the staging Atlas instance"
+urlBase=http://${stagingServer}:8080/gxa/admin/buildIndex
 # First submit Solr build
-response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "http://${stagingServer}:8080/gxa/admin/buildIndex"`
+response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase"`
 if [ -z "$response" ]; then
-    echo "ERROR: Got empty response from http://${stagingServer}:8080/gxa/admin/buildIndex" >&2
+    echo "ERROR: Got empty response from $urlBase" >&2
     exit 1
 fi 
 echo $response | grep -P '^STARTED|^PROCESSING' > /dev/null
 if [ $? -ne 0 ]; then
-    echo "ERROR: Incorrect response from: http://${stagingServer}:8080/gxa/admin/buildIndex - expected: STARTED; got: '$response'" >&2
+    echo "ERROR: Incorrect response from: $urlBase - expected: STARTED; got: '$response'" >&2
     exit 1
 fi 
 # Now keeping checking status every 5 mins until the process is complete; then report success and time taken
@@ -222,13 +224,13 @@ while [ $? -ne 0  ]; do
     # E.g. PROCESSING, total time elapsed: 0 minutes, estimated progress: 1%, estimated minutes to completion: 35, file being processed
     echo $response | awk -F"," '{print $1","$2","$3","$4}'
     sleep 300 
-    response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "http://${stagingServer}:8080/gxa/admin/buildIndex/status"`
+    response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase/status"`
     echo $response | grep '^COMPLETED' > /dev/null
 done
 # Report success and time taken 
 echo $response | awk -F"," '{print $1","$2}'
 
-
+####################
 echo "Rebuild the multi-term autocomplete index"
 # c.f. step 3 on https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?title=Building+the+solr+indices&spaceKey=GXA
 # First submit Solr build
@@ -246,11 +248,17 @@ else
 fi 
 
 # Decorate all experiments
+aux=~/tmp/decorate.$$
+rm -rf $aux
 for decorationType in genenames tracks R cluster gsea; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
     submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
-    echo "About to call: monitor_decorate_lsf_submission $submitted $decorationType"
-    failed=`monitor_decorate_lsf_submission $submitted $decorationType`
+    echo "monitor_decorate_lsf_submission $submitted $decorationType" >> $aux
+done
+for l in $(cat $aux); do
+    echo "About to call: '$l'"
+    decorationType=`echo $l | awk '{print $NF}'`
+    failed=`eval $(echo $l)`
     if [ ! -z "$failed" ]; then
 	echo "ERROR: $failed 'decorate_all_experiments.sh $decorationType' jobs failed"
 	exit 1
@@ -258,3 +266,38 @@ for decorationType in genenames tracks R cluster gsea; do
     echo "Copy all $decorationType decorated files to the staging area"
     ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
 done
+rm -rf $aux
+
+####################
+if [ 1 -eq 0 ]; then  
+# TODO: Switch off the anaytics re-build until java dev team have stabilised the build procedure
+
+echo "Re-build Analytics index on the staging Atlas instance"
+# First submit Analytics index build
+urlBase=http://${stagingServer}:8080/gxa/admin/analyticsIndex/buildIndex
+statusPrefix="Full Analytics index build"
+response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase"`
+if [ -z "$response" ]; then
+    echo "ERROR: Got empty response from $urlBase" >&2
+    exit 1
+fi 
+echo $response | grep "$statusPrefix started" > /dev/null
+if [ $? -ne 0 ]; then
+    echo "ERROR: Incorrect response from: $urlBase - expected: '$statusPrefix started'; got: '$response'" >&2
+    exit 1
+fi 
+# Now keeping checking status every 30 mins until the process is complete; then report success and time taken
+echo $response | tail -1 | "$statusPrefix finished" > /dev/null
+while [ $? -ne 0  ]; do
+    # E.g. PROCESSING, total time elapsed: 0 minutes, estimated progress: 1%, estimated minutes to completion: 35, file being processed
+    numExps=`echo $response | grep 'E-' | wc -l`
+    echo "Indexed $numExps experiments so far..."
+    sleep 1800 
+    response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase/status"`
+    echo $response | tail -1 | grep "$statusPrefix finished" > /dev/null
+done
+# Report $statusPrefix finished time
+echo $response | tail -1
+
+# TODO: end
+fi

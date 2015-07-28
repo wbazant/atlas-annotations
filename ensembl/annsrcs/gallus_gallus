@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=80
+software.version=81
 url=http://www.ensembl.org/biomart/martservice?
 organism=gallus gallus
 databaseName=ensembl
