@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=81
+software.version=82
 url=http://www.ensembl.org/biomart/martservice?
 organism=ciona intestinalis
 databaseName=ensembl
@@ -28,5 +28,4 @@ property.refseq=refseq_mrna,refseq_ncrna,refseq_peptide
 property.symbol=external_gene_name
 property.unigene=unigene
 property.uniprot=uniprot_sptrembl,uniprot_swissprot
-arrayDesign.A-AFFY-106=affy_cint06a520380f
 

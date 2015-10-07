@@ -55,10 +55,8 @@ dbUser=$6
 dbSID=$7
 stagingTomcatAdmin=$8
 
-
-tmp="/nfs/public/rw/homes/fg_atlas/tmp"
 dbPass=`get_pass $dbUser`
-dbPass=`get_pass $dbUser`
+dbConnection=${dbUser}/${dbPass}@${dbSID}
 stagingTomcatAdminPass=`get_pass $stagingTomcatAdmin`
 stagingServer=ves-hx-76
 
@@ -99,7 +97,35 @@ if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_$
 fi
 
 echo "Obtain all the individual mapping files from Ensembl"
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ${tmp}/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+
+echo "Fetching the latest GO mappings..."
+# This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
+${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the latest GO mappings" >&2
+    exit 1
+fi 
+
+echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
+a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
+if [ ! -s $a2cMappingFile ]; then 
+    echo "ERROR: Missing $a2cMappingFile"
+    exit 1
+fi
+for gof in $(ls ensembl/*.go.tsv); do
+    echo "${gof} ... "
+    for l in $(cat $a2cMappingFile); do
+	alternativeID=`echo $l | awk -F"\t" '{print $1}'`
+	canonicalID=`echo $l | awk -F"\t" '{print $2}'`
+	grep "${alternativeID}$" $gof > /dev/null
+	if [ $? -eq 0 ]; then
+	    perl -pi -e "s|${alternativeID}$|${canonicalID}|g" $gof
+	    printf "$alternativeID -> $canonicalID "
+	fi
+    done
+    echo "${gof} done "
+done
 
 echo "Merge all individual property files into matrices"
 for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
@@ -182,7 +208,7 @@ fi
 echo "Load bioentityOrganism.dat, organismEnsemblDB.dat, bioentityName.dat and designelementMapping.dat into staging Oracle schema"
 for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping; do
     rm -rf ${f}.log; rm -rf ${f}.bad
-    sqlldr ${dbUser}/${dbPass}@${dbSID} control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
+    sqlldr $dbConnection control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
     if [ -s "${f}.bad" ]; then
 	echo "ERROR: Failed to load ${f} into ${dbUser}@${dbSID}"
 	exit 1
@@ -247,12 +273,21 @@ else
     echo "'http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true' has completed successfully"
 fi 
 
+# Get mapping between Atlas experiments and Ensembl DBs that own their species
+exp2ensdb=~/tmp/experiment_to_ensembldb.$$
+get_experimentToEnsemblDB $dbConnection > ${exp2ensdb}.aux
+if [ $RELEASE_TYPE == "ensembl" ]; then
+    grep "${RELEASE_TYPE}$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
+else
+    grep -v "${RELEASE_TYPE}$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
+fi 
+
 # Decorate all experiments
 aux=~/tmp/decorate.$$
 rm -rf $aux
 for decorationType in genenames tracks R cluster gsea; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
-    submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
+    submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType ${exp2ensdb}.tsv`
     echo "monitor_decorate_lsf_submission $submitted $decorationType" >> $aux
 done
 for l in $(cat $aux); do
@@ -267,6 +302,7 @@ for l in $(cat $aux); do
     ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
 done
 rm -rf $aux
+rm -rf ${exp2ensdb}.*
 
 ####################
 if [ 1 -eq 0 ]; then  
@@ -274,7 +310,7 @@ if [ 1 -eq 0 ]; then
 
 echo "Re-build Analytics index on the staging Atlas instance"
 # First submit Analytics index build
-urlBase=http://${stagingServer}:8080/gxa/admin/analyticsIndex/buildIndex
+urlBase=http://${stagingServer}:8080/gxa/admin/analyticsIndex/buildIndex?threads=8&batchSize=2048&timeout=48
 statusPrefix="Full Analytics index build"
 response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase"`
 if [ -z "$response" ]; then

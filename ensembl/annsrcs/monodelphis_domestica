@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=81
+software.version=82
 url=http://www.ensembl.org/biomart/martservice?
 organism=monodelphis domestica
 databaseName=ensembl
