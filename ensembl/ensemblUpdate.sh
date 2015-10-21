@@ -277,9 +277,9 @@ fi
 exp2ensdb=~/tmp/experiment_to_ensembldb.$$
 get_experimentToEnsemblDB $dbConnection > ${exp2ensdb}.aux
 if [ $RELEASE_TYPE == "ensembl" ]; then
-    grep "${RELEASE_TYPE}$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
+    grep "ensembl$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
 else
-    grep -v "${RELEASE_TYPE}$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
+    grep -v "ensembl$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
 fi 
 
 # Decorate all experiments
