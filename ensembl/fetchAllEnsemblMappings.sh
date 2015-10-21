@@ -56,14 +56,19 @@ for organism in $(ls ${annSrcsDir}/); do
 	     rm -f $outFile
              for ensemblProperty in $ensemblProperties; do
                 echo "[INFO] Fetching $organism :: $atlasBioentityType : $ensemblBioentityType : $atlasProperty : $ensemblProperty"
-		fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblProperty $chromosomeName >> $outFile
+		        fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblProperty $chromosomeName >> $outFile
              done
 	     # Some files may contain empty lines (e.g. homo_sapiens.ensgene.disease.tsv) - these empty lines need to be removed, otherwise the merged
 	     # file - the output  of mergePropertiesIntoMatrix.pl - will contain empty lines too - which could be a problem for gene properties Solr index 
 	     # building that consumes it.
 	     grep -v '^$' $outFile > $outFile.tmp
 	     mv $outFile.tmp $outFile
-	     # This is for human disease property - the file in Ensembl 78 seems to contain lots of rows that don't start with gene identifier (this didn't happen
+         
+         # Sort the file so that it doesn't cause problems during processing.
+         sort -k 1,1 $outFile > ${outFile}.sorted
+         mv ${outFile}.sorted $outFile
+	     
+         # This is for human disease property - the file in Ensembl 78 seems to contain lots of rows that don't start with gene identifier (this didn't happen
 	     # in Ensembl 77). This may be a bug on their side, but whatever it is, we keep only rows with gene identifiers in the first column.
 	     if [ "$organism" == "homo_sapiens" ]; then
 		 if [ "$atlasProperty" == "disease" ]; then
