@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=82
+software.version=83
 url=http://www.ensembl.org/biomart/martservice?
 organism=xenopus tropicalis
 databaseName=ensembl

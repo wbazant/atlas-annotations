@@ -113,7 +113,7 @@ if [ ! -s $a2cMappingFile ]; then
     echo "ERROR: Missing $a2cMappingFile"
     exit 1
 fi
-for gof in $(ls ensembl/*.go.tsv); do
+for gof in $(ls *.go.tsv); do
     echo "${gof} ... "
     for l in $(cat $a2cMappingFile); do
 	alternativeID=`echo $l | awk -F"\t" '{print $1}'`
@@ -215,6 +215,12 @@ for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping;
     fi
 done
 
+# Update the organism_kingdom table.
+echo "Updating the organism_kingdom table..."
+echo "delete from organism_kingdom;" | sqlplus -s $dbConnection
+echo "insert into organism_kingdom (organismid, kingdom ) select organismid as organismid, case when ensembldb = 'ensembl' then 'animals' else case when ensembldb = 'metazoa' then 'animals' else ensembldb end end as kingdom from organism_ensembldb;" | sqlplus -s $dbConnection
+
+
 echo "Fetching the latest Reactome mappings..."
 # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
 # gene ids - we need to use the mapping files we've just retrieved from Ensembl
@@ -299,7 +305,7 @@ for l in $(cat $aux); do
 	exit 1
     fi 
     echo "Copy all $decorationType decorated files to the staging area"
-    ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
+    ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType ${exp2ensdb}.tsv copyonly
 done
 rm -rf $aux
 rm -rf ${exp2ensdb}.*
