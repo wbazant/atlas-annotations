@@ -11,10 +11,10 @@ getPctComplete() {
     successful=`grep 'Successfully completed' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
     failed=`grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
     if [ -z "$successful" ]; then
-	successful=0
+        successful=0
     fi
     if [ -z "$failed" ]; then
-	failed=0
+        failed=0
     fi
     done=$[$successful+$failed]
     pctComplete=`echo "scale=0; $(($done*100/$numSubmittedJobs))" | bc`
@@ -26,8 +26,8 @@ monitor_decorate_lsf_submission() {
     decorationType=$2
     pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
     while [ "$pctComplete" -lt "100" ]; do
-	sleep 60
-	pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
+        sleep 60
+        pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
     done 
     # Return number of failed jobs
     echo `grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out`
@@ -293,6 +293,11 @@ aux=~/tmp/decorate.$$
 rm -rf $aux
 for decorationType in genenames tracks R cluster gsea; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
+
+    # Delete all LSF log files from previous run (if any).
+    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out
+    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.err
+
     submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType ${exp2ensdb}.tsv`
     echo "monitor_decorate_lsf_submission $submitted $decorationType" >> $aux
 done
@@ -301,8 +306,8 @@ for l in $(cat $aux); do
     decorationType=`echo $l | awk '{print $NF}'`
     failed=`eval $(echo $l)`
     if [ ! -z "$failed" ]; then
-	echo "ERROR: $failed 'decorate_all_experiments.sh $decorationType' jobs failed"
-	exit 1
+        echo "ERROR: $failed 'decorate_all_experiments.sh $decorationType' jobs failed"
+        exit 1
     fi 
     echo "Copy all $decorationType decorated files to the staging area"
     ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType ${exp2ensdb}.tsv copyonly
@@ -310,6 +315,12 @@ done
 rm -rf $aux
 rm -rf ${exp2ensdb}.*
 
+# Tidy up LSF log files.
+for decorationType in genenames tracks R cluster gsea; do 
+    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out
+    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.err
+done
+    
 ####################
 if [ 1 -eq 0 ]; then  
 # TODO: Switch off the anaytics re-build until java dev team have stabilised the build procedure
