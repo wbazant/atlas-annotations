@@ -1,5 +1,5 @@
 software.name=metazoa
-software.version=29
+software.version=30
 url=http://metazoa.ensembl.org/biomart/martservice?
 organism=caenorhabditis elegans
 databaseName=metazoa

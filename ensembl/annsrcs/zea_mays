@@ -1,5 +1,5 @@
 software.name=plants
-software.version=29
+software.version=30
 url=http://plants.ensembl.org/biomart/martservice?
 organism=zea mays
 databaseName=plants
