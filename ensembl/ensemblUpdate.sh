@@ -90,42 +90,44 @@ popd
 
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 
-echo "Archive the previous Ensembl Data - if not done already"
-if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
-    mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-    mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
-fi
-
-echo "Obtain all the individual mapping files from Ensembl"
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
-
-echo "Fetching the latest GO mappings..."
-# This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the latest GO mappings" >&2
-    exit 1
-fi 
-
-echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
-a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
-if [ ! -s $a2cMappingFile ]; then 
-    echo "ERROR: Missing $a2cMappingFile"
-    exit 1
-fi
-for gof in $(ls *.go.tsv); do
-    echo "${gof} ... "
-    for l in $(cat $a2cMappingFile); do
-	alternativeID=`echo $l | awk -F"\t" '{print $1}'`
-	canonicalID=`echo $l | awk -F"\t" '{print $2}'`
-	grep "${alternativeID}$" $gof > /dev/null
-	if [ $? -eq 0 ]; then
-	    perl -pi -e "s|${alternativeID}$|${canonicalID}|g" $gof
-	    printf "$alternativeID -> $canonicalID "
-	fi
-    done
-    echo "${gof} done "
-done
+#--------------------------------------------------
+# echo "Archive the previous Ensembl Data - if not done already"
+# if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
+#     mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
+#     mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
+# fi
+# 
+# echo "Obtain all the individual mapping files from Ensembl"
+# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+# 
+# echo "Fetching the latest GO mappings..."
+# # This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
+# ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
+# if [ $? -ne 0 ]; then
+#     echo "ERROR: Failed to get the latest GO mappings" >&2
+#     exit 1
+# fi 
+# 
+# echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
+# a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
+# if [ ! -s $a2cMappingFile ]; then 
+#     echo "ERROR: Missing $a2cMappingFile"
+#     exit 1
+# fi
+# for gof in $(ls *.go.tsv); do
+#     echo "${gof} ... "
+#     for l in $(cat $a2cMappingFile); do
+# 	alternativeID=`echo $l | awk -F"\t" '{print $1}'`
+# 	canonicalID=`echo $l | awk -F"\t" '{print $2}'`
+# 	grep "${alternativeID}$" $gof > /dev/null
+# 	if [ $? -eq 0 ]; then
+# 	    perl -pi -e "s|${alternativeID}$|${canonicalID}|g" $gof
+# 	    printf "$alternativeID -> $canonicalID "
+# 	fi
+#     done
+#     echo "${gof} done "
+# done
+#-------------------------------------------------- 
 
 echo "Merge all individual property files into matrices"
 for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
@@ -134,13 +136,17 @@ for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
    done 
 done 
 
-echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
-for dir in ensembl mirbase reactome go interpro; do
-   rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
-done
+#--------------------------------------------------
+# echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
+# for dir in ensembl mirbase reactome go interpro; do
+#    rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
+# done
+#-------------------------------------------------- 
 
-echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
-cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
+#--------------------------------------------------
+# echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
+# cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
+#-------------------------------------------------- 
 
 echo "Copy all matrices to the public Ensembl data directory"
 for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
@@ -216,25 +222,27 @@ for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping;
 done
 
 # Update the organism_kingdom table.
-echo "Updating the organism_kingdom table..."
-echo "delete from organism_kingdom;" | sqlplus -s $dbConnection
-echo "insert into organism_kingdom (organismid, kingdom ) select organismid as organismid, case when ensembldb = 'ensembl' then 'animals' else case when ensembldb = 'metazoa' then 'animals' else ensembldb end end as kingdom from organism_ensembldb;" | sqlplus -s $dbConnection
-
-
-echo "Fetching the latest Reactome mappings..."
-# This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
-# gene ids - we need to use the mapping files we've just retrieved from Ensembl
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the latest Reactome mappings" >&2
-    exit 1
-fi 
-
-echo "Copy all files to the other public data directories"
-for dir in mirbase reactome go interpro; do
-       cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
-done
-popd
+#--------------------------------------------------
+# echo "Updating the organism_kingdom table..."
+# echo "delete from organism_kingdom;" | sqlplus -s $dbConnection
+# echo "insert into organism_kingdom (organismid, kingdom ) select organismid as organismid, case when ensembldb = 'ensembl' then 'animals' else case when ensembldb = 'metazoa' then 'animals' else ensembldb end end as kingdom from organism_ensembldb;" | sqlplus -s $dbConnection
+# 
+# 
+# echo "Fetching the latest Reactome mappings..."
+# # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
+# # gene ids - we need to use the mapping files we've just retrieved from Ensembl
+# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
+# if [ $? -ne 0 ]; then
+#     echo "ERROR: Failed to get the latest Reactome mappings" >&2
+#     exit 1
+# fi 
+# 
+# echo "Copy all files to the other public data directories"
+# for dir in mirbase reactome go interpro; do
+#        cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
+# done
+# popd
+#-------------------------------------------------- 
 
 ####################
 echo "Re-build Solr index on the staging Atlas instance"
