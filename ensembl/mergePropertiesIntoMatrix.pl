@@ -52,6 +52,7 @@ use strict ;
 use warnings ;
 no warnings 'uninitialized';
 use Getopt::Long qw(:config no_ignore_case);
+use File::Spec;
 
 ## Initialise global $, @ and %
 my ($help, $indir, $outdir, $species, $bioentity) ; #arguments
@@ -72,22 +73,23 @@ my @A_propertyList ;
 
 ## Get arguments
 ################
-GetOptions( 'help|Help|h|H' => \$help,
-	    'indir=s'   => \$indir,
-            'species=s' => \$species,
-	    'bioentity=s' => \$bioentity,
-            'outdir=s'  => \$outdir,
-          ) ;
+GetOptions( 
+    'help|Help|h|H' => \$help,
+	'indir=s'   => \$indir,
+    'species=s' => \$species,
+	'bioentity=s' => \$bioentity,
+    'outdir=s'  => \$outdir,
+);
 
-my $commandLine = join(' ',@ARGV) ; 
+my $commandLine = join(' ',@ARGV); 
 
 #Test arguments
 if (!$indir || !$outdir) { print "[WARNING] Missing input (-indir) or output (-outdir) directories\n" ; $help  = 1 ; }
 if (!$bioentity || !$species) { print "[WARNING] Missing species (-species) or bioentity (-bioentity)\n" ; $help  = 1 ; }
-if ($help) { usage($commandLine) ; die ; }
+if ($help) { usage($commandLine); die; }
 
 #Output file
-my $outfile = "$species.$bioentity.tsv" ;   
+my $outfile = "$species.$bioentity.tsv";   
 
 ## Main program
 ###############
@@ -132,13 +134,13 @@ for my $file (@A_fileList) {
 
 
 ## 3. Print the matrix
-open (FOUT, ">$outdir/$outfile") || die ("Can't open output file $outfile\n") ;
+open (FOUT, ">:encoding(UTF-8)", File::Spec->catfile( $outdir, $outfile ) ) || die ("Can't open output file $outfile\n") ;
 
 ## Print the header
 print FOUT "$bioentity\t" ;
-for my $title (@A_propertyList) {
-	print FOUT "$title\t" ;
-} print FOUT "\n" ;
+my $title = join "\t", @A_propertyList;
+print FOUT $title ;
+print FOUT "\n" ;
 
 ## Print the data
 #	bioentity	property-A 	property-B	property-C ...

@@ -23,9 +23,9 @@ for organism in $(ls ${annSrcsDir}/); do
     # ${annSrcsDir}/$organism and the associated registry settings
     # Process only $selectedOrganism if it was specified
     if [ ! -z "$selectedOrganism" ]; then 
-	if [ "$organism" != "$selectedOrganism" ]; then
-	    continue
-	fi
+        if [ "$organism" != "$selectedOrganism" ]; then
+            continue
+        fi
     fi
     url=`grep '^url=' ${annSrcsDir}/$organism | awk -F"=" '{print $NF}' | tr -d "?"`
     datasetName=`grep '^datasetName=' ${annSrcsDir}/$organism | awk -F"=" '{print $NF}'`
@@ -51,39 +51,39 @@ for organism in $(ls ${annSrcsDir}/); do
           # Omit each property in $atlasBioentityTypes - retrieve just the non-bioentity type properties (e.g. for $atlasBioentityType = 'ensgene',
           # the gene identifier is the first column in the file - there's no point including that same gene identifier as a property in the subsequent column 
           if [[ $atlasBioentityType != *${atlasProperty}* ]]; then 
-	     ensemblProperties=`grep "^property.${atlasProperty}=" ${annSrcsDir}/$organism | awk -F"=" '{print $NF}' | tr "," "\n"`
-	     outFile="${outputDir}/${organism}.${atlasBioentityType}.${atlasProperty}.tsv"
-	     rm -f $outFile
-             for ensemblProperty in $ensemblProperties; do
-                echo "[INFO] Fetching $organism :: $atlasBioentityType : $ensemblBioentityType : $atlasProperty : $ensemblProperty"
-		        fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblProperty $chromosomeName >> $outFile
-             done
-	     # Some files may contain empty lines (e.g. homo_sapiens.ensgene.disease.tsv) - these empty lines need to be removed, otherwise the merged
-	     # file - the output  of mergePropertiesIntoMatrix.pl - will contain empty lines too - which could be a problem for gene properties Solr index 
-	     # building that consumes it.
-	     grep -v '^$' $outFile > $outFile.tmp
-	     mv $outFile.tmp $outFile
-         
-         # Sort the file so that it doesn't cause problems during processing.
-         sort -k 1,1 $outFile > ${outFile}.sorted
-         mv ${outFile}.sorted $outFile
-	     
-         # This is for human disease property - the file in Ensembl 78 seems to contain lots of rows that don't start with gene identifier (this didn't happen
-	     # in Ensembl 77). This may be a bug on their side, but whatever it is, we keep only rows with gene identifiers in the first column.
-	     if [ "$organism" == "homo_sapiens" ]; then
-		 if [ "$atlasProperty" == "disease" ]; then
-		    grep '^ENS' $outFile > $outFile.tmp
-		    mv $outFile.tmp $outFile
-		 fi
-	     fi
+             ensemblProperties=`grep "^property.${atlasProperty}=" ${annSrcsDir}/$organism | awk -F"=" '{print $NF}' | tr "," "\n"`
+             outFile="${outputDir}/${organism}.${atlasBioentityType}.${atlasProperty}.tsv"
+             rm -f $outFile
+                 for ensemblProperty in $ensemblProperties; do
+                    echo "[INFO] Fetching $organism :: $atlasBioentityType : $ensemblBioentityType : $atlasProperty : $ensemblProperty"
+                    fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblProperty $chromosomeName >> $outFile
+                 done
+             # Some files may contain empty lines (e.g. homo_sapiens.ensgene.disease.tsv) - these empty lines need to be removed, otherwise the merged
+             # file - the output  of mergePropertiesIntoMatrix.pl - will contain empty lines too - which could be a problem for gene properties Solr index 
+             # building that consumes it.
+             grep -v '^$' $outFile > $outFile.tmp
+             mv $outFile.tmp $outFile
+             
+             # Sort the file so that it doesn't cause problems during processing.
+             sort -k 1,1 $outFile > ${outFile}.sorted
+             mv ${outFile}.sorted $outFile
+             
+             # This is for human disease property - the file in Ensembl 78 seems to contain lots of rows that don't start with gene identifier (this didn't happen
+             # in Ensembl 77). This may be a bug on their side, but whatever it is, we keep only rows with gene identifiers in the first column.
+             if [ "$organism" == "homo_sapiens" ]; then
+                 if [ "$atlasProperty" == "disease" ]; then
+                    grep '^ENS' $outFile > $outFile.tmp
+                    mv $outFile.tmp $outFile
+                 fi
+             fi
           fi
        done
 
        # If $atlasBioentityType = gene, also retrieve synonyms (via mysql) as the last column
        if [[ "$atlasBioentityType" == "ensgene" ]]; then 
-	   atlasProperty="synonym"
+           atlasProperty="synonym"
            echo "[INFO] Fetching $organism :: $atlasBioentityType : $ensemblBioentityType : synonym"
-	   fetchGeneSynonyms $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion > ${outputDir}/${organism}.${atlasBioentityType}.${atlasProperty}.tsv
+           fetchGeneSynonyms $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion > ${outputDir}/${organism}.${atlasBioentityType}.${atlasProperty}.tsv
        fi       
     done
 
@@ -98,6 +98,7 @@ for organism in $(ls ${annSrcsDir}/); do
        # Note removing of lines with trailing tab (i.e. with bioentity and no corresponding design element)
        fetchProperties $url $serverVirtualSchema $datasetName $ensemblBioentityType $ensemblArrayDesign $chromosomeName | sed '/\t$/d' >> ${outputDir}/${organism}.${atlasArrayDesign}.tsv
     done
+
 done
 # Remove auxiliary Ensembl registry files
 rm -rf ~/tmp/*.registry.$$
