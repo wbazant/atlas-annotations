@@ -334,8 +334,8 @@ fi
 # Decorate all experiments
 aux=~/tmp/decorate.$$
 rm -rf $aux
-#for decorationType in genenames tracks R cluster gsea; do 
-for decorationType in R cluster gsea; do 
+#for decorationType in genenames tracks R cluster gsea coexpression; do 
+for decorationType in coexpression; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
 
     # Delete all LSF log files from previous run (if any).
@@ -360,7 +360,7 @@ rm -rf $aux
 rm -rf ${exp2ensdb}.*
 
 # Tidy up LSF log files.
-for decorationType in genenames tracks R cluster gsea; do 
+for decorationType in genenames tracks R cluster gsea coexpression; do 
     rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out
     rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.err
 done
