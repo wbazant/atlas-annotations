@@ -16,7 +16,7 @@ fi
 
 IFS="
 "
-adFile="/nfs/ma/home/atlas3-production/arraydesigns/microRNA/$arrayDesign/$arrayDesign.tsv"
+adFile="${ATLAS_PROD}/arraydesigns/microRNA/$arrayDesign/$arrayDesign.tsv"
 for l in $(tail -n +2 $adFile); do
     prefix=`echo $l | awk -F"-" '{print $1}'`
     organism=`grep "^$prefix" ${outputDir}/idprefix_to_organism.txt | awk -F"\t" '{print $NF}'`

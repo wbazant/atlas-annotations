@@ -1,6 +1,6 @@
 #!/bin/bash
 # A script to increment release numbers in annotation source config files for ensembl and ensemblgenoms to $ENSEMBL_RELNUM and $ENSEMBLGENOMES_RELNUM respectively
-# After the script is run, the annotation source config files need to be commited and pushed to git, so that they are propagated to /nfs/ma/home/atlas3-production/sw/atlasinstall_<env>/atlasprod
+# After the script is run, the annotation source config files need to be commited and pushed to git, so that they are propagated to ${ATLAS_PROD}/sw/atlasinstall_<env>/atlasprod
 # Author: rpetry@ebi.ac.uk
 
 

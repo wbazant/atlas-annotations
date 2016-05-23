@@ -48,7 +48,7 @@ use Log::Log4perl::Level;
 use DateTime;
 use Math::Round;
 
-use Atlas::Common qw( get_atlas_site_config );
+use Atlas::Common qw( create_atlas_site_config );
 use Bio::MAGETAB::Util::Reader::ADF;
 
 # Auto flush buffer.
@@ -84,7 +84,7 @@ my $mirbaseAliases = &make_mirbase_aliases( $args->{ "mirbase_aliases_file" } );
 $logger->info( "Successfully read miRBase aliases." );
 
 # Get site config with relevant variables.
-my $atlasSiteConfig = get_atlas_site_config;
+my $atlasSiteConfig = create_atlas_site_config;
 
 # Array of miRNA array design accessions.
 my $arrayDesignAccessions = $atlasSiteConfig->get_mirna_array_design_accessions

@@ -63,6 +63,20 @@ for organism in $(ls ${annSrcsDir}/); do
              # building that consumes it.
              grep -v '^$' $outFile > $outFile.tmp
              mv $outFile.tmp $outFile
+
+             # Some files may contain non-ascii characters. The example we
+             # noticed recently was: 
+             # "ENSDARG00000070755    r-chr21-CX3CR1�40.7%-EK41814" 
+             # in danio_rerio.ensgene.synonym.tsv. Remove any lines like this
+             # as they trip up the index build.
+             nonAsciiLines=`pcregrep -n "[\x80-\xFF]" $outFile 2> /dev/null`
+             if [ ! -z "$nonAsciiLines" ]; then
+                 echo "[WARN] Non-ascii characters found in $outFile:"
+                 echo "$nonAsciiLines"
+                 echo "[WARN] Removing line(s) with non-ascii characters"
+                 perl -nle 'print if m{^[[:ascii:]]+$}' $outFile > $outFile.asciionly
+                 mv ${outFile}.asciionly $outFile
+             fi
              
              # Sort the file so that it doesn't cause problems during processing.
              sort -k 1,1 $outFile > ${outFile}.sorted

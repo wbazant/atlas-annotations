@@ -42,7 +42,7 @@ fi
 
 if [ $# -lt 8 ]; then
   echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL RELEASE_TYPE dbUser dbSID stagingTomcatAdmin"
-  echo "e.g. $0 75 21 75 22 ensemblgenomes atlasprd3 ATLASREL"
+  echo "e.g. $0 75 21 75 22 ensemblgenomes atlasprd3 ATLASPRO"
   exit 1
 fi 
 
@@ -79,248 +79,226 @@ elif [ "$RELEASE_TYPE" == "ensemblgenomes" ]; then
     fi
 fi 
 
-#--------------------------------------------------
-# echo "Validate all Ensembl annotation sources against the release specified in them"
-# pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl
-# ./validateAnnSrcs.sh annsrcs
-# if [ $? -ne 0 ]; then
-#     echo "ERROR: Validation of annotation sources failed - please check notes on validation source failures on http://bar.ebi.ac.uk:8080/trac/wiki/BioentityAnnotationUpdates; fix and re-run"
-#     exit 1
-# fi
-# popd
-# 
-# pushd ${ATLAS_PROD}/bioentity_properties/ensembl
-# 
-# echo "Archive the previous Ensembl Data - if not done already"
-# if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
-#     mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-#     mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
-# else
-#     echo "Not archiving as this has already been done."
-# fi
-# 
-# echo "Obtain all the individual mapping files from Ensembl"
-# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
-# 
-# echo "Fetching the latest GO mappings..."
-# # This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
-# ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
-# if [ $? -ne 0 ]; then
-#     echo "ERROR: Failed to get the latest GO mappings" >&2
-#     exit 1
-# fi 
-# 
-# echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
-# a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
-# if [ ! -s $a2cMappingFile ]; then 
-#     echo "ERROR: Missing $a2cMappingFile"
-#     exit 1
-# fi
-# for gof in $(ls *.go.tsv); do
-#     echo "${gof} ... "
-#     for l in $(cat $a2cMappingFile); do
-# 	alternativeID=`echo $l | awk -F"\t" '{print $1}'`
-# 	canonicalID=`echo $l | awk -F"\t" '{print $2}'`
-# 	grep "${alternativeID}$" $gof > /dev/null
-# 	if [ $? -eq 0 ]; then
-# 	    perl -pi -e "s|${alternativeID}$|${canonicalID}|g" $gof
-# 	    printf "$alternativeID -> $canonicalID "
-# 	fi
-#     done
-#     echo "${gof} done "
-# done
-# 
-# echo "Merge all individual property files into matrices"
-# for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
-#    for bioentity in ensgene enstranscript ensprotein; do 
-#       ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
-#    done 
-# done 
-# 
-# 
-# # Compare the line counts of the new files against those in the previous
-# # versions downloaded.
-# echo "Checking all mapping files against archive ..."
-# 
-# # Create the path to the directory containing the mapping files we just archived above.
-# previousArchive=${ATLAS_PROD}/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-# 
-# # Go through the newly downloaded mapping files.
-# for mappingFile in $( ls *.tsv ); do
-# 
-#     # Count the number of lines in the new file.
-#     newFileNumLines=`cat $mappingFile | wc -l`
-# 
-#     # Cound the number of lines in the archived version of the same file.
-#     if [ -s ${previousArchive}/$mappingFile ]; then
-#         oldFileNumLines=`cat ${previousArchive}/$mappingFile | wc -l`
-# 
-#         # Warn to STDOUT and STDERR if the number of lines in the new file is
-#         # significantly lower than the number of lines in the old file.
-#         if [ $newFileNumLines -lt $oldFileNumLines ]; then
-# 
-#             # Calculate the difference between the numbers of lines.
-#             difference=`expr $oldFileNumLines - $newFileNumLines`
-# 
-#             # Only warn if the difference is greater than 2000 genes.
-#             # tee is used to send the message to STDOUT as well.
-#             if [ $difference -gt 2000 ]; then
-#                 echo "WARNING - new version of $mappingFile has $newFileNumLines lines, old version has $oldFileNumLines lines!" | tee /dev/stderr
-#             fi
-#         fi
-#     fi
-# done
-# 
-# echo "Finished checking mapping files against archive."
-# 
-# 
-# echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
-# for dir in ensembl mirbase reactome go interpro; do
-#    rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
-# done
-# 
-# echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
-# cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
-# 
-# echo "Copy all matrices to the public Ensembl data directory"
-# for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
-#     for bioentity in ensgene enstranscript ensprotein; do
-#     	cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
-#     done 
-# done
-# 
-# popd
-# 
-#-------------------------------------------------- 
-#--------------------------------------------------
-# echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat sqlloader file for loading into the staging DB instance"
-# 
-# pushd ${ATLAS_PROD}/bioentity_properties
-# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
-# # Apply sanity test
-# size=`wc -l bioentityOrganism.dat | awk '{print $1}'`
-# if [ "$size" -lt 200 ]; then
-#     echo "ERROR: Something went wrong with populating bioentityOrganism.dat file - should have more than 200 rows"
-#     exit 1
-# fi 
-# 
-# echo "Generate ${ATLAS_PROD}/bioentity_properties/organismEnsemblDB.dat sqlloader file for loading into the staging DB instance"
-# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_organismEnsemblDB_forloading.sh ${ATLAS_PROD}/bioentity_properties
-# # Apply sanity test
-# size=`wc -l organismEnsemblDB.dat | awk '{print $1}'`
-# if [ "$size" -lt 30 ]; then
-#     echo "ERROR: Something went wrong with populating organismEnsemblDB.dat file - should have more than 30 rows"
-#     exit 1
-# fi 
-# popd
-# 
-# echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityName.dat sqlloader file for loading into the staging DB instance"
-# echo "... Generate miRBase component"
-# pushd ${ATLAS_PROD}/bioentity_properties/mirbase
-# rm -rf miRNAName.dat
-# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/mirbase/prepare_mirbasenames_forloading.sh
-# popd
-# echo "... Generate Ensembl component"
-# pushd ${ATLAS_PROD}/bioentity_properties/ensembl
-# rm -rf geneName.dat
-# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
-# popd
-# 
-# pushd ${ATLAS_PROD}/bioentity_properties
-# echo "Merge miRNAName.dat and geneName.dat into bioentityName.dat"
-# cp ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
-# cat ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
-# # Apply sanity test
-# size=`wc -l bioentityName.dat | awk '{print $1}'`
-# if [ "$size" -lt 1000000 ]; then
-#     echo "ERROR: Something went wrong with populating bioentityName.dat file - should have more than 800k rows"
-#     exit 1
-# fi 
-# 
-# echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat sqlloader file for loading into the staging DB instance"
-# rm -rf designelementMapping.dat
-# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
-# # Apply sanity test
-# size=`wc -l designelementMapping.dat | awk '{print $1}'`
-# if [ "$size" -lt 2000000 ]; then
-#     echo "ERROR: Something went wrong with populating designelementMapping.dat file - should have more than 2mln rows"
-#     exit 1
-# fi 
-# 
-# echo "Load bioentityOrganism.dat, organismEnsemblDB.dat, bioentityName.dat and designelementMapping.dat into staging Oracle schema"
-# for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping; do
-#     rm -rf ${f}.log; rm -rf ${f}.bad
-#     sqlldr $dbConnection control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
-#     if [ -s "${f}.bad" ]; then
-# 	echo "ERROR: Failed to load ${f} into ${dbUser}@${dbSID}"
-# 	exit 1
-#     fi
-# done
-# 
-# # Update the organism_kingdom table.
-# echo "Updating the organism_kingdom table..."
-# echo "delete from organism_kingdom;" | sqlplus -s $dbConnection
-# echo "insert into organism_kingdom (organismid, kingdom ) select organismid as organismid, case when ensembldb = 'ensembl' then 'animals' else case when ensembldb = 'metazoa' then 'animals' else ensembldb end end as kingdom from organism_ensembldb;" | sqlplus -s $dbConnection
-# 
-# 
-# echo "Fetching the latest Reactome mappings..."
-# # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
-# # gene ids - we need to use the mapping files we've just retrieved from Ensembl
-# ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
-# if [ $? -ne 0 ]; then
-#     echo "ERROR: Failed to get the latest Reactome mappings" >&2
-#     exit 1
-# fi 
-# 
-# echo "Copy all files to the other public data directories"
-# for dir in mirbase reactome go interpro; do
-#        cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
-# done
-# popd
-# 
-# ####################
-# echo "Re-build Solr index on the staging Atlas instance"
-# urlBase=http://${stagingServer}:8080/gxa/admin/buildIndex
-# # First submit Solr build
-# response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase"`
-# if [ -z "$response" ]; then
-#     echo "ERROR: Got empty response from $urlBase" >&2
-#     exit 1
-# fi 
-# echo $response | grep -P '^STARTED|^PROCESSING' > /dev/null
-# if [ $? -ne 0 ]; then
-#     echo "ERROR: Incorrect response from: $urlBase - expected: STARTED; got: '$response'" >&2
-#     exit 1
-# fi 
-# # Now keeping checking status every 5 mins until the process is complete; then report success and time taken
-# echo $response | grep '^COMPLETED' > /dev/null
-# while [ $? -ne 0  ]; do
-#     # E.g. PROCESSING, total time elapsed: 0 minutes, estimated progress: 1%, estimated minutes to completion: 35, file being processed
-#     echo $response | awk -F"," '{print $1","$2","$3","$4}'
-#     sleep 300 
-#     response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase/status"`
-#     echo $response | grep '^COMPLETED' > /dev/null
-# done
-# # Report success and time taken 
-# echo $response | awk -F"," '{print $1","$2}'
-# 
-# ####################
-# echo "Rebuild the multi-term autocomplete index"
-# # c.f. step 3 on https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?title=Building+the+solr+indices&spaceKey=GXA
-# # First submit Solr build
-# response=`curl -s "http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true"`
-# if [ -z "$response" ]; then
-#     echo "ERROR: Got empty response from http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true" >&2
-#     exit 1
-# fi 
-# echo $response | grep '<int name="status">0</int>' > /dev/null
-# if [ $? -ne 0 ]; then
-#     echo "ERROR: Incorrect response from: http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true - expected: <int name="status">0</int>; got: '$response'" >&2
-#     exit 1
-# else 
-#     echo "'http://${stagingServer}:8983/solr/gxa/suggest_properties?spellcheck.build=true' has completed successfully"
-# fi 
-#-------------------------------------------------- 
+echo "Validate all Ensembl annotation sources against the release specified in them"
+pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl
+./validateAnnSrcs.sh annsrcs
+if [ $? -ne 0 ]; then
+    echo "ERROR: Validation of annotation sources failed - please check notes on validation source failures on http://bar.ebi.ac.uk:8080/trac/wiki/BioentityAnnotationUpdates; fix and re-run"
+    exit 1
+fi
+popd
+
+pushd ${ATLAS_PROD}/bioentity_properties/ensembl
+
+echo "Archive the previous Ensembl Data - if not done already"
+if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
+    mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
+    mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
+else
+    echo "Not archiving as this has already been done."
+fi
+
+echo "Obtain all the individual mapping files from Ensembl"
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+
+echo "Fetching the latest GO mappings..."
+# This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
+${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the latest GO mappings" >&2
+    exit 1
+fi 
+
+echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
+a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
+if [ ! -s $a2cMappingFile ]; then 
+    echo "ERROR: Missing $a2cMappingFile"
+    exit 1
+fi
+for gof in $(ls *.go.tsv); do
+    echo "${gof} ... "
+    for l in $(cat $a2cMappingFile); do
+	alternativeID=`echo $l | awk -F"\t" '{print $1}'`
+	canonicalID=`echo $l | awk -F"\t" '{print $2}'`
+	grep "${alternativeID}$" $gof > /dev/null
+	if [ $? -eq 0 ]; then
+	    perl -pi -e "s|${alternativeID}$|${canonicalID}|g" $gof
+	    printf "$alternativeID -> $canonicalID "
+	fi
+    done
+    echo "${gof} done "
+done
+
+echo "Merge all individual property files into matrices"
+for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
+   for bioentity in ensgene enstranscript ensprotein; do 
+      ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
+   done 
+done 
+
+
+# Compare the line counts of the new files against those in the previous
+# versions downloaded.
+echo "Checking all mapping files against archive ..."
+
+# Create the path to the directory containing the mapping files we just archived above.
+previousArchive=${ATLAS_PROD}/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
+
+# Go through the newly downloaded mapping files.
+for mappingFile in $( ls *.tsv ); do
+
+    # Count the number of lines in the new file.
+    newFileNumLines=`cat $mappingFile | wc -l`
+
+    # Cound the number of lines in the archived version of the same file.
+    if [ -s ${previousArchive}/$mappingFile ]; then
+        oldFileNumLines=`cat ${previousArchive}/$mappingFile | wc -l`
+
+        # Warn to STDOUT and STDERR if the number of lines in the new file is
+        # significantly lower than the number of lines in the old file.
+        if [ $newFileNumLines -lt $oldFileNumLines ]; then
+
+            # Calculate the difference between the numbers of lines.
+            difference=`expr $oldFileNumLines - $newFileNumLines`
+
+            # Only warn if the difference is greater than 2000 genes.
+            # tee is used to send the message to STDOUT as well.
+            if [ $difference -gt 2000 ]; then
+                echo "WARNING - new version of $mappingFile has $newFileNumLines lines, old version has $oldFileNumLines lines!" | tee /dev/stderr
+            fi
+        fi
+    fi
+done
+
+echo "Finished checking mapping files against archive."
+
+
+echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
+for dir in ensembl mirbase reactome go interpro; do
+   rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
+done
+
+echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
+cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
+
+echo "Copy all matrices to the public Ensembl data directory"
+for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
+    for bioentity in ensgene enstranscript ensprotein; do
+    	cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
+    done 
+done
+
+popd
+
+
+# Create files that will be loaded into the database.
+echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat file"
+
+pushd ${ATLAS_PROD}/bioentity_properties
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
+# Apply sanity test
+size=`wc -l bioentityOrganism.dat | awk '{print $1}'`
+if [ "$size" -lt 200 ]; then
+    echo "ERROR: Something went wrong with populating bioentityOrganism.dat file - should have more than 200 rows"
+    exit 1
+fi 
+
+echo "Generate ${ATLAS_PROD}/bioentity_properties/organismEnsemblDB.dat file"
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_organismEnsemblDB_forloading.sh ${ATLAS_PROD}/bioentity_properties
+# Apply sanity test
+size=`wc -l organismEnsemblDB.dat | awk '{print $1}'`
+if [ "$size" -lt 30 ]; then
+    echo "ERROR: Something went wrong with populating organismEnsemblDB.dat file - should have more than 30 rows"
+    exit 1
+fi 
+popd
+
+echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityName.dat file"
+echo "... Generate miRBase component"
+pushd ${ATLAS_PROD}/bioentity_properties/mirbase
+rm -rf miRNAName.dat
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/mirbase/prepare_mirbasenames_forloading.sh
+popd
+echo "... Generate Ensembl component"
+pushd ${ATLAS_PROD}/bioentity_properties/ensembl
+rm -rf geneName.dat
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
+popd
+
+pushd ${ATLAS_PROD}/bioentity_properties
+echo "Merge miRNAName.dat and geneName.dat into bioentityName.dat"
+cp ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
+cat ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
+# Apply sanity test
+size=`wc -l bioentityName.dat | awk '{print $1}'`
+if [ "$size" -lt 1000000 ]; then
+    echo "ERROR: Something went wrong with populating bioentityName.dat file - should have more than 800k rows"
+    exit 1
+fi 
+
+echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat file"
+rm -rf designelementMapping.dat
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
+# Apply sanity test
+size=`wc -l designelementMapping.dat | awk '{print $1}'`
+if [ "$size" -lt 2000000 ]; then
+    echo "ERROR: Something went wrong with populating designelementMapping.dat file - should have more than 2mln rows"
+    exit 1
+fi 
+
+#################
+# Copy the files to the FTP directory.
+# TODO: Remove the loading part.
+echo "Load bioentityOrganism.dat, organismEnsemblDB.dat, bioentityName.dat and designelementMapping.dat into staging Oracle schema"
+for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping; do
+    rm -rf ${f}.log; rm -rf ${f}.bad
+    sqlldr $dbConnection control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
+    if [ -s "${f}.bad" ]; then
+        echo "ERROR: Failed to load ${f} into ${dbUser}@${dbSID}"
+	exit 1
+    fi
+done
+
+# Update the organism_kingdom table.
+echo "Updating the organism_kingdom table..."
+echo "delete from organism_kingdom;" | sqlplus -s $dbConnection
+echo "insert into organism_kingdom (organismid, kingdom ) select organismid as organismid, case when ensembldb = 'ensembl' then 'animals' else case when ensembldb = 'metazoa' then 'animals' else ensembldb end end as kingdom from organism_ensembldb;" | sqlplus -s $dbConnection
+#################
+
+
+
+
+# Archive the previous Reactome data. Note the files from Gramene need to be
+# dealt with manually, when they send us a new one.
+echo "Archive the previous Reactome Data - if not done already"
+if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
+    mkdir -p $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
+    cp $ATLAS_PROD/bioentity_properties/reactome/*.reactome.* $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
+else
+    ls $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL} | grep reactome.tsv > /dev/null
+    grepCode=$?
+    if [ $grepCode == 1 ]; then
+        cp $ATLAS_PROD/bioentity_properties/reactome/*.reactome.* $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
+    else
+        echo "Not archiving Reactome data as this has already been done."
+    fi
+fi
+
+echo "Fetching the latest Reactome mappings..."
+# This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
+# gene ids - we need to use the mapping files we've just retrieved from Ensembl
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the latest Reactome mappings" >&2
+    exit 1
+fi 
+
+echo "Copy all files to the other public data directories"
+for dir in mirbase reactome go interpro; do
+       cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
+done
+popd
+
 
 # Get mapping between Atlas experiments and Ensembl DBs that own their species
 exp2ensdb=~/tmp/experiment_to_ensembldb.$$
@@ -334,8 +312,7 @@ fi
 # Decorate all experiments
 aux=~/tmp/decorate.$$
 rm -rf $aux
-#for decorationType in genenames tracks R cluster gsea coexpression; do 
-for decorationType in coexpression; do 
+for decorationType in genenames tracks R cluster gsea coexpression; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
 
     # Delete all LSF log files from previous run (if any).
@@ -365,36 +342,3 @@ for decorationType in genenames tracks R cluster gsea coexpression; do
     rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.err
 done
     
-####################
-if [ 1 -eq 0 ]; then  
-# TODO: Switch off the anaytics re-build until java dev team have stabilised the build procedure
-
-echo "Re-build Analytics index on the staging Atlas instance"
-# First submit Analytics index build
-urlBase=http://${stagingServer}:8080/gxa/admin/analyticsIndex/buildIndex?threads=8&batchSize=2048&timeout=48
-statusPrefix="Full Analytics index build"
-response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase"`
-if [ -z "$response" ]; then
-    echo "ERROR: Got empty response from $urlBase" >&2
-    exit 1
-fi 
-echo $response | grep "$statusPrefix started" > /dev/null
-if [ $? -ne 0 ]; then
-    echo "ERROR: Incorrect response from: $urlBase - expected: '$statusPrefix started'; got: '$response'" >&2
-    exit 1
-fi 
-# Now keeping checking status every 30 mins until the process is complete; then report success and time taken
-echo $response | tail -1 | "$statusPrefix finished" > /dev/null
-while [ $? -ne 0  ]; do
-    # E.g. PROCESSING, total time elapsed: 0 minutes, estimated progress: 1%, estimated minutes to completion: 35, file being processed
-    numExps=`echo $response | grep 'E-' | wc -l`
-    echo "Indexed $numExps experiments so far..."
-    sleep 1800 
-    response=`curl -s -u $stagingTomcatAdmin:$stagingTomcatAdminPass "$urlBase/status"`
-    echo $response | tail -1 | grep "$statusPrefix finished" > /dev/null
-done
-# Report $statusPrefix finished time
-echo $response | tail -1
-
-# TODO: end
-fi

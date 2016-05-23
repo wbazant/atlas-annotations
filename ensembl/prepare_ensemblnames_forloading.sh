@@ -1,6 +1,6 @@
 # This script geneartes sqlloader file for bioentity_name table, containing Ensmebl genes, using $dir/../bioentityOrganisms.dat as the organism reference
 
-dir="/nfs/ma/home/atlas3-production/bioentity_properties/ensembl"
+dir="${ATLAS_PROD}/bioentity_properties/ensembl"
 
 IFS="
 "
