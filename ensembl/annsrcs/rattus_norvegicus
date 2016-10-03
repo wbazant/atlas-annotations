@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=84
+software.version=85
 url=http://www.ensembl.org/biomart/martservice?
 organism=rattus norvegicus
 databaseName=ensembl
@@ -43,3 +43,4 @@ arrayDesign.A-GEOD-14745=efg_agilent_wholegenome_4x44k_v3
 arrayDesign.A-MEXP-2237=efg_agilent_sureprint_g3_ge_8x60k
 arrayDesign.A-MEXP-784=efg_agilent_wholegenome_4x44k_v1
 arrayDesign.A-AFFY-160=affy_ragene_1_0_st_v1
+arrayDesign.A-GEOD-11534=affy_ragene_1_0_st_v1

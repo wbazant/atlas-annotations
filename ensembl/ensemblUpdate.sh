@@ -40,8 +40,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ $# -lt 8 ]; then
-  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL RELEASE_TYPE dbUser dbSID stagingTomcatAdmin"
+if [ $# -lt 6 ]; then
+  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL dbUser dbSID"
   echo "e.g. $0 75 21 75 22 ensemblgenomes atlasprd3 ATLASPRO"
   exit 1
 fi 
@@ -50,34 +50,23 @@ OLD_ENSEMBL_REL=$1
 OLD_ENSEMBLGENOMES_REL=$2
 NEW_ENSEMBL_REL=$3
 NEW_ENSEMBLGENOMES_REL=$4
-RELEASE_TYPE=$5
-dbUser=$6
-dbSID=$7
-stagingTomcatAdmin=$8
+#RELEASE_TYPE=$5
+dbUser=$5
+dbSID=$6
 
 dbPass=`get_pass $dbUser`
 dbConnection=${dbUser}/${dbPass}@${dbSID}
-stagingTomcatAdminPass=`get_pass $stagingTomcatAdmin`
-stagingServer=ves-hx-76
 
-# Annotation release will always be either for just Ensembl or just for Ensembl Genomes, but never for both - as the latter always releases some time after the former
-# Note that if RELEASE_TYPE=ensembl, then $NEW_ENSEMBL_REL must be greater than $OLD_ENSEMBL_REL
-# and if RELEASE_TYPE=ensemblgenomes, then $NEW_ENSEMBLGENOMES_REL must be greater than $OLD_ENSEMBLGENOMES_REL
-echo $RELEASE_TYPE | grep -P 'ensembl|ensemblgenomes' > /dev/null
-if [ $? -ne 0 ]; then
-    echo "ERROR: Unrecognised RELEASE_TYPE: $RELEASE_TYPE - should be either ensembl or ensemblgenomes"
-    exit 1
-elif [ "$RELEASE_TYPE" == "ensembl" ]; then
-    if [ "$NEW_ENSEMBL_REL" -le "$OLD_ENSEMBL_REL" ]; then
-	echo "ERROR: For RELEASE_TYPE: $RELEASE_TYPE, NEW_ENSEMBL_REL must be greater than OLD_ENSEMBL_REL"
+# Note that if $NEW_ENSEMBL_REL must be greater than $OLD_ENSEMBL_REL
+# and $NEW_ENSEMBLGENOMES_REL must be greater than $OLD_ENSEMBLGENOMES_REL
+if [ "$NEW_ENSEMBL_REL" -le "$OLD_ENSEMBL_REL" ]; then
+	echo "ERROR: NEW_ENSEMBL_REL must be greater than OLD_ENSEMBL_REL"
 	exit 1
-    fi
-elif [ "$RELEASE_TYPE" == "ensemblgenomes" ]; then 
-    if [ "$NEW_ENSEMBLGENOMES_REL" -le "$OLD_ENSEMBLGENOMES_REL" ]; then
-	echo "ERROR: For RELEASE_TYPE: $RELEASE_TYPE, NEW_ENSEMBLGENOMES_REL must be greater than OLD_ENSEMBLGENOMES_REL"
+fi
+if [ "$NEW_ENSEMBLGENOMES_REL" -le "$OLD_ENSEMBLGENOMES_REL" ]; then
+	echo "ERROR: NEW_ENSEMBLGENOMES_REL must be greater than OLD_ENSEMBLGENOMES_REL"
 	exit 1
-    fi
-fi 
+fi
 
 echo "Validate all Ensembl annotation sources against the release specified in them"
 pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl
@@ -302,16 +291,12 @@ popd
 
 # Get mapping between Atlas experiments and Ensembl DBs that own their species
 exp2ensdb=~/tmp/experiment_to_ensembldb.$$
-get_experimentToEnsemblDB $dbConnection > ${exp2ensdb}.aux
-if [ $RELEASE_TYPE == "ensembl" ]; then
-    grep "ensembl$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
-else
-    grep -v "ensembl$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
-fi 
+get_experimentToEnsemblDB $dbConnection > ${exp2ensdb}.tsv
 
 # Decorate all experiments
 aux=~/tmp/decorate.$$
 rm -rf $aux
+
 for decorationType in genenames tracks R cluster gsea coexpression; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
 

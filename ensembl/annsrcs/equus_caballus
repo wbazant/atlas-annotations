@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=84
+software.version=85
 url=http://www.ensembl.org/biomart/martservice?
 organism=equus caballus
 databaseName=ensembl
