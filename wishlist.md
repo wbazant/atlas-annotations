@@ -63,6 +63,7 @@ Things that at some point in the past we wanted to reuse.
   + gets newest code on manual deploy
   + runs as fg_atlas
   + prod environment
+  + Ammonite shell runs
   + can explore and do things for the first time but with care
   + can update task runners
   + can run task runners from crontab
@@ -73,3 +74,10 @@ Things that at some point in the past we wanted to reuse.
 ### notes
 - I am not sure if one setup can inherit from another actually. At worst sync them through copy and paste.
 - You can't send tasks to lsf from local, so the local setup will never be complete
+- will we not reuse configuration.properties?
+  + probably not
+  + can improve and extend AtlasResource:
+    - ExperimentDirectoryResource(String experimentDataLocation)
+    - PerExperimentResource
+    - PerContrastResource
+    - PerArrayDesignAndContrastResource
