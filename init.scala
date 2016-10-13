@@ -1,6 +1,6 @@
-//you can quickly install Oracle drivers through these magic imports
-//import $ivy.`com.oracle:ojdbc6:11.2.0.3`
-//import $ivy.`com.oracle:ucp:11.2.0.3`
+//get IntelliJ to make jars in lib directory
+//copy oracle jars - see new joiner page
+
 
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
@@ -19,7 +19,7 @@ ds.setMaxIdleTime(1)
 val jdbcTemplate = new org.springframework.jdbc.core.JdbcTemplate(ds)
 
 // use objects modelling our problem domain
-val human = new uk.ac.ebi.atlas.trader.SpeciesFactory(jdbcTemplate).getSpecies("homo sapiens")
+val human = new uk.ac.ebi.atlas.trader.SpeciesFactory(jdbcTemplate).create("homo sapiens")
 
 //solr setup is much less fiddly - the client/query part is just a wrapper around a URL
 val analyticsSolrClient = new org.apache.solr.client.solrj.impl.HttpSolrClient("http://localhost:8983/solr/analytics")
