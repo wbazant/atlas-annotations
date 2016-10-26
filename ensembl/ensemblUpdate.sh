@@ -40,66 +40,83 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ $# -lt 8 ]; then
-  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL RELEASE_TYPE dbUser dbSID stagingTomcatAdmin"
+if [ $# -lt 6 ]; then
+  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL dbUser dbSID"
   echo "e.g. $0 75 21 75 22 ensemblgenomes atlasprd3 ATLASPRO"
   exit 1
 fi 
 
 OLD_ENSEMBL_REL=$1
 OLD_ENSEMBLGENOMES_REL=$2
-NEW_ENSEMBL_REL=$3
-NEW_ENSEMBLGENOMES_REL=$4
-RELEASE_TYPE=$5
-dbUser=$6
-dbSID=$7
-stagingTomcatAdmin=$8
+OLD_WBPS_REL=$3
+NEW_ENSEMBL_REL=$4
+NEW_ENSEMBLGENOMES_REL=$5
+NEW_WBPS_REL=$6
+dbUser=$7
+dbSID=$8
 
 dbPass=`get_pass $dbUser`
 dbConnection=${dbUser}/${dbPass}@${dbSID}
-stagingTomcatAdminPass=`get_pass $stagingTomcatAdmin`
-stagingServer=ves-hx-76
 
-# Annotation release will always be either for just Ensembl or just for Ensembl Genomes, but never for both - as the latter always releases some time after the former
-# Note that if RELEASE_TYPE=ensembl, then $NEW_ENSEMBL_REL must be greater than $OLD_ENSEMBL_REL
-# and if RELEASE_TYPE=ensemblgenomes, then $NEW_ENSEMBLGENOMES_REL must be greater than $OLD_ENSEMBLGENOMES_REL
-echo $RELEASE_TYPE | grep -P 'ensembl|ensemblgenomes' > /dev/null
-if [ $? -ne 0 ]; then
-    echo "ERROR: Unrecognised RELEASE_TYPE: $RELEASE_TYPE - should be either ensembl or ensemblgenomes"
-    exit 1
-elif [ "$RELEASE_TYPE" == "ensembl" ]; then
-    if [ "$NEW_ENSEMBL_REL" -le "$OLD_ENSEMBL_REL" ]; then
-	echo "ERROR: For RELEASE_TYPE: $RELEASE_TYPE, NEW_ENSEMBL_REL must be greater than OLD_ENSEMBL_REL"
+# Note that if $NEW_ENSEMBL_REL must be greater than $OLD_ENSEMBL_REL
+# and $NEW_ENSEMBLGENOMES_REL must be greater than $OLD_ENSEMBLGENOMES_REL
+if [ "$NEW_ENSEMBL_REL" -le "$OLD_ENSEMBL_REL" ]; then
+	echo "ERROR: NEW_ENSEMBL_REL must be greater than OLD_ENSEMBL_REL"
 	exit 1
-    fi
-elif [ "$RELEASE_TYPE" == "ensemblgenomes" ]; then 
-    if [ "$NEW_ENSEMBLGENOMES_REL" -le "$OLD_ENSEMBLGENOMES_REL" ]; then
-	echo "ERROR: For RELEASE_TYPE: $RELEASE_TYPE, NEW_ENSEMBLGENOMES_REL must be greater than OLD_ENSEMBLGENOMES_REL"
-	exit 1
-    fi
-fi 
-
-echo "Validate all Ensembl annotation sources against the release specified in them"
-pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl
-./validateAnnSrcs.sh annsrcs
-if [ $? -ne 0 ]; then
-    echo "ERROR: Validation of annotation sources failed - please check notes on validation source failures on http://bar.ebi.ac.uk:8080/trac/wiki/BioentityAnnotationUpdates; fix and re-run"
-    exit 1
 fi
+if [ "$NEW_ENSEMBLGENOMES_REL" -le "$OLD_ENSEMBLGENOMES_REL" ]; then
+	echo "ERROR: NEW_ENSEMBLGENOMES_REL must be greater than OLD_ENSEMBLGENOMES_REL"
+	exit 1
+fi
+if [ "$NEW_WBPS_REL" -lt "$OLD_WBPS_REL" ]; then
+	echo "ERROR: NEW_WBPS_REL must not be less than OLD_WBPS_REL"
+	exit 1
+fi
+
+
+pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations
+
+for annotationDB in ensembl wbps; do
+    echo "Validate all $annotationDB annotation sources against the release specified in them"
+    ./validateAnnSrcs.sh $annotationDB/annsrcs
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Validation of $annotationDB annotation sources failed - please check notes on validation source failures on http://bar.ebi.ac.uk:8080/trac/wiki/BioentityAnnotationUpdates; fix and re-run"
+        exit 1
+    fi
+done
+
 popd
 
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 
-echo "Archive the previous Ensembl Data - if not done already"
+echo "Archive the previous Ensembl data - if not done already"
 if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
     mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-    mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
+    mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
 else
     echo "Not archiving as this has already been done."
 fi
+popd
 
+pushd $ATLAS_PROD}/bioentity_properties/wbps
+echo "Archive the previous WBPS data - if not done already"
+if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}" ]; then
+    mkdir -p $ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}
+    mv * $ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}
+else
+    echo "Not archiving as this has already been done."
+fi
+popd
+
+pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 echo "Obtain all the individual mapping files from Ensembl"
 ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+popd
+
+pushd $ATLAS_PROD}/bioentity_properties/wbps
+echo "Obtain all the individual mapping files from WBPS"
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/fetchAllWbpsMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_wbps_${NEW_WBPS_REL}_bioentity_properties_update.log 2>&1
+popd
 
 echo "Fetching the latest GO mappings..."
 # This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
@@ -129,65 +146,83 @@ for gof in $(ls *.go.tsv); do
     echo "${gof} done "
 done
 
-echo "Merge all individual property files into matrices"
-for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
-   for bioentity in ensgene enstranscript ensprotein; do 
-      ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
-   done 
+echo "Merge all individual Ensembl property files into matrices"
+for species in $(ls *ens*.tsv | awk -F"." '{print $1}' | sort | uniq); do 
+    for bioentity in ensgene enstranscript ensprotein; do 
+        ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
+    done 
 done 
 
-
-# Compare the line counts of the new files against those in the previous
-# versions downloaded.
-echo "Checking all mapping files against archive ..."
-
-# Create the path to the directory containing the mapping files we just archived above.
-previousArchive=${ATLAS_PROD}/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-
-# Go through the newly downloaded mapping files.
-for mappingFile in $( ls *.tsv ); do
-
-    # Count the number of lines in the new file.
-    newFileNumLines=`cat $mappingFile | wc -l`
-
-    # Cound the number of lines in the archived version of the same file.
-    if [ -s ${previousArchive}/$mappingFile ]; then
-        oldFileNumLines=`cat ${previousArchive}/$mappingFile | wc -l`
-
-        # Warn to STDOUT and STDERR if the number of lines in the new file is
-        # significantly lower than the number of lines in the old file.
-        if [ $newFileNumLines -lt $oldFileNumLines ]; then
-
-            # Calculate the difference between the numbers of lines.
-            difference=`expr $oldFileNumLines - $newFileNumLines`
-
-            # Only warn if the difference is greater than 2000 genes.
-            # tee is used to send the message to STDOUT as well.
-            if [ $difference -gt 2000 ]; then
-                echo "WARNING - new version of $mappingFile has $newFileNumLines lines, old version has $oldFileNumLines lines!" | tee /dev/stderr
-            fi
-        fi
-    fi
+# Do the same for WBPS.
+echo "Merge all individual WBPS property files into matrics"
+for species in $(ls *wbps*.tsv | awk -F"." '{print $1}' | sort | uniq); do
+    for bioentity in wbpsgene wbpsprotein wbpstranscript; do
+        ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir .
+    done
 done
 
-echo "Finished checking mapping files against archive."
+#--------------------------------------------------
+# # Compare the line counts of the new files against those in the previous
+# # versions downloaded.
+# echo "Checking all mapping files against archive ..."
+# 
+# # Create the path to the directory containing the mapping files we just archived above.
+# previousArchive=${ATLAS_PROD}/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
+# 
+# # Go through the newly downloaded mapping files.
+# for mappingFile in $( ls *.tsv ); do
+# 
+#     # Count the number of lines in the new file.
+#     newFileNumLines=`cat $mappingFile | wc -l`
+# 
+#     # Cound the number of lines in the archived version of the same file.
+#     if [ -s ${previousArchive}/$mappingFile ]; then
+#         oldFileNumLines=`cat ${previousArchive}/$mappingFile | wc -l`
+# 
+#         # Warn to STDOUT and STDERR if the number of lines in the new file is
+#         # significantly lower than the number of lines in the old file.
+#         if [ $newFileNumLines -lt $oldFileNumLines ]; then
+# 
+#             # Calculate the difference between the numbers of lines.
+#             difference=`expr $oldFileNumLines - $newFileNumLines`
+# 
+#             # Only warn if the difference is greater than 2000 genes.
+#             # tee is used to send the message to STDOUT as well.
+#             if [ $difference -gt 2000 ]; then
+#                 echo "WARNING - new version of $mappingFile has $newFileNumLines lines, old version has $oldFileNumLines lines!" | tee /dev/stderr
+#             fi
+#         fi
+#     fi
+# done
+# 
+# echo "Finished checking mapping files against archive."
+#-------------------------------------------------- 
 
 
 echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
-for dir in ensembl mirbase reactome go interpro; do
+for dir in ensembl mirbase reactome go interpro wbps; do
    rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
 done
 
 echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
 cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
 
-echo "Copy all matrices to the public Ensembl data directory"
+pushd ${ATLAS_PROD}/bioentity_properties/ensembl
+echo "Copy all Ensembl matrices to the public Ensembl data directory"
 for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
     for bioentity in ensgene enstranscript ensprotein; do
     	cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
     done 
 done
+popd
 
+pushd ${ATLAS_PROD}/bioentity_properties/wbps
+echo "Copy all WBPS matrices to the public WBPS data directory"
+for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
+    for bioentity in wbpsgene wbpstranscript wbpsprotein; do
+        cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/wbps/
+    done
+done
 popd
 
 
@@ -203,14 +238,6 @@ if [ "$size" -lt 200 ]; then
     exit 1
 fi 
 
-echo "Generate ${ATLAS_PROD}/bioentity_properties/organismEnsemblDB.dat file"
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_organismEnsemblDB_forloading.sh ${ATLAS_PROD}/bioentity_properties
-# Apply sanity test
-size=`wc -l organismEnsemblDB.dat | awk '{print $1}'`
-if [ "$size" -lt 30 ]; then
-    echo "ERROR: Something went wrong with populating organismEnsemblDB.dat file - should have more than 30 rows"
-    exit 1
-fi 
 popd
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityName.dat file"
@@ -224,11 +251,16 @@ pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 rm -rf geneName.dat
 ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
 popd
+pushd ${ATLAS_PROD}/bioentity_properties/wbps
+rm -rf wbpsgeneName.dat
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/prepare_wbpsnames_forloading.sh
+popd
 
 pushd ${ATLAS_PROD}/bioentity_properties
-echo "Merge miRNAName.dat and geneName.dat into bioentityName.dat"
+echo "Merge miRNAName.dat, geneName.dat and wbpsgeneName.dat into bioentityName.dat"
 cp ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
 cat ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
+cat ${ATLAS_PROD}/bioentity_properties/wbps/wbpsgeneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
 # Apply sanity test
 size=`wc -l bioentityName.dat | awk '{print $1}'`
 if [ "$size" -lt 1000000 ]; then
@@ -246,11 +278,21 @@ if [ "$size" -lt 2000000 ]; then
     exit 1
 fi 
 
+echo "Generate ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat file"
+rm -rf organismKingdom.dat
+${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_organismKingdom_forloading.sh ${ATLAS_PROD}/bioentity_properties
+# Apply sanity test
+size=`wc -l organismKingdom.dat | awk '{print $1}'`
+if [ "$size" -lt 50 ]; then
+    echo "ERROR: Something went wrong with populating organismKingdom.dat file - should have more than 50 rows"
+    exit 1
+fi 
+
+
 #################
 # Copy the files to the FTP directory.
-# TODO: Remove the loading part.
-echo "Load bioentityOrganism.dat, organismEnsemblDB.dat, bioentityName.dat and designelementMapping.dat into staging Oracle schema"
-for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping; do
+echo "Load bioentityOrganism.dat, bioentityName.dat, organismKingdom.dat and designelementMapping.dat into staging Oracle schema"
+for f in bioentityOrganism bioentityName organismKingdom designelementMapping; do
     rm -rf ${f}.log; rm -rf ${f}.bad
     sqlldr $dbConnection control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
     if [ -s "${f}.bad" ]; then
@@ -258,13 +300,7 @@ for f in bioentityOrganism organismEnsemblDB bioentityName designelementMapping;
 	exit 1
     fi
 done
-
-# Update the organism_kingdom table.
-echo "Updating the organism_kingdom table..."
-echo "delete from organism_kingdom;" | sqlplus -s $dbConnection
-echo "insert into organism_kingdom (organismid, kingdom ) select organismid as organismid, case when ensembldb = 'ensembl' then 'animals' else case when ensembldb = 'metazoa' then 'animals' else ensembldb end end as kingdom from organism_ensembldb;" | sqlplus -s $dbConnection
 #################
-
 
 
 
@@ -300,18 +336,10 @@ done
 popd
 
 
-# Get mapping between Atlas experiments and Ensembl DBs that own their species
-exp2ensdb=~/tmp/experiment_to_ensembldb.$$
-get_experimentToEnsemblDB $dbConnection > ${exp2ensdb}.aux
-if [ $RELEASE_TYPE == "ensembl" ]; then
-    grep "ensembl$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
-else
-    grep -v "ensembl$" ${exp2ensdb}.aux > ${exp2ensdb}.tsv
-fi 
-
 # Decorate all experiments
 aux=~/tmp/decorate.$$
 rm -rf $aux
+
 for decorationType in genenames tracks R cluster gsea coexpression; do 
     echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
 
@@ -319,7 +347,7 @@ for decorationType in genenames tracks R cluster gsea coexpression; do
     rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out
     rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.err
 
-    submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType ${exp2ensdb}.tsv`
+    submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
     echo "monitor_decorate_lsf_submission $submitted $decorationType" >> $aux
 done
 for l in $(cat $aux); do
@@ -331,10 +359,9 @@ for l in $(cat $aux); do
         exit 1
     fi 
     echo "Copy all $decorationType decorated files to the staging area"
-    ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType ${exp2ensdb}.tsv copyonly
+    ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
 done
 rm -rf $aux
-rm -rf ${exp2ensdb}.*
 
 # Tidy up LSF log files.
 for decorationType in genenames tracks R cluster gsea coexpression; do 
