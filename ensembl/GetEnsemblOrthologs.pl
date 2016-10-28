@@ -55,6 +55,7 @@ use Getopt::Long;
 use LWP::UserAgent;
 use HTTP::Request;
 use Data::Dumper;
+use File::Basename;
 use File::Spec;
 use Log::Log4perl qw( :easy );
 use 5.10.0;
@@ -100,9 +101,24 @@ while (my $thing = readdir $dh) {
 }
 
 closedir $dh;
- 
+
+# Make a list of allowed ortholog species. These should be the first letter of
+# the genus and the last letter of the species.
+my %orthologSpecies;
+foreach my $annsrcFile ( @FileNames ) {
+
+    my @splitSpecies = split "_", basename( $annsrcFile );
+
+    my $firstLetter = substr( $splitSpecies[ 0 ], 0, 1 );
+
+    my $newSpecies = $firstLetter . $splitSpecies[ 1 ];
+
+    $orthologSpecies{ $newSpecies } = 1;
+}
+
 # Parses file names and opens the file, and then reads it.
 foreach my $name (@FileNames){
+
 	my $fileName = File::Spec -> catfile($dir, $name);
 	
 	#reading file
@@ -140,15 +156,24 @@ foreach my $name (@FileNames){
 					#Tests if the first element of the line has '_homolog_ensembl_gene$'
 					# if so pushes the element onto orthologs array
 					if ($splitLine[0] =~ /_homolog_ensembl_gene$/){
-						push (@orthologs, $splitLine[0]);
+
+                        my @splitOrthAttribute = split "_", $splitLine[ 0 ];
+
+                        my $orthSpecies = $splitOrthAttribute[ 0 ];
+
+                        if( $orthologSpecies{ $orthSpecies } ) {
+
+                            push (@orthologs, $splitLine[0]);
+                        }
+                        else {
+                            say "Skipping non-Atlas species $orthSpecies.";
+                        }
 					}
 								
 				}
 			last;	# breaks out of the loop, because datasetName is found.
 			}
-			
     	}
-    
 	}
  	close $fh;
  	#separates orthologs with comma in the list

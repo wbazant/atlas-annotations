@@ -35,9 +35,18 @@ for f in $(ls ); do
        errors="$errors${nl}ERROR: Failed to find ${datasetName} in ${url}type=datasets&mart=${mart}"
     fi
     # Check that $mySqlDbName is present in $mySqlDbUrl for release $softwareVersion
-    found=`mysql -s -u anonymous -h $mySqlDbHost -P $mySqlDbPort -e "SHOW DATABASES LIKE '${mySqlDbName}_core_${softwareVersion}%';" | grep "^${mySqlDbName}_core_${softwareVersion}" | wc -l`
+    if [[ $annSrcsDir =~ ensembl ]]; then
+        dbInfo=`mysql -s -u anonymous -h $mySqlDbHost -P $mySqlDbPort -e "SHOW DATABASES LIKE '${mySqlDbName}_core_${softwareVersion}%';"`
+    elif [[ $annSrcsDir =~ wbps ]]; then
+        dbInfo=`mysql -s -u ensro -h $mySqlDbHost -P $mySqlDbPort -e "SHOW DATABASES LIKE '${mySqlDbName}_core_${softwareVersion}%';"`
+    else
+        echo "Unrecognised annotation database in $annSrcsDir"
+        exit 1
+    fi
+    
+    found=`echo $dbInfo | grep "^${mySqlDbName}_core_${softwareVersion}" | wc -l`
     if [ $found -ne 1 ]; then
-       errors="$errors${nl}ERROR: The following query returned 0 results: mysql -s -u anonymous -h $mySqlDbHost -P $mySqlDbPort -e 'SHOW DATABASES LIKE \"${mySqlDbName}_core_${softwareVersion}%\";'"
+       errors="$errors${nl}ERROR: The following query returned 0 results: $mysqlCommand"
     fi 
     # Get ensembl properties and array designs in ansrc and report any differences
     grep -P '^property|arrayDesign\.'  $f | awk -F"=" '{print $NF}' | tr "," "\n" | sort | uniq > ${f}.annsrc.ensemblproperties
