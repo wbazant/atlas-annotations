@@ -2,6 +2,8 @@
 import $ivy.`com.oracle:ojdbc6:11.2.0.3`
 import $ivy.`com.oracle:ucp:11.2.0.3`
 
+//get IntelliJ to make jars in lib directory
+//copy oracle jars - see new joiner page
 import ammonite.ops._
 import ammonite.ops.ImplicitWd._
 interp.load.cp(ammonite.ops.pwd/"lib")
