@@ -1,15 +1,27 @@
 # Quick start
-Run ammonite:
+
+Run Ammonite REPL:
 `amm`
 
-Load `init.scala`:
+Connect to Oracle database, load Atlas classes and set up some objects:
 ```
-import ammonite.ops._
-interp.load.module(Path(pwd + "/init.scala"))
+import $file.AtlasDemo
 ```
 
 Use Atlas classes to do interesting stuff:
 ```
-analyticsSearchService.getBioentityIdentifiersForSpecies(human)
+AtlasDemo.analyticsSearchService.getBioentityIdentifiersForSpecies(AtlasDemo.human)
 
 ```
+
+Alternatively, if you want to use ScalikeJDBC:
+```
+import $file.init.ScalikeJdbc
+import ScalikeJdbc._
+```
+
+And you’re ready to go:
+```
+val experiments: List[Map[String,Any]] = sql"select * from experiment".map(_.toMap).list.apply() 
+```
+

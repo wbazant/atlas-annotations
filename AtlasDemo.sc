@@ -1,8 +1,10 @@
-import $file.init.Oracle
+import $file.init.OracleUcp
 import $file.init.Atlas
 
-val jdbcTemplate = new org.springframework.jdbc.core.JdbcTemplate(Oracle.ds)
-val namedParameterJdbcTemplate = new org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate(Oracle.ds)
+val ds = OracleUcp.getDataSource("jdbc:oracle:thin:@ora-vm-029.ebi.ac.uk:1531:ATLASDEV", "atlas3dev", "atlas3dev")
+
+val jdbcTemplate = new org.springframework.jdbc.core.JdbcTemplate(ds)
+val namedParameterJdbcTemplate = new org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate(ds)
 
 // Use objects modelling our problem domain
 val speciesFactory = new uk.ac.ebi.atlas.trader.SpeciesFactory(jdbcTemplate) 
