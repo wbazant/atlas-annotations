@@ -1,0 +1,5 @@
+{
+  "url"      : "jdbc:oracle:thin:@ora-vm-029.ebi.ac.uk:1531:ATLASDEV",
+  "user"     : "atlas3dev",
+  "password" : "atlas3dev"
+}
