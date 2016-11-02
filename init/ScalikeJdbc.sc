@@ -10,11 +10,9 @@ import ammonite.ops.ImplicitWd._
 val json = JSON.parseFull(read! pwd/"oracle-settings.json")
 
 val (url, user, password) = 
-  List("url", "user", "password").map(
-    e => json.get.asInstanceOf[Map[String, Any]](e).asInstanceOf[String]
-  ) match {
-      case List(a, b, c) => (a, b, c) 
-    }
+  List("url", "user", "password").map(e => json.get.asInstanceOf[Map[String, Any]](e).asInstanceOf[String]) match {
+    case List(a, b, c) => (a, b, c) 
+  }
 
 val ds = OracleUcp.getDataSource(url, user, password)
 
