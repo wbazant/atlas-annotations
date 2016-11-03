@@ -1,0 +1,16 @@
+There's a problem with some of the array design mappings - they're gone from Ensembl, which is bad because microarray experiments have results per probe and the probe to gene ID mappings keep changing.
+
+Maria decides she doesn't want to wait until they made it back in and will run a script without these mappings, and backfill them from the archive.
+
+She removes them temporarily, pushes to git and deploys (not sure how the deployment happened from the git repository)
+
+The way to run the command is in a wiki. She sets up environment variables saying which Ensembl release it is now.
+She pastes that command in - it's bsub which runs stuff on the cluster - she specifies where the log files should go. Then watches the results.
+
+The script usually fails so she's gonna come back to wherever it failed last time to see if it progressed yet.
+
+
+
+We keep our own versions of Perl and R, making sure it's up to date and so on, because systems don't do that very well. The shortcuts are set up in ~/.profile of fg_atlas.
+Our perl is aliased to somewhere on NFS, that's shared, ~/.profile is shared, and we can ask the cluster for the same machine as fg_atlas which is super nice.
+We can alias amm in exactly the same way, probably also telling it to keep its class files in /var/tmp.
