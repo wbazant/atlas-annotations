@@ -1,5 +1,5 @@
 software.name=plants
-software.version=32
+software.version=33
 url=http://plants.ensembl.org/biomart/martservice?
 organism=oryza sativa
 databaseName=plants
@@ -23,4 +23,4 @@ property.symbol=external_gene_id
 property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
 arrayDesign.A-AFFY-126=affy_rice
 arrayDesign.A-GEOD-6864=agilent_g2519f_015241
-
+arrayDesign.A-MEXP-1414=agilent_g2519f_015241

@@ -98,7 +98,7 @@ else
 fi
 popd
 
-pushd $ATLAS_PROD}/bioentity_properties/wbps
+pushd ${ATLAS_PROD}/bioentity_properties/wbps
 echo "Archive the previous WBPS data - if not done already"
 if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}" ]; then
     mkdir -p $ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}
@@ -113,7 +113,7 @@ echo "Obtain all the individual mapping files from Ensembl"
 ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
 popd
 
-pushd $ATLAS_PROD}/bioentity_properties/wbps
+pushd ${ATLAS_PROD}/bioentity_properties/wbps
 echo "Obtain all the individual mapping files from WBPS"
 ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/fetchAllWbpsMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_wbps_${NEW_WBPS_REL}_bioentity_properties_update.log 2>&1
 popd
@@ -126,6 +126,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi 
 
+pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
 a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
 if [ ! -s $a2cMappingFile ]; then 
@@ -152,14 +153,17 @@ for species in $(ls *ens*.tsv | awk -F"." '{print $1}' | sort | uniq); do
         ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
     done 
 done 
+popd
 
+pushd ${ATLAS_PROD}/bioentity_properties/wbps
 # Do the same for WBPS.
-echo "Merge all individual WBPS property files into matrics"
+echo "Merge all individual WBPS property files into matrices"
 for species in $(ls *wbps*.tsv | awk -F"." '{print $1}' | sort | uniq); do
     for bioentity in wbpsgene wbpsprotein wbpstranscript; do
         ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir .
     done
 done
+popd
 
 #--------------------------------------------------
 # # Compare the line counts of the new files against those in the previous
@@ -297,7 +301,7 @@ for f in bioentityOrganism bioentityName organismKingdom designelementMapping; d
     sqlldr $dbConnection control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
     if [ -s "${f}.bad" ]; then
         echo "ERROR: Failed to load ${f} into ${dbUser}@${dbSID}"
-	exit 1
+        exit 1
     fi
 done
 #################

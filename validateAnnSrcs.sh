@@ -36,6 +36,9 @@ for f in $(ls ); do
     fi
     # Check that $mySqlDbName is present in $mySqlDbUrl for release $softwareVersion
     if [[ $annSrcsDir =~ ensembl ]]; then
+        if [ -z $mySqlDbHost ]; then
+            continue
+        fi
         dbInfo=`mysql -s -u anonymous -h $mySqlDbHost -P $mySqlDbPort -e "SHOW DATABASES LIKE '${mySqlDbName}_core_${softwareVersion}%';"`
     elif [[ $annSrcsDir =~ wbps ]]; then
         dbInfo=`mysql -s -u ensro -h $mySqlDbHost -P $mySqlDbPort -e "SHOW DATABASES LIKE '${mySqlDbName}_core_${softwareVersion}%';"`
@@ -44,9 +47,13 @@ for f in $(ls ); do
         exit 1
     fi
     
+    if [ -z $dbInfo ]; then
+        continue
+    fi
+
     found=`echo $dbInfo | grep "^${mySqlDbName}_core_${softwareVersion}" | wc -l`
     if [ $found -ne 1 ]; then
-       errors="$errors${nl}ERROR: The following query returned 0 results: $mysqlCommand"
+       errors="$errors${nl}ERROR: mySQL query returned 0 results."
     fi 
     # Get ensembl properties and array designs in ansrc and report any differences
     grep -P '^property|arrayDesign\.'  $f | awk -F"=" '{print $NF}' | tr "," "\n" | sort | uniq > ${f}.annsrc.ensemblproperties

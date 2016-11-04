@@ -1,5 +1,5 @@
 software.name=plants
-software.version=32
+software.version=33
 url=http://plants.ensembl.org/biomart/martservice?
 organism=brassica oleracea
 databaseName=plants

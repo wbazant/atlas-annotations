@@ -1,5 +1,5 @@
 software.name=plants
-software.version=32
+software.version=33
 url=http://plants.ensembl.org/biomart/martservice?
 organism=arabidopsis thaliana
 databaseName=plants
@@ -24,5 +24,4 @@ property.refseq=refseq_peptide
 property.symbol=external_gene_id
 property.unigene=unigene
 property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
-arrayDesign.A-AFFY-2=affy_ath1_121501
 

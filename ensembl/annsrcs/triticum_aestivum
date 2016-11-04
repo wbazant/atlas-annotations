@@ -1,5 +1,5 @@
 software.name=plants
-software.version=32
+software.version=33
 url=http://plants.ensembl.org/biomart/martservice?
 organism=triticum aestivum
 databaseName=plants
@@ -12,7 +12,6 @@ property.description=description
 property.ensgene=ensembl_gene_id
 property.ensprotein=ensembl_peptide_id
 property.enstranscript=ensembl_transcript_id
-property.entrezgene=entrezgene
 property.go=go_accession
 property.goterm=go_name_1006
 property.interpro=interpro_id
