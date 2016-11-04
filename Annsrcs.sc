@@ -29,6 +29,41 @@ def readProperties(annsrcsPath: Path) = {
   }
 }
 
+val properties = readProperties(annsrcsPath)
+
+def getValue(species: String, propertyName: String) : Either[String, String] = {
+  properties
+  .filter {
+    case p =>
+      p.species == species && p.name == propertyName
+  }
+  .headOption
+  .map{_.value} match {
+    case Some(result)
+      => Right(result)
+    case None
+      => Left(s"Property ${propertyName} missing for species ${species}")
+  }
+}
+
+def getValues[T<:Seq[String]](species: String, propertyNames: T)= {
+  val m = properties
+  .filter {
+    case p =>
+      p.species == species && propertyNames.contains(p.name)
+  }
+  .map {
+    case p
+      => (p.name, p.value)
+  }
+  .toMap
+  if(m.keySet == propertyNames.toSet){
+    Right(propertyNames.map{m.get(_).get})
+  } else {
+    Left(s"Properties ${(propertyNames.toSet -- m.keySet).mkString(", ")} missing for species ${species}")
+  }
+}
+
 def isAboutArrayDesign(p: Property) = p.name.contains("arrayDesign")
 
 val allSpecies = readProperties(annsrcsPath).map(_.species).toSet
@@ -36,7 +71,7 @@ val allSpecies = readProperties(annsrcsPath).map(_.species).toSet
 
 //groups by value of property
 val groupsByValue = readProperties(annsrcsPath).filter(!isAboutArrayDesign(_)).groupBy(_.name).mapValues(_.groupBy(_.value)).mapValues(_.mapValues(_.map(_.species)))
-browse(groupsByValue)
+//browse(groupsByValue)
 
 /*
 Fragmented values:
