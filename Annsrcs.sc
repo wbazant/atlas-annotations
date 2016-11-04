@@ -64,6 +64,35 @@ def getValues[T<:Seq[String]](species: String, propertyNames: T)= {
   }
 }
 
+case class GenePropertyName(species: String, atlasName: String, ensemblName: String)
+
+object GenePropertyName {
+  def fromProperty(p: Property) = {
+    p.name.split("\\.").toList match {
+      case List("property", atlasName)
+        =>  p.value
+            .split(",").toList
+            .map{case ensemblName => GenePropertyName(p.species, atlasName, ensemblName)}
+      case _
+        => List()
+    }
+  }
+}
+
+def genePropertyNames = {
+  properties
+  .flatMap {
+    GenePropertyName.fromProperty(_)
+  }
+}
+
+def allEnsemblGeneProperties(species: String) = {
+  genePropertyNames
+  .filter(_.species == species)
+  .map(_.ensemblName)
+  .toSet
+}
+
 def isAboutArrayDesign(p: Property) = p.name.contains("arrayDesign")
 
 val allSpecies = readProperties(annsrcsPath).map(_.species).toSet
