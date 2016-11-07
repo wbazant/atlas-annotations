@@ -64,30 +64,31 @@ def getValues[T<:Seq[String]](species: String, propertyNames: T)= {
   }
 }
 
-case class GenePropertyName(species: String, atlasName: String, ensemblName: String)
+case class BioentityPropertyName(species: String, atlasName: String, ensemblName: String)
 
-object GenePropertyName {
+object BioentityPropertyName {
   def fromProperty(p: Property) = {
     p.name.split("\\.").toList match {
       case List("property", atlasName)
         =>  p.value
             .split(",").toList
-            .map{case ensemblName => GenePropertyName(p.species, atlasName, ensemblName)}
+            .map{case ensemblName => BioentityPropertyName(p.species, atlasName, ensemblName)}
       case _
         => List()
     }
   }
-}
 
-def genePropertyNames = {
-  properties
-  .flatMap {
-    GenePropertyName.fromProperty(_)
+  def all() = {
+    properties
+    .flatMap {
+      this.fromProperty(_)
+    }
   }
 }
 
-def allEnsemblGeneProperties(species: String) = {
-  genePropertyNames
+
+def allEnsemblBioentityProperties(species: String) = {
+  BioentityPropertyName.all()
   .filter(_.species == species)
   .map(_.ensemblName)
   .toSet

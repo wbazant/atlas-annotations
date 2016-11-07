@@ -1,0 +1,18 @@
+The annotation script failed, Maria wanted to do just the annotation so she copied that part of the script to its own directory.
+
+It submits jobs to LSF and writes to the data processing directory, and dumps out and error files there. It clears out the previous ones.
+
+What were to happen if the data processing directory for an experiment was gone?
+The configuration.xml and factors.xml are the most important, because you can regenerate everything from there. Seeing what happened to an experiment would be very nice.
+
+Idea: what if configuration.xml and factors.xml were tracked through a git repository?
+
+Imagine the experiment processing directory is a git repo, tracking configuration.xml and factors.xml.
+
+Jobs list the commit hash so you know up to which point stuff needs to be reprocessed.
+
+Job setup
+Dependency- e.g. experiment directory, Ensembl
+Verify if it's good to proceed with this job
+How to do job
+Verify that the job is done

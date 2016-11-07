@@ -115,6 +115,7 @@ object Attribute {
 }
 
 /*
+e.g.
 Attribute("ensembl_gene_id", "Ensembl Gene ID/ Ensembl Stable ID of the Gene", "feature_page", "btaurus_gene_ensembl__gene__main", "stable_id_1023"),
 Attribute("ensembl_transcript_id", "Ensembl Transcript ID/ Ensembl Stable ID of the Transcript", "feature_page", "btaurus_gene_ensembl__transcript__main", "stable_id_1066"),
 */
@@ -137,7 +138,6 @@ def lookupAttributes(species:String) = {
   }
 }
 
-
 //replaces: curl -s -X GET "${url}type=attributes&dataset=${datasetName}" | awk '{print $1}' | sort | uniq > ${f}.ensemblproperties
 def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: String) = {
   lookupAttributes(species)
@@ -146,7 +146,7 @@ def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: S
     .map{_.propertyName}
     .toSet
   }.right.flatMap { case bioMartAttributes =>
-    (Annsrcs.allEnsemblGeneProperties(species) -- bioMartAttributes.toSet).toList match {
+    (Annsrcs.allEnsemblBioentityProperties(species) -- bioMartAttributes.toSet).toList match {
       case List()
         => Right(())
       case x
@@ -157,6 +157,7 @@ def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: S
 
 def validate() = {
   Combinators.doAll(validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes)(Combinators.speciesList())
+}
 
 
 
@@ -175,5 +176,43 @@ the other ones are properties
 url is not quite an url, just like, "ensembl"
 
 */
+
+//virtualSchemaName is not what I thought it is, I think!
+//bioMartRequest("ensembl","default", "btaurus_gene_ensembl",Map(), List("ensembl_gene_id", "go_id")).asString
+def bioMartRequest(
+  databaseName: String,
+  serverVirtualSchema: String,
+  datasetName: String,
+  filters: Map[String, String],
+  attributes: List[String]) = {
+    val query =
+      <Query
+        virtualSchemaName={serverVirtualSchema}
+        formatter="TSV"
+        header="1"
+        uniqueRows="1"
+        count="1">
+        <Dataset
+          name={datasetName}
+          interface="default">
+          {filters
+            .map {case (k,v) =>
+              <Filter name={k} value={v} />
+            }
+          }
+          {attributes
+           .map {case attr =>
+             <Attribute name={attr} />
+            }
+          }
+        </Dataset>
+      </Query>
+
+  request(databaseName, Map(("query","<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query>"+ query.toString))
+  )
+}
+
+
+
 
 def fetchProperties(url: String, serverVirtualSchema: String, datasetName: String, ensemblBioentityType: String, ensemblProperty: String, chromosomeName: String) = ""
