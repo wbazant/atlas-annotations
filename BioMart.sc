@@ -3,6 +3,7 @@ import scalaj.http._
 import scala.xml.XML
 import scala.util.{Try, Success, Failure}
 
+import $file.Combinators
 import $file.Annsrcs
 
 
@@ -136,6 +137,7 @@ def lookupAttributes(species:String) = {
   }
 }
 
+
 //replaces: curl -s -X GET "${url}type=attributes&dataset=${datasetName}" | awk '{print $1}' | sort | uniq > ${f}.ensemblproperties
 def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: String) = {
   lookupAttributes(species)
@@ -152,6 +154,9 @@ def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: S
     }
   }
 }
+
+def validate() = {
+  Combinators.doAll(validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes)(Combinators.speciesList())
 
 
 

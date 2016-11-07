@@ -11,7 +11,7 @@ sql"show databases like 'aedes_aegypti_core_55_1d'".map(rs=> rs.toMap.values.map
 sql"select * from information_schema.columns where table_schema = 'aedes_aegypti_core_55_1d' and table_name = 'gene'".map(_.toMap.get("COLUMN_NAME")).list.apply()
 
 
-def databasesForDbName(mySqlDbName: String,version:String = "%") =
+def databasesForDbName(mySqlDbName: String,version:String = "%")(implicit session: DBSession) =
   sql"show databases like ${mySqlDbName+"\\_core\\_"+version+"\\_%"}"
   .map(rs=> rs.toMap.values.map(_.toString))
   .list.apply()
