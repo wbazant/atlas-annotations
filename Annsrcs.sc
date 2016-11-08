@@ -94,6 +94,14 @@ def allEnsemblBioentityProperties(species: String) = {
   .toSet
 }
 
+def allEnsemblArrayDesigns(species: String) = {
+  BioentityPropertyName.all()
+  .filter(_.species == species)
+  .filter(isAboutArrayDesign(_))
+  .map(_.ensemblName)
+  .toSet
+}
+
 def isAboutArrayDesign(p: Property) = p.name.contains("arrayDesign")
 
 val allSpecies = readProperties(annsrcsPath).map(_.species).toSet

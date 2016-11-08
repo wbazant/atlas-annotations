@@ -4,6 +4,7 @@ import scala.xml.XML
 import scala.util.{Try, Success, Failure}
 
 import $file.Combinators
+import Combinators.Species
 import $file.Annsrcs
 
 
@@ -31,7 +32,7 @@ def getAsXml(request: HttpRequest): Either[String, xml.Elem] = {
   }
 }
 
-def registryRequest(species: String) = {
+def registryRequest(species: Species) = {
   Annsrcs.getValue(species, "databaseName")
   .right.map {
     case (databaseName)
@@ -40,12 +41,12 @@ def registryRequest(species: String) = {
 }
 
 
-def availableMarts(responseXml: xml.Elem) = {
+def availableMartsAndTheirSchemas(responseXml: xml.Elem) = {
   (responseXml \\ "MartURLLocation")
   .map{case x =>
-    (x.attribute("database"),x.attribute("name")) match {
-      case (Some(db),Some(name))
-        => Some((db.toString,name.toString))
+    (x.attribute("database"),x.attribute("serverVirtualSchema")) match {
+      case (Some(db),Some(serverVirtualSchema))
+        => Some((db.toString,serverVirtualSchema.toString))
       case _
         => None
     }
@@ -54,7 +55,7 @@ def availableMarts(responseXml: xml.Elem) = {
   .toMap
 }
 
-def lookupAvailableMarts(species: String) : Either[String, Map[String, String]] = {
+def lookupAvailableMartsAndTheirSchemas(species: Species) : Either[String, Map[String, String]] = {
   registryRequest(species)
   .right.map {
     case (req)
@@ -62,20 +63,20 @@ def lookupAvailableMarts(species: String) : Either[String, Map[String, String]] 
   }.joinRight
   .right.map {
     case xml
-      => availableMarts(xml)
+      => availableMartsAndTheirSchemas(xml)
   }
 }
 
-def lookupServerVirtualSchema(species: String) :Either[String,String]  = {
+def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
   Annsrcs.getValues(species, List("software.name", "software.version"))
   .right.map {
     case params => params match {
       case List(softwareName, softwareVersion)
-        => lookupAvailableMarts(species)
+        => lookupAvailableMartsAndTheirSchemas(species)
             .right.flatMap { case marts =>
               marts
               .get(s"${softwareName}_mart_${softwareVersion}")
-              .toRight(s"No good serverVirtualSchema for ${species}, available: ${marts.mkString(", ")}")
+              .toRight(s"Could not determine serverVirtualSchema for species ${species} because expected mart not found, available marts: ${marts.mkString(", ")}")
             }
       case x
         => Left(s"Unexpected: ${x}")
@@ -139,7 +140,7 @@ def lookupAttributes(species:String) = {
 }
 
 //replaces: curl -s -X GET "${url}type=attributes&dataset=${datasetName}" | awk '{print $1}' | sort | uniq > ${f}.ensemblproperties
-def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: String) = {
+def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: Species) = {
   lookupAttributes(species)
   .right.map {
     _
@@ -178,22 +179,54 @@ url is not quite an url, just like, "ensembl"
 */
 
 //virtualSchemaName is not what I thought it is, I think!
-//bioMartRequest("ensembl","default", "btaurus_gene_ensembl",Map(), List("ensembl_gene_id", "go_id")).asString
+//bioMartRequest(BiomartAuxiliaryInfo("ensembl","default", "btaurus_gene_ensembl"),Map(), List("ensembl_gene_id", "go_id")).asString
+
+case class BiomartAuxiliaryInfo(databaseName: String, serverVirtualSchema: String, datasetName: String)
+
+object BiomartAuxiliaryInfo {
+  def getMap(speciesKeys: Seq[Species]) = { //: Either[String, Map[Species, BiomartAuxiliaryInfo ]]
+    Combinators.combine(
+      speciesKeys
+      .map{ case species : Species =>
+        getForSpecies(species)
+        .right.map((species, _))
+      }
+    )
+    .right.map(_.toMap)
+    // speciesKeys
+    // .toSet
+    // .flatMap{ case species :Species => getFor(species).right.map((species, _))}
+  }
+
+  def getForSpecies(species: Species) = {
+    Annsrcs.getValues(species, List("databaseName", "datasetName"))
+    .right.flatMap {
+      case params => params match {
+        case List(databaseName, datasetName)
+          => lookupServerVirtualSchema(species)
+              .right.map{ case serverVirtualSchema =>
+                BiomartAuxiliaryInfo(databaseName,serverVirtualSchema, datasetName)
+              }
+        case x
+          => Left(s"Unexpected: ${x}")
+      }
+    }
+  }
+}
+
 def bioMartRequest(
-  databaseName: String,
-  serverVirtualSchema: String,
-  datasetName: String,
+  biomartAuxiliaryInfo : BiomartAuxiliaryInfo,
   filters: Map[String, String],
   attributes: List[String]) = {
     val query =
       <Query
-        virtualSchemaName={serverVirtualSchema}
+        virtualSchemaName={biomartAuxiliaryInfo.serverVirtualSchema}
         formatter="TSV"
         header="1"
         uniqueRows="1"
-        count="1">
+        count="0">
         <Dataset
-          name={datasetName}
+          name={biomartAuxiliaryInfo.datasetName}
           interface="default">
           {filters
             .map {case (k,v) =>
@@ -208,9 +241,25 @@ def bioMartRequest(
         </Dataset>
       </Query>
 
-  request(databaseName, Map(("query","<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query>"+ query.toString))
+  request(biomartAuxiliaryInfo.databaseName, Map(("query","<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query>"+ query.toString))
   )
 }
+
+def fetchFromBioMart(aux:Map[Species, BiomartAuxiliaryInfo])(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, String]= {
+  aux.get(species).map(Right(_))
+  .getOrElse(BiomartAuxiliaryInfo.getForSpecies(species))
+  .right.map{ case bioMartAuxiliaryInfo =>
+    bioMartRequest(bioMartAuxiliaryInfo, filters, attributes)
+  }
+  .right.map { case request =>
+    request.asString.body
+  }
+}
+
+def fetchFromBioMart(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, String] = {
+  fetchFromBioMart(Map[Species, BiomartAuxiliaryInfo]())(species, filters, attributes)
+}
+
 
 
 

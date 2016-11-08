@@ -1,44 +1,80 @@
 import $file.Annsrcs
+import $file.Combinators
+
 
 case class RetrieveAnnotationTask(species: String, filters: Map[String, String], attributes: List[String])
 
 
-def tasks(species: String) = {
+def retrieveAnnotationTasksForSpecies(species: String): List[List[RetrieveAnnotationTask]] = {
   val ensemblBioentityTypes = Map(
     "ensgene"->"ensembl_gene_id",
     "ensprotein"->"ensembl_peptide_id",
     "enstranscript"-> "ensembl_transcript_id")
 
-  val filters =
-    Annsrcs.getValue(species,"chromosomeName")
-    .right.map(_.split(",").toList) match {
-    case Right(chromosomes)
-      => {
-        chromosomes
-        .map { case chromosome =>
-          Map("chromosomeName"->chromosome)
-        }
+  val pairs =
+    ensemblBioentityTypes.values.flatMap{case bioentityType =>
+      Annsrcs.allEnsemblBioentityProperties(species)
+      .map{case bioentityProperty =>
+        (bioentityType, bioentityProperty)
       }
-    case _
-      => List(Map[String,String]())
-  }
-  for {
-      bioentityType <- ensemblBioentityTypes.values
-      filter <- filters
-      propertyName<- Annsrcs.allEnsemblBioentityProperties(species)
-      if( bioentityType!=propertyName)
-  } yield {
-    RetrieveAnnotationTask(species, filter, List(bioentityType, propertyName))
-  }
+    }
+    .filter{case (bioentityType, propertyName) =>
+      bioentityType != propertyName
+    }
+    .toList
+
+  val shards =
+    Annsrcs.getValue(species,"chromosomeName")
+    .right.map(_.split(",").toList.map(Map("chromosome_name"->_)))
+    left.map{missingChromosome => Map[String,String]()}
+    .merge
+
+  val retrieveEnsemblPropertiesTasks =
+    pairs.map {case (bioentityType, propertyName) =>
+      shards.map {case shard =>
+        RetrieveAnnotationTask(species, shard, List(bioentityType, propertyName))
+      }
+    }
+
+  val retrieveArrayDesignsTasks =
+    Annsrcs.allEnsemblArrayDesigns(species)
+    .map(("ensembl_gene_id", _))
+    .map {case (bioentityType, propertyName) =>
+      shards.map {case shard =>
+        RetrieveAnnotationTask(species, shard, List(bioentityType, propertyName))
+      }
+    }
+}
+
+def retrieveAnnotationTasks() = {
+  Combinators.speciesList()
+  .map(retrieveAnnotationTasksForSpecies)
+  .flatten
+}
+/*
+def ensemblUpdates: Future[Nothing] = {
+  //s
 }
 
 
-/*
-types=ensgene,enstranscript,ensprotein
-property.description=description
-property.embl=embl
-property.ensfamily=family
-property.ensfamily_description=family_description
-property.ensgene=ensembl_gene_id
-property.ensprotein=ensembl_peptide_id
+
+trait OperatesOnFiles {
+  def filesBefore: List[Path]
+  def target: Path
+  def filesConsumed: List[Path]
+
+  def isDone: Boolean = {
+    filesBefore()
+    .filter{filesConsumed().contains(_)}
+    .map{_.exists()}
+    .foldRight(target().exists)(_||_)
+  }
+
+  def canStart: Boolean = {
+    filesBefore()
+    .map{_.exists()}
+    .foldRight(true)(_||_)
+  }
+}
+
 */
