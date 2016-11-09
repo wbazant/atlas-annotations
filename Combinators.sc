@@ -1,4 +1,3 @@
-import $file.Annsrcs
 
 /*
 This is just a doodle of how to combine results.
@@ -27,10 +26,6 @@ def combine[T](data: Seq[Either[String,T]]) = {
     case (strings, _) => Left(for(Left(s) <- strings) yield s)
   }
 }
-
-type Species = String
-
-def speciesList() : Seq[Species] = ammonite.ops.ls(Annsrcs.annsrcsPath).map(_.segments.last)
 
 /*
 A module:

@@ -4,8 +4,11 @@ import scala.xml.XML
 import scala.util.{Try, Success, Failure}
 
 import $file.Combinators
-import Combinators.Species
-import $file.Annsrcs
+import $file.property.Species
+import Species._
+import $file.property.AnnotationSource
+import $file.property.AtlasProperty
+
 
 
 def request(databaseName: String,properties: Map[String, String]) : HttpRequest = {
@@ -33,7 +36,7 @@ def getAsXml(request: HttpRequest): Either[String, xml.Elem] = {
 }
 
 def registryRequest(species: Species) = {
-  Annsrcs.getValue(species, "databaseName")
+  AnnotationSource.getValue(species, "databaseName")
   .right.map {
     case (databaseName)
       => request(databaseName, Map("type"->"registry"))
@@ -68,7 +71,7 @@ def lookupAvailableMartsAndTheirSchemas(species: Species) : Either[String, Map[S
 }
 
 def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
-  Annsrcs.getValues(species, List("software.name", "software.version"))
+  AnnotationSource.getValues(species, List("software.name", "software.version"))
   .right.map {
     case params => params match {
       case List(softwareName, softwareVersion)
@@ -86,7 +89,7 @@ def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
 
 //TODO: databaseName and datasetName might be per kingdom (metazoa,fungi, etc.)
 def attributesRequest(species:String) = {
-  Annsrcs.getValues(species, List("databaseName", "datasetName"))
+  AnnotationSource.getValues(species, List("databaseName", "datasetName"))
   .right.flatMap {
     case params => params match {
       case List(databaseName, datasetName)
@@ -147,7 +150,7 @@ def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: S
     .map{_.propertyName}
     .toSet
   }.right.flatMap { case bioMartAttributes =>
-    (Annsrcs.allEnsemblBioentityProperties(species) -- bioMartAttributes.toSet).toList match {
+    (AtlasProperty.allEnsemblPropertiesForSpecies(species) -- bioMartAttributes.toSet).toList match {
       case List()
         => Right(())
       case x
@@ -157,7 +160,7 @@ def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: S
 }
 
 def validate() = {
-  Combinators.doAll(validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes)(Combinators.speciesList())
+  Combinators.doAll(validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes)(Species.allSpecies())
 }
 
 
@@ -199,7 +202,7 @@ object BiomartAuxiliaryInfo {
   }
 
   def getForSpecies(species: Species) = {
-    Annsrcs.getValues(species, List("databaseName", "datasetName"))
+    AnnotationSource.getValues(species, List("databaseName", "datasetName"))
     .right.flatMap {
       case params => params match {
         case List(databaseName, datasetName)
