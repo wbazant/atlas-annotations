@@ -1,15 +1,18 @@
 import $file.AnnotationSource
 
-sealed abstract class AtlasProperty(val species: String)
+import $file.Species
+import Species.Species
 
-case class AtlasBioentityProperty(override val species: String, bioentityType: BioentityType, atlasName: String) extends AtlasProperty(species)
+sealed abstract class AtlasProperty(val species: Species, val atlasName: String)
+
+case class AtlasBioentityProperty(override val species: Species, bioentityType: BioentityType, override val atlasName: String) extends AtlasProperty(species,atlasName)
 
 sealed abstract class BioentityType(val ensemblName: String)
 case object GENE extends BioentityType("ensembl_gene_id")
 case object TRANSCRIPT extends BioentityType("ensembl_transcript_id")
 case object PROTEIN extends BioentityType("ensembl_peptide_id")
 
-case class AtlasArrayDesign(override val species: String, atlasName: String) extends AtlasProperty(species)
+case class AtlasArrayDesign(override val species: Species,override val atlasName: String) extends AtlasProperty(species,atlasName)
 
 def getMappingWithEnsemblProperties = {
   AnnotationSource.properties
@@ -35,6 +38,7 @@ def getMappingWithEnsemblProperties = {
         => Map()
     }
   }.reduceLeft(_ ++ _)
+
 }
 
 def allEnsemblPropertiesForSpecies(species:String) = {

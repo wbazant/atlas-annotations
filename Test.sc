@@ -3,6 +3,12 @@ import $file.BioMart
 import $file.Retrieve
 import scala.util.Random
 
+import $file.property.AtlasProperty
+import AtlasProperty._
+
+val (atlasBioentityProperty, ensemblProperties)= (new AtlasBioentityProperty("bos_tauris", GENE, "interproterm"),List("interpro_description"))
+
+
 def testTasks()= {
   Combinators.speciesList()
   .flatMap{case species =>

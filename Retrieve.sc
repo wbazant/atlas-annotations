@@ -1,80 +1,55 @@
-import $file.Annsrcs
-import $file.Combinators
+import $file.property.AtlasProperty
+import AtlasProperty._
+import $file.property.AnnotationSource
+import $file.Paths
 
+type BioMartQuerySpecification = (Map[String, String],List[String]) //filters and attributes
+case class BioMartTask(species: String, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path)
 
-case class RetrieveAnnotationTask(species: String, filters: Map[String, String], attributes: List[String])
+def ensemblNameOfReferenceColumn(atlasProperty: AtlasProperty) = {
+  atlasProperty match {
+    case AtlasBioentityProperty(species, GENE, atlasName)
+      => "ensembl_gene_id"
+    case AtlasBioentityProperty(species, TRANSCRIPT, atlasName)
+      => "ensembl_peptide_id"
+    case AtlasBioentityProperty(species, PROTEIN, atlasName)
+      => "ensembl_transcript_id"
+    case AtlasArrayDesign(species, atlasName)
+      => "ensembl_gene_id"
+  }
+}
 
-
-def retrieveAnnotationTasksForSpecies(species: String): List[List[RetrieveAnnotationTask]] = {
-  val ensemblBioentityTypes = Map(
-    "ensgene"->"ensembl_gene_id",
-    "ensprotein"->"ensembl_peptide_id",
-    "enstranscript"-> "ensembl_transcript_id")
-
-  val pairs =
-    ensemblBioentityTypes.values.flatMap{case bioentityType =>
-      Annsrcs.allEnsemblBioentityProperties(species)
-      .map{case bioentityProperty =>
-        (bioentityType, bioentityProperty)
-      }
-    }
-    .filter{case (bioentityType, propertyName) =>
-      bioentityType != propertyName
-    }
-    .toList
-
+def queriesForAtlasProperty(atlasProperty: AtlasProperty, ensemblProperties : List[String]) = {
   val shards =
-    Annsrcs.getValue(species,"chromosomeName")
-    .right.map(_.split(",").toList.map(Map("chromosome_name"->_)))
-    left.map{missingChromosome => Map[String,String]()}
-    .merge
+      AnnotationSource.getValue(atlasProperty.species,"chromosomeName")
+      .right.map(_.split(",").toList.map{case chromosome => Map("chromosome_name"->chromosome)})
+      .left.map{missingChromosome => List(Map[String,String]())}
+      .merge
 
-  val retrieveEnsemblPropertiesTasks =
-    pairs.map {case (bioentityType, propertyName) =>
-      shards.map {case shard =>
-        RetrieveAnnotationTask(species, shard, List(bioentityType, propertyName))
-      }
-    }
+  ensemblProperties
+  .flatMap{case ensemblName =>
+    val attributes =
+      List(
+        ensemblNameOfReferenceColumn(atlasProperty)
+        ,ensemblName
+      )
 
-  val retrieveArrayDesignsTasks =
-    Annsrcs.allEnsemblArrayDesigns(species)
-    .map(("ensembl_gene_id", _))
-    .map {case (bioentityType, propertyName) =>
-      shards.map {case shard =>
-        RetrieveAnnotationTask(species, shard, List(bioentityType, propertyName))
-      }
-    }
-}
-
-def retrieveAnnotationTasks() = {
-  Combinators.speciesList()
-  .map(retrieveAnnotationTasksForSpecies)
-  .flatten
-}
-/*
-def ensemblUpdates: Future[Nothing] = {
-  //s
-}
-
-
-
-trait OperatesOnFiles {
-  def filesBefore: List[Path]
-  def target: Path
-  def filesConsumed: List[Path]
-
-  def isDone: Boolean = {
-    filesBefore()
-    .filter{filesConsumed().contains(_)}
-    .map{_.exists()}
-    .foldRight(target().exists)(_||_)
-  }
-
-  def canStart: Boolean = {
-    filesBefore()
-    .map{_.exists()}
-    .foldRight(true)(_||_)
+    shards.map((_,attributes))
   }
 }
 
-*/
+def retrievalPlanForAtlasProperty(atlasProperty: AtlasProperty, ensemblProperties : List[String]) = {
+  BioMartTask(
+    atlasProperty.species,
+    queriesForAtlasProperty(atlasProperty, ensemblProperties),
+    Paths.destinationFor(atlasProperty)
+  )
+}
+
+
+def allTasks = {
+  AtlasProperty.getMappingWithEnsemblProperties
+  .map{ case (atlasProperty, ensemblProperties) =>
+    retrievalPlanForAtlasProperty(atlasProperty, ensemblProperties)
+  }
+}

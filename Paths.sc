@@ -1,3 +1,28 @@
+import $file.property.AtlasProperty
+import AtlasProperty._
+
+import ammonite.ops._
+
+val cwd = pwd
+val ATLAS_PROD = cwd / "ATLAS_PROD_FAKE"
+
+
+
+def destinationFor(atlasProperty: AtlasProperty) = {
+  val middleBit =
+    atlasProperty match {
+      case AtlasBioentityProperty(species, GENE, atlasName)
+        => ".ensgene."
+      case AtlasBioentityProperty(species, TRANSCRIPT, atlasName)
+        => ".enstranscript."
+      case AtlasBioentityProperty(species, PROTEIN, atlasName)
+        => ".ensprotein."
+      case AtlasArrayDesign(species, atlasName)
+        => "."
+    }
+  ATLAS_PROD / "bioentity_properties" / "ensembl" / s"${atlasProperty.species}${middleBit}${atlasProperty.atlasName}.tsv"
+}
+
 /*
 
 The files need to go somewhere.
@@ -30,9 +55,8 @@ bioentity_properties_out/wbps
 bioentity_properties_out/go
 bioentity_properties_out/interpro
 bioentity_properties_out/reactome
+bioentity_properties_out/mirbase
 
-
-go
 
 
 
