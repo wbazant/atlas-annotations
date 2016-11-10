@@ -3,8 +3,7 @@ import AtlasProperty._
 
 import ammonite.ops._
 
-val cwd = pwd
-val ATLAS_PROD = cwd / "ATLAS_PROD_FAKE"
+val ATLAS_PROD = pwd / up /  "ATLAS_PROD_FAKE"
 
 
 
