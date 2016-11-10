@@ -5,7 +5,9 @@ import ammonite.ops._
 
 val ATLAS_PROD = pwd / up /  "ATLAS_PROD_FAKE"
 
-
+def adaptDestinationForFailedResult(destination:Path) = {
+  destination/ up / (destination.last+".partial")
+}
 
 def destinationFor(atlasProperty: AtlasProperty) = {
   val middleBit =

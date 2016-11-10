@@ -225,7 +225,7 @@ def bioMartRequest(
       <Query
         virtualSchemaName={biomartAuxiliaryInfo.serverVirtualSchema}
         formatter="TSV"
-        header="1"
+        header="0"
         uniqueRows="1"
         count="0">
         <Dataset
@@ -248,23 +248,17 @@ def bioMartRequest(
   )
 }
 
-def fetchFromBioMart(aux:Map[Species, BiomartAuxiliaryInfo])(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, String]= {
+def fetchFromBioMart(aux:Map[Species, BiomartAuxiliaryInfo])(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, Array[String]]= {
   aux.get(species).map(Right(_))
   .getOrElse(BiomartAuxiliaryInfo.getForSpecies(species))
   .right.map{ case bioMartAuxiliaryInfo =>
     bioMartRequest(bioMartAuxiliaryInfo, filters, attributes)
   }
   .right.map { case request =>
-    request.asString.body
+    request.asString.body.split('\n')
   }
 }
 
-def fetchFromBioMart(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, String] = {
+def fetchFromBioMart(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, Array[String]] = {
   fetchFromBioMart(Map[Species, BiomartAuxiliaryInfo]())(species, filters, attributes)
 }
-
-
-
-
-
-def fetchProperties(url: String, serverVirtualSchema: String, datasetName: String, ensemblBioentityType: String, ensemblProperty: String, chromosomeName: String) = ""

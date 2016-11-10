@@ -1,18 +1,18 @@
-import $file.Combinators
-import $file.BioMart
-import $file.Retrieve
+import $file.src.Combinators
+import $file.src.BioMart
+import $file.src.Tasks
 import scala.util.Random
 
-import $file.property.AtlasProperty
+import $file.src.property.AtlasProperty
 import AtlasProperty._
 
-val (atlasBioentityProperty, ensemblProperties)= (new AtlasBioentityProperty("bos_tauris", GENE, "interproterm"),List("interpro_description"))
+val (atlasBioentityProperty, ensemblProperties)= (new AtlasBioentityProperty("bos_taurus", GENE, "interproterm"),List("interpro_description"))
 
 
 def testTasks()= {
   Combinators.speciesList()
   .flatMap{case species =>
-    Random.shuffle(Retrieve.retrieveAnnotationTasksForSpecies(species).flatten).headOption
+    Random.shuffle(Tasks.retrieveAnnotationTasksForSpecies(species).flatten).headOption
   }
 }
 
@@ -20,6 +20,8 @@ def out = testTasks().map{ case task =>
   (task, BioMart.fetchFromBioMart(task.species, task.filters, task.attributes))
 }
 
+import $file.src.BioMart
+BioMart.fetchFromBioMart("bos_taurus", Map(), List("ensembl_gene_id", "interpro_description"))
 /*
 {
   Combinators.speciesList()
