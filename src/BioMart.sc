@@ -9,8 +9,6 @@ import Species._
 import $file.property.AnnotationSource
 import $file.property.AtlasProperty
 
-
-
 def request(databaseName: String,properties: Map[String, String]) : HttpRequest = {
   val base = databaseName match {
     case "metazoa" => "http://metazoa.ensembl.org"
@@ -70,6 +68,7 @@ def lookupAvailableMartsAndTheirSchemas(species: Species) : Either[String, Map[S
   }
 }
 
+//TODO this is a very annoying way of finding out you're not using up to date versions of Ensembl Plants
 def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
   AnnotationSource.getValues(species, List("software.name", "software.version"))
   .right.map {
@@ -87,7 +86,6 @@ def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
   }.joinRight
 }
 
-//TODO: databaseName and datasetName might be per kingdom (metazoa,fungi, etc.)
 def attributesRequest(species:String) = {
   AnnotationSource.getValues(species, List("databaseName", "datasetName"))
   .right.flatMap {
@@ -120,8 +118,7 @@ object Attribute {
 
 /*
 e.g.
-Attribute("ensembl_gene_id", "Ensembl Gene ID/ Ensembl Stable ID of the Gene", "feature_page", "btaurus_gene_ensembl__gene__main", "stable_id_1023"),
-Attribute("ensembl_transcript_id", "Ensembl Transcript ID/ Ensembl Stable ID of the Transcript", "feature_page", "btaurus_gene_ensembl__transcript__main", "stable_id_1066"),
+Right(Attribute("ensembl_gene_id", "Ensembl Gene ID/ Ensembl Stable ID of the Gene", "feature_page", "btaurus_gene_ensembl__gene__main", "stable_id_1023"))
 */
 def lookupAttributes(species:String) = {
   attributesRequest(species)
@@ -142,52 +139,10 @@ def lookupAttributes(species:String) = {
   }
 }
 
-//replaces: curl -s -X GET "${url}type=attributes&dataset=${datasetName}" | awk '{print $1}' | sort | uniq > ${f}.ensemblproperties
-def validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes(species: Species) = {
-  lookupAttributes(species)
-  .right.map {
-    _
-    .map{_.propertyName}
-    .toSet
-  }.right.flatMap { case bioMartAttributes =>
-    (AtlasProperty.allEnsemblPropertiesForSpecies(species) -- bioMartAttributes.toSet).toList match {
-      case List()
-        => Right(())
-      case x
-        => Left(s"Properties in our config for species ${species} not found as BioMart attributes: ${x.mkString(", ")}")
-    }
-  }
-}
-
-def validate() = {
-  Combinators.doAll(validateEnsemblPropertiesInOurConfigCorrespondToBioMartAttributes)(Species.allSpecies())
-}
-
-
-
-
-
-
-//ensembl_gene_id	Ensembl Gene ID	Ensembl Stable ID of the Gene	feature_page	html,txt,csv,tsv,xls	btaurus_gene_ensembl__gene__main	stable_id_1023
-
-//Set("feature_page", "sequences", "snp", "structure", "homologs", "snp_somatic")
-
-//    curl -s -X GET "${url}type=attributes&dataset=${datasetName}" | awk '{print $1}' | sort | uniq > ${f}.ensemblproperties
-
-/*
-serverVirtualSchema you need to look up
-the other ones are properties
-url is not quite an url, just like, "ensembl"
-
-*/
-
-//virtualSchemaName is not what I thought it is, I think!
-//bioMartRequest(BiomartAuxiliaryInfo("ensembl","default", "btaurus_gene_ensembl"),Map(), List("ensembl_gene_id", "go_id")).asString
-
 case class BiomartAuxiliaryInfo(databaseName: String, serverVirtualSchema: String, datasetName: String)
 
 object BiomartAuxiliaryInfo {
-  def getMap(speciesKeys: Seq[Species]) = { //: Either[String, Map[Species, BiomartAuxiliaryInfo ]]
+  def getMap(speciesKeys: Seq[Species]) = {
     Combinators.combine(
       speciesKeys
       .map{ case species : Species =>
@@ -196,9 +151,6 @@ object BiomartAuxiliaryInfo {
       }
     )
     .right.map(_.toMap)
-    // speciesKeys
-    // .toSet
-    // .flatMap{ case species :Species => getFor(species).right.map((species, _))}
   }
 
   def getForSpecies(species: Species) = {
