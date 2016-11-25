@@ -1,7 +1,7 @@
 import ammonite.ops._
 
 val annsrcsPath: Path = pwd/up/"atlasprod"/"bioentity_annotations"/"ensembl"/"annsrcs"
-val wormsAnnsrcsPath: Path = pwd/up/"atlasprod"/"bioentity_annotations"/"wbps"/"annsrcs"
+val wbpsAnnsrcsPath: Path = pwd/up/"atlasprod"/"bioentity_annotations"/"wbps"/"annsrcs"
 
 case class Property(species: String, name: String, value: String){
   def isAboutArrayDesign = name.contains("arrayDesign")
@@ -32,9 +32,10 @@ def readProperties(annsrcsPath: Path) = {
 }
 
 val properties = readProperties(annsrcsPath)
+val wbpsProperties = readProperties(wbpsAnnsrcsPath)
 
-def getValue(species: String, propertyName: String) : Either[String, String] = {
-  properties
+def getValue(source: Seq[Property] = properties)(species: String, propertyName: String) : Either[String, String] = {
+  source
   .filter {
     case p =>
       p.species == species && p.name == propertyName
@@ -48,8 +49,13 @@ def getValue(species: String, propertyName: String) : Either[String, String] = {
   }
 }
 
-def getValues[T<:Seq[String]](species: String, propertyNames: T)= {
-  val m = properties
+def getValue(species: String, propertyName: String) : Either[String, String] = {
+  if (wbpsProperties.exists(_.species == species)) getValue(wbpsProperties)(species, propertyName)
+  else getValue()(species, propertyName)
+}
+
+def getValues[T<:Seq[String]](source: Seq[Property] = properties)(species: String, propertyNames: T) : Either[String, Seq[String]] = {
+  val m = source
   .filter {
     case p =>
       p.species == species && propertyNames.contains(p.name)
@@ -64,4 +70,9 @@ def getValues[T<:Seq[String]](species: String, propertyNames: T)= {
   } else {
     Left(s"Properties ${(propertyNames.toSet -- m.keySet).mkString(", ")} missing for species ${species}")
   }
+}
+
+def getValues[T<:Seq[String]](species: String, propertyNames: T)  : Either[String, Seq[String]] = {
+  if (wbpsProperties.exists(_.species == species)) getValues(wbpsProperties)(species, propertyNames)
+  else getValues()(species, propertyNames)
 }
