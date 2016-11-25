@@ -1,7 +1,7 @@
 import ammonite.ops._
 
 val annsrcsPath: Path = pwd/up/"atlasprod"/"bioentity_annotations"/"ensembl"/"annsrcs"
-
+val wormsAnnsrcsPath: Path = pwd/up/"atlasprod"/"bioentity_annotations"/"wbps"/"annsrcs"
 
 case class Property(species: String, name: String, value: String){
   def isAboutArrayDesign = name.contains("arrayDesign")
