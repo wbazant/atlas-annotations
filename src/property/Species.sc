@@ -3,7 +3,10 @@ import $file.AnnotationSource
 
 type Species = String
 
-def allSpecies() : Seq[Species] = ammonite.ops.ls(AnnotationSource.annsrcsPath).map(_.segments.last)
+def allSpecies() : Seq[Species] = {
+  (ammonite.ops.ls(AnnotationSource.annsrcsPath).toList ::: ammonite.ops.ls(AnnotationSource.wbpsAnnsrcsPath).toList)
+  .map(_.segments.last).distinct
+}
 
 
 /*
