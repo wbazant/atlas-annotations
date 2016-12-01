@@ -1,7 +1,8 @@
 import $file.Tasks
 import $file.BioMart
-import $file.property.Species
+import $file.^.property.Species
 import Species.Species
+import $file.^.util.Combinators
 
 import collection.mutable.{ HashMap, Set }
 

@@ -1,11 +1,9 @@
-import $file.property.AtlasProperty
+import $file.^.property.AtlasProperty
 import AtlasProperty._
-import $file.Directories
+import $file.^.Directories
 import Directories._
 
 import ammonite.ops._
-
-def scriptOutDestination(fileName: String) = OUT/ fileName
 
 def adaptDestinationForFailedResult(destination:Path) = {
   destination/ up / (destination.last+".partial")

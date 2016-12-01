@@ -1,6 +1,6 @@
-import $file.property.AtlasProperty
+import $file.^.property.AtlasProperty
 import AtlasProperty._
-import $file.property.AnnotationSource
+import $file.^.property.AnnotationSource
 import $file.Paths
 
 type BioMartQuerySpecification = (Map[String, String],List[String]) //filters and attributes

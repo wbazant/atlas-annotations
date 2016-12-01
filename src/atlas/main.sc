@@ -1,11 +1,11 @@
 import $file.AtlasSpecies
-import $file.^.Paths
+import $file.^.Directories
 
-val speciesJsonPath = Paths.scriptOutDestination("species.json")
+val speciesJsonPath = Directories.scriptOutDestination("species.json")
 if(speciesJsonPath.toNIO.toFile.exists){
-  val swp = Paths.scriptOutDestination("species.json.swp")
+  val swp = Directories.scriptOutDestination("species.json.swp")
   swp.toNIO.toFile.delete
   ammonite.ops.mv(speciesJsonPath, swp)
 }
 
-AtlasSpecies.dump(Paths.scriptOutDestination("species.json"))
+AtlasSpecies.dump(Directories.scriptOutDestination("species.json"))

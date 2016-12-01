@@ -3,11 +3,11 @@ import scalaj.http._
 import scala.xml.XML
 import scala.util.{Try, Success, Failure}
 
-import $file.Combinators
-import $file.property.Species
+import $file.^.util.Combinators
+import $file.^.property.Species
 import Species._
-import $file.property.AnnotationSource
-import $file.property.AtlasProperty
+import $file.^.property.AnnotationSource
+import $file.^.property.AtlasProperty
 
 def request(databaseName: String,properties: Map[String, String]) : HttpRequest = {
   val base = databaseName match {
