@@ -9,13 +9,13 @@ import java.nio.charset.StandardCharsets
 
 case class AtlasSpecies(species: String, defaultQueryFactorType: String, kingdom: String, resources: List[(String, List[String])]) {
   val json =
-    ("atlasSpecies" -> ("name" -> this.species) ~
+    ("name" -> this.species) ~
     ("defaultQueryFactorType" -> this.defaultQueryFactorType) ~
     ("kingdom" -> this.kingdom) ~
     ("resources" ->
       this.resources.map { case (rType, rValues) =>
         (("type" -> rType) ~
-         ("url" -> rValues))}))
+         ("urls" -> rValues))})
 
   def toJson: String = pretty(render(json))
 }
