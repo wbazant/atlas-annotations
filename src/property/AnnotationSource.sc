@@ -1,7 +1,6 @@
 import ammonite.ops._
-
-val annsrcsPath: Path = pwd/up/"atlasprod"/"bioentity_annotations"/"ensembl"/"annsrcs"
-val wbpsAnnsrcsPath: Path = pwd/up/"atlasprod"/"bioentity_annotations"/"wbps"/"annsrcs"
+import $file.^.Directories
+import Directories.{annsrcsPath,wbpsAnnsrcsPath}
 
 case class Property(species: String, name: String, value: String){
   def isAboutArrayDesign = name.contains("arrayDesign")
@@ -31,8 +30,8 @@ def readProperties(annsrcsPath: Path) = {
   }
 }
 
-val properties = readProperties(annsrcsPath)
-val wbpsProperties = readProperties(wbpsAnnsrcsPath)
+lazy val properties = readProperties(annsrcsPath)
+lazy val wbpsProperties = readProperties(wbpsAnnsrcsPath)
 
 def getValue(source: Seq[Property] = properties)(species: String, propertyName: String) : Either[String, String] = {
   source

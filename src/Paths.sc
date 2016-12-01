@@ -1,9 +1,11 @@
 import $file.property.AtlasProperty
 import AtlasProperty._
+import $file.Directories
+import Directories._
 
 import ammonite.ops._
 
-val ATLAS_PROD = pwd / up /  "ATLAS_PROD_FAKE"
+def scriptOutDestination(fileName: String) = OUT/ fileName
 
 def adaptDestinationForFailedResult(destination:Path) = {
   destination/ up / (destination.last+".partial")
