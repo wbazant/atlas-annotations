@@ -31,7 +31,7 @@ object AtlasSpeciesFactory {
         "plants" -> "plants")
 
   val resourcesMap = 
-    Map("genome browser" ->  Map("ensembl" -> List("http://www.ensembl.org/"),
+    Map("genome_  browser" ->  Map("ensembl" -> List("http://www.ensembl.org/"),
                                   "metazoa" -> List("http://metazoa.ensembl.org/"),
                                   "fungi" -> List("http://fungi.ensembl.org/"),
                                   "parasite" -> List("http://parasite.wormbase.org/"),
@@ -59,4 +59,7 @@ object AtlasSpeciesFactory {
   val filePath = "species.json"
   val str = "[" + allSpeciesJson.mkString(",\n") + "]"
   Files.write(Paths.get(filePath), str.getBytes(StandardCharsets.UTF_8))
+
+  rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species.json" 
+  cp (pwd/"species.json", pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species.json")
 // }
