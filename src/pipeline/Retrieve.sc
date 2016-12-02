@@ -81,22 +81,26 @@ def validate(tasks: Seq[Tasks.BioMartTask]) = {
 def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
     aux:Map[Species, BioMart.BiomartAuxiliaryInfo])
   (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
-  future {
-    performBioMartTask(aux, task) match {
-      case Right(msg)
-        => logOut(msg)
-      case Left(err)
-        => logErr(err)
+  if(task.seemsDone){
+    logOut(s"Task appears done, skipping: ${task}")
+  } else {
+    future {
+      performBioMartTask(aux, task) match {
+        case Right(msg)
+          => logOut(msg)
+        case Left(err)
+          => logErr(err)
+      }
+    } onFailure {
+      /*
+      this is not ideal because it gets submitted to a pool I think and might not happen for a while.
+      Anyway we do not expect this kind of failure.
+      */
+       case e => {
+         logErr(s"Fatal failure for task: {task}")
+         logErr(e)
+       }
     }
-  } onFailure {
-    /*
-    this is not ideal because it gets submitted to a pool I think and might not happen for a while.
-    Anyway we do not expect this kind of failure.
-    */
-     case e => {
-       logErr(s"Fatal failure for task: {task}")
-       logErr(e)
-     }
   }
 }
 
