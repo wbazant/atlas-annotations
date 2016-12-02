@@ -1,0 +1,3 @@
+I tried to run the pipeline and several array designs weren't found in biomart.
+
+I don't currently know what the process of picking correct array design is. To find out!

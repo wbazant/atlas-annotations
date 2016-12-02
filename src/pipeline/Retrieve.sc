@@ -73,7 +73,7 @@ def validate(tasks: Seq[Tasks.BioMartTask]) = {
         case List()
           => Right(())
         case x
-          => Left(s"Properties we wanted to request for species ${species} not found as BioMart attributes: ${x.mkString(", ")}")
+          => Left(s"Validation error, properties for species ${species} not found in BioMart as valid attributes: ${x.mkString(", ")}")
       }
     }
   }

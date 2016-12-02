@@ -5,5 +5,3 @@ organism=caenorhabditis elegans
 datasetName=celegans_eg_gene
 chromosomeName=I,II,III,IV,V,X,MtDNA
 property.ensgene=wormbase_gene
-arrayDesign.A-AFFY-60=affy_c_elegans
-
