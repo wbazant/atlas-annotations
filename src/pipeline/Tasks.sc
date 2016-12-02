@@ -6,6 +6,7 @@ import $file.Paths
 type BioMartQuerySpecification = (Map[String, String],List[String]) //filters and attributes
 case class BioMartTask(species: String, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path){
   def ensemblAttributesInvolved = queries.map(_._2).flatten.toSet
+  override def toString = s"BioMart task for ${species} : ${queries.size} queries, destination: ${destination}"
 }
 
 def ensemblNameOfReferenceColumn(atlasProperty: AtlasProperty) = {

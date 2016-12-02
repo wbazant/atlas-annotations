@@ -87,14 +87,21 @@ def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
     aux:Map[Species, BioMart.BiomartAuxiliaryInfo])
   (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
   future {
-    performBioMartTask(aux, task)
-  } onComplete {
-    case Success(Right(msg))
-      => logOut(msg)
-    case Success(Left(err))
-      => logErr(err)
-    case Failure(e)
-      => logErr(e)
+    performBioMartTask(aux, task) match {
+      case Right(msg)
+        => logOut(msg)
+      case Left(err)
+        => logErr(err)
+    }
+  } onFailure {
+    /*
+    this is not ideal because it gets submitted to a pool I think and might not happen for a while.
+    Anyway we do not expect this kind of failure.
+    */
+     case e => {
+       logErr(s"Fatal failure for task: {task}")
+       logErr(e)
+     }
   }
 }
 
@@ -118,10 +125,13 @@ def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
               for(task <- tasks) {
                 scheduleAndLogResultOfBioMartTask(logOut, logErr, auxiliaryInfo)(task)(ec)
               }
-              executorService.shutdown()
+              Thread.sleep(1000)
             }
           case Left(err)
-            => logErr("Failed retrieving auxiliary info: "+err)
+            => {
+              logErr("Failed retrieving auxiliary info:")
+              logErr(err)
+            }
         }
       }
     case Left(err)
