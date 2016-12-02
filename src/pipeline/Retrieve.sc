@@ -106,11 +106,13 @@ def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
   validate(tasks) match {
     case Right(_)
       => {
-        logOut(s"Successfully validated ${tasks.size} tasks")
+        logOut(s"Validated ${tasks.size} tasks")
         val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.species}.toSet.toSeq)
         aux match {
           case Right(auxiliaryInfo)
             => {
+              logOut(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
+
               val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
               val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
               for(task <- tasks) {
@@ -119,7 +121,7 @@ def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
               executorService.shutdown()
             }
           case Left(err)
-            => logErr(err)
+            => logErr("Failed retrieving auxiliary info: "+err)
         }
       }
     case Left(err)
