@@ -30,7 +30,7 @@ object AtlasSpeciesFactory {
         "plants" -> "plants")
 
   val resourcesMap =
-    Map("genome browser" ->  Map("ensembl" -> List("http://www.ensembl.org/"),
+    Map("genome_browser" ->  Map("ensembl" -> List("http://www.ensembl.org/"),
                                   "metazoa" -> List("http://metazoa.ensembl.org/"),
                                   "fungi" -> List("http://fungi.ensembl.org/"),
                                   "parasite" -> List("http://parasite.wormbase.org/"),
