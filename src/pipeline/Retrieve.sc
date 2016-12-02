@@ -39,19 +39,14 @@ def performBioMartTask(aux:Map[Species, BioMart.BiomartAuxiliaryInfo], task: Tas
   }
   val messageAboutTiming = s"Retrieved data for ${task} in ${(System.nanoTime - t0) / 1000000} ms"
 
-  val destination = if(errors.size == 0){
-    task.destination
-  } else {
-    Paths.adaptDestinationForFailedResult(task.destination)
-  }
-
-  if(!result.isEmpty){
-    ammonite.ops.write.over(destination,
+  Paths.writeResult(
+    destination = task.destination,
+    result =
       result.toStream
       .map{case(k,s) => k+"\t"+s.mkString("\t")+"\n"}
-      .sorted
-    )
-  }
+      .sorted,
+    hasErrors = errors.size > 0
+   )
 
   errors.toList match {
     case List()

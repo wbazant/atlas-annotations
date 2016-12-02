@@ -5,8 +5,14 @@ import Directories._
 
 import ammonite.ops._
 
-def adaptDestinationForFailedResult(destination:Path) = {
-  destination/ up / (destination.last+".partial")
+def writeResult(destination: Path, result: Stream[String], hasErrors: Boolean = false) = {
+  if(hasErrors) {
+    write.over(destination / up / (destination.last+".failed"), result)
+  } else {
+    val swp = destination/ up / (destination.last+".swp")
+    write.over(swp, result)
+    mv(swp, destination)
+  }
 }
 
 def destinationFor(atlasProperty: AtlasProperty) = {
