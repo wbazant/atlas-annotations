@@ -1,6 +1,8 @@
 import ammonite.ops._
 val ATLAS_PROD = pwd / up /  "ATLAS_PROD_FAKE"
 val OUT = pwd / up /  "out"
+val LOG = pwd / up /  "log"
+
 
 
 val annsrcsPath = ATLAS_PROD/"bioentity_annotations"/"ensembl"/"annsrcs"

@@ -3,6 +3,9 @@ import $file.BioMart
 import $file.^.property.Species
 import Species.Species
 import $file.^.util.Combinators
+import $file.Log
+import scala.concurrent._
+import scala.util.{Success, Failure}
 
 import collection.mutable.{ HashMap, Set }
 
@@ -78,30 +81,50 @@ def validate(tasks: Seq[Tasks.BioMartTask]) = {
     case (Nil,  _) => Right(())
     case (strings, _) => Left(for(Left(s) <- strings) yield s)
   }
+}
 
+def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
+    aux:Map[Species, BioMart.BiomartAuxiliaryInfo])
+  (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
+  future {
+    performBioMartTask(aux, task)
+  } onComplete {
+    case Success(Right(msg))
+      => logOut(msg)
+    case Success(Left(err))
+      => logErr(err)
+    case Failure(e)
+      => logErr(e)
+  }
 }
 
 //TODO: this should already be writing to logging streams - if it crashes the results are lost!
-def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
+def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
+  val logOut = Log.log(runId, "biomart")(_)
+  val logErr = Log.err(runId, "biomart")(_)
 
   validate(tasks) match {
     case Right(_)
       => {
-        BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.species}.toSet.toSeq)
-        .right.map{ case aux =>
-          Combinators.combine(
-            //parallelize here
-            tasks.map{case task =>
-
-              performBioMartTask(aux,task)
+        logOut(s"Successfully validated ${tasks.size} tasks")
+        val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.species}.toSet.toSeq)
+        aux match {
+          case Right(auxiliaryInfo)
+            => {
+              val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
+              val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
+              for(task <- tasks) {
+                scheduleAndLogResultOfBioMartTask(logOut, logErr, auxiliaryInfo)(task)(ec)
+              }
+              executorService.shutdown()
             }
-          )
+          case Left(err)
+            => logErr(err)
         }
       }
     case Left(err)
       => {
-        //You should probably log that validation didn't pass innit
-        Left(err)
+        logErr(err)
       }
   }
 }

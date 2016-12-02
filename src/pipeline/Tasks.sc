@@ -54,4 +54,5 @@ def allTasks = {
   .map{ case (atlasProperty, ensemblProperties) =>
     retrievalPlanForAtlasProperty(atlasProperty, ensemblProperties)
   }
+  .toSeq
 }
