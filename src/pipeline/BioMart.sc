@@ -3,11 +3,11 @@ import scalaj.http._
 import scala.xml.XML
 import scala.util.{Try, Success, Failure}
 
-import $file.Combinators
-import $file.property.Species
+import $file.^.util.Combinators
+import $file.^.property.Species
 import Species._
-import $file.property.AnnotationSource
-import $file.property.AtlasProperty
+import $file.^.property.AnnotationSource
+import $file.^.property.AtlasProperty
 
 def request(databaseName: String,properties: Map[String, String]) : HttpRequest = {
   val base = databaseName match {
@@ -69,18 +69,24 @@ def lookupAvailableMartsAndTheirSchemas(species: Species) : Either[String, Map[S
   }
 }
 
+def pickMostAppropriateMart(expectedMart: String)(marts: Map[String, String]) : Either[String, String] = {
+  val expected = marts.get(expectedMart)
+  val fallback = marts.filter(_._1.contains(expectedMart)).values.headOption
+  expected
+  .orElse(fallback)
+  .toRight(s"Could not determine serverVirtualSchema because expected mart ${expectedMart} not found, available marts: ${marts.mkString(", ")}")
+}
+
 //TODO this is a very annoying way of finding out you're not using up to date versions of Ensembl Plants
 def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
   AnnotationSource.getValues(species, List("software.name", "software.version"))
   .right.map {
     case params => params match {
       case List(softwareName, softwareVersion)
-        => lookupAvailableMartsAndTheirSchemas(species)
-            .right.flatMap { case marts =>
-              marts
-              .get(s"${softwareName}_mart_${softwareVersion}")
-              .toRight(s"Could not determine serverVirtualSchema for species ${species} because expected mart not found, available marts: ${marts.mkString(", ")}")
-            }
+        => {
+            lookupAvailableMartsAndTheirSchemas(species)
+              .right.flatMap(pickMostAppropriateMart(s"${softwareName}_mart_${softwareVersion}"))
+          }
       case x
         => Left(s"Unexpected: ${x}")
     }

@@ -1,7 +1,11 @@
 import $file.Tasks
 import $file.BioMart
-import $file.property.Species
+import $file.^.property.Species
 import Species.Species
+import $file.^.util.Combinators
+import $file.Log
+import scala.concurrent._
+import scala.util.{Success, Failure}
 
 import collection.mutable.{ HashMap, Set }
 
@@ -35,19 +39,14 @@ def performBioMartTask(aux:Map[Species, BioMart.BiomartAuxiliaryInfo], task: Tas
   }
   val messageAboutTiming = s"Retrieved data for ${task} in ${(System.nanoTime - t0) / 1000000} ms"
 
-  val destination = if(errors.size == 0){
-    task.destination
-  } else {
-    Paths.adaptDestinationForFailedResult(task.destination)
-  }
-
-  if(!result.isEmpty){
-    ammonite.ops.write.over(destination,
+  Paths.writeResult(
+    destination = task.destination,
+    result =
       result.toStream
       .map{case(k,s) => k+"\t"+s.mkString("\t")+"\n"}
-      .sorted
-    )
-  }
+      .sorted,
+    hasErrors = errors.size > 0
+   )
 
   errors.toList match {
     case List()
@@ -69,7 +68,7 @@ def validate(tasks: Seq[Tasks.BioMartTask]) = {
         case List()
           => Right(())
         case x
-          => Left(s"Properties we wanted to request for species ${species} not found as BioMart attributes: ${x.mkString(", ")}")
+          => Left(s"Validation error, properties for species ${species} not found in BioMart as valid attributes: ${x.mkString(", ")}")
       }
     }
   }
@@ -77,30 +76,66 @@ def validate(tasks: Seq[Tasks.BioMartTask]) = {
     case (Nil,  _) => Right(())
     case (strings, _) => Left(for(Left(s) <- strings) yield s)
   }
+}
 
+def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
+    aux:Map[Species, BioMart.BiomartAuxiliaryInfo])
+  (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
+  if(task.seemsDone){
+    logOut(s"Task appears done, skipping: ${task}")
+  } else {
+    future {
+      performBioMartTask(aux, task) match {
+        case Right(msg)
+          => logOut(msg)
+        case Left(err)
+          => logErr(err)
+      }
+    } onFailure {
+      /*
+      this is not ideal because it gets submitted to a pool I think and might not happen for a while.
+      Anyway we do not expect this kind of failure.
+      */
+       case e => {
+         logErr(s"Fatal failure for task: {task}")
+         logErr(e)
+       }
+    }
+  }
 }
 
 //TODO: this should already be writing to logging streams - if it crashes the results are lost!
-def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
+def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
+  val logOut = Log.log(runId, "biomart")(_)
+  val logErr = Log.err(runId, "biomart")(_)
 
   validate(tasks) match {
     case Right(_)
       => {
-        BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.species}.toSet.toSeq)
-        .right.map{ case aux =>
-          Combinators.combine(
-            //parallelize here
-            tasks.map{case task =>
+        logOut(s"Validated ${tasks.size} tasks")
+        val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.species}.toSet.toSeq)
+        aux match {
+          case Right(auxiliaryInfo)
+            => {
+              logOut(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
 
-              performBioMartTask(aux,task)
+              val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
+              val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
+              for(task <- tasks) {
+                scheduleAndLogResultOfBioMartTask(logOut, logErr, auxiliaryInfo)(task)(ec)
+              }
+              Thread.sleep(1000)
             }
-          )
+          case Left(err)
+            => {
+              logErr("Failed retrieving auxiliary info:")
+              logErr(err)
+            }
         }
       }
     case Left(err)
       => {
-        //You should probably log that validation didn't pass innit
-        Left(err)
+        logErr(err)
       }
   }
 }

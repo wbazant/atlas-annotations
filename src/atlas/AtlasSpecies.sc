@@ -2,8 +2,9 @@ import $ivy.`org.json4s:json4s-native_2.12:3.5.0`
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
-import $file.property.AnnotationSource
-import $file.property.Species
+import $file.^.property.AnnotationSource
+import $file.^.property.Species
+import $file.^.util.Combinators
 import java.nio.file.{Paths, Files}
 import java.nio.charset.StandardCharsets
 import ammonite.ops._
@@ -32,7 +33,7 @@ object AtlasSpeciesFactory {
         "parasite" -> "animals",
         "plants" -> "plants")
 
-  val resourcesMap = 
+  val resourcesMap =
     Map("genome_browser" ->  Map("ensembl" -> List("http://www.ensembl.org/"),
                                   "metazoa" -> List("http://metazoa.ensembl.org/"),
                                   "fungi" -> List("http://fungi.ensembl.org/"),
@@ -58,15 +59,27 @@ object AtlasSpeciesFactory {
 }
 
 // object Main extends App {
-  val allSpeciesJson = Species.allSpecies.map(AtlasSpeciesFactory.create(_).right.get.toJson)
+  // val allSpeciesJson = Species.allSpecies.map(AtlasSpeciesFactory.create(_).right.get.toJson)
 
-  val filePath = "species-properties.json"
-  val str = "[" + allSpeciesJson.mkString(",\n") + "]"
-  Files.write(Paths.get(filePath), str.getBytes(StandardCharsets.UTF_8))
-  println(s"${filePath} written successfully")
+  // val filePath = "species-properties.json"
+  // val str = "[" + allSpeciesJson.mkString(",\n") + "]"
+  // Files.write(Paths.get(filePath), str.getBytes(StandardCharsets.UTF_8))
+  // println(s"${filePath} written successfully")
 
-  val destPath = pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
-  rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json" 
-  cp (pwd/"species-properties.json", destPath)
-  println(s"${filePath} copied to ${destPath}")
+  // val destPath = pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
+  // rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json" 
+  // cp (pwd/"species-properties.json", destPath)
+  // println(s"${filePath} copied to ${destPath}")
 // }
+
+val destPath = pwd/up/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
+def dump(path: ammonite.ops.Path) = {
+  Combinators.combine(Species.allSpecies.map(AtlasSpeciesFactory.create))
+  .right.map(_.map(_.toJson).mkString(",\n"))
+  .right.map {
+    case txt => s"[${txt}]"} match {
+      case Right(res) => ammonite.ops.write(path, res)
+      case Left(err) => print(err)
+  }
+}
+

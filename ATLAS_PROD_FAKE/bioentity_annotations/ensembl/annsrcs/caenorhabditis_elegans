@@ -1,0 +1,7 @@
+software.name=metazoa
+software.version=33
+url=http://metazoa.ensembl.org/biomart/martservice?
+organism=caenorhabditis elegans
+datasetName=celegans_eg_gene
+chromosomeName=I,II,III,IV,V,X,MtDNA
+property.ensgene=wormbase_gene

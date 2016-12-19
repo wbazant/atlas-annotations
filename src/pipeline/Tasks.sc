@@ -1,11 +1,13 @@
-import $file.property.AtlasProperty
+import $file.^.property.AtlasProperty
 import AtlasProperty._
-import $file.property.AnnotationSource
+import $file.^.property.AnnotationSource
 import $file.Paths
 
 type BioMartQuerySpecification = (Map[String, String],List[String]) //filters and attributes
 case class BioMartTask(species: String, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path){
+  def seemsDone = destination.toNIO.toFile.exists
   def ensemblAttributesInvolved = queries.map(_._2).flatten.toSet
+  override def toString = s"BioMart task for ${species} : ${queries.size} queries, destination: ${destination}"
 }
 
 def ensemblNameOfReferenceColumn(atlasProperty: AtlasProperty) = {
@@ -54,4 +56,5 @@ def allTasks = {
   .map{ case (atlasProperty, ensemblProperties) =>
     retrievalPlanForAtlasProperty(atlasProperty, ensemblProperties)
   }
+  .toSeq
 }

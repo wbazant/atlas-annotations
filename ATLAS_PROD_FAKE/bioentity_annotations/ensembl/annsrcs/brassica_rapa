@@ -1,0 +1,22 @@
+software.name=plants
+software.version=33
+url=http://plants.ensembl.org/biomart/martservice?
+organism=brassica rapa
+databaseName=plants
+datasetName=brapa_eg_gene
+mySqlDbName=brassica_rapa
+mySqlDbUrl=mysql-eg-mirror.ebi.ac.uk:4157
+types=ensgene,enstranscript,ensprotein
+chromosomeName=A01,A02,A03,A04,A05,A06,A07,A08,A09,A10
+property.gene_biotype=gene_biotype
+property.description=description
+property.ensgene=ensembl_gene_id
+property.ensprotein=ensembl_peptide_id
+property.enstranscript=ensembl_transcript_id
+property.go=go_accession
+property.goterm=go_name_1006
+property.interpro=interpro_id
+property.interproterm=interpro_description
+property.symbol=external_gene_id
+property.uniprot=uniprot_sptrembl
+
