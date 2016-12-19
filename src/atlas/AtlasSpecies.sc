@@ -42,17 +42,16 @@ object AtlasSpeciesFactory {
     )
 
   def create(species: String): Either[String, AtlasSpecies] = {
-    AnnotationSource.getValues(species, List("databaseName", "mySqlDbName")) flatMap {
+    AnnotationSource.getValues(species, List("databaseName", "mySqlDbName"))
+    .right.map {
       case List(databaseName, mySqlDbName) => 
-        Right(
-          AtlasSpecies(
-            species.capitalize,
-            defaultQueryFactorTypesMap(databaseName),
-            kingdomMap(databaseName),
-            resourcesMap.toList.map {
-              case (key, values) => (key, values(databaseName).map(_ + mySqlDbName.capitalize))
-            }
-          )
+        AtlasSpecies(
+          species.capitalize,
+          defaultQueryFactorTypesMap(databaseName),
+          kingdomMap(databaseName),
+          resourcesMap.toList.map {
+            case (key, values) => (key, values(databaseName).map(_ + mySqlDbName.capitalize))
+          }
         )
     }
   }
@@ -60,7 +59,7 @@ object AtlasSpeciesFactory {
 
 // object Main extends App {
   // val allSpeciesJson = Species.allSpecies.map(AtlasSpeciesFactory.create(_).right.get.toJson)
-
+  //
   // val filePath = "species-properties.json"
   // val str = "[" + allSpeciesJson.mkString(",\n") + "]"
   // Files.write(Paths.get(filePath), str.getBytes(StandardCharsets.UTF_8))
@@ -72,7 +71,6 @@ object AtlasSpeciesFactory {
   // println(s"${filePath} copied to ${destPath}")
 // }
 
-val destPath = pwd/up/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
 def dump(path: ammonite.ops.Path) = {
   Combinators.combine(Species.allSpecies.map(AtlasSpeciesFactory.create))
   .right.map(_.map(_.toJson).mkString(",\n"))
