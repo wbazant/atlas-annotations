@@ -1,11 +1,12 @@
-import $ivy.`org.json4s:json4s-native_2.11:3.5.0` 
+import $ivy.`org.json4s:json4s-native_2.12:3.5.0`
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 import $file.property.AnnotationSource
 import $file.property.Species
-import java.nio.file.{Paths, Files} 
-import java.nio.charset.StandardCharsets 
+import java.nio.file.{Paths, Files}
+import java.nio.charset.StandardCharsets
+import ammonite.ops._
 
 case class AtlasSpecies(species: String, defaultQueryFactorType: String, kingdom: String, resources: List[(String, List[String])]) {
   val json =
@@ -21,7 +22,8 @@ case class AtlasSpecies(species: String, defaultQueryFactorType: String, kingdom
 }
 
 object AtlasSpeciesFactory {
-  val defaultQueryFactorTypesMap = Map("parasite" -> "DEVELOPMENTAL_STAGE")
+  val defaultQueryFactorTypesMap = 
+    Map("parasite" -> "DEVELOPMENTAL_STAGE").withDefaultValue("ORGANISM_PART")
 
   val kingdomMap =
     Map("ensembl" -> "animals",
@@ -31,35 +33,40 @@ object AtlasSpeciesFactory {
         "plants" -> "plants")
 
   val resourcesMap = 
-    Map("genome_  browser" ->  Map("ensembl" -> List("http://www.ensembl.org/"),
+    Map("genome_browser" ->  Map("ensembl" -> List("http://www.ensembl.org/"),
                                   "metazoa" -> List("http://metazoa.ensembl.org/"),
                                   "fungi" -> List("http://fungi.ensembl.org/"),
                                   "parasite" -> List("http://parasite.wormbase.org/"),
                                   "plants" -> List("http://plants.ensembl.org/", "http://ensembl.gramene.org/"))
     )
 
-  def create(species: String): AtlasSpecies = {
-    AnnotationSource.getValues(species, List("databaseName", "mySqlDbName")) match {
-      case Right(List(databaseName, mySqlDbName)) => 
-        AtlasSpecies(
-          species,
-          defaultQueryFactorTypesMap.get(databaseName).getOrElse("ORGANISM_PART"),
-          kingdomMap.get(databaseName).getOrElse(""),
-          resourcesMap.toList.map {
-            case (key, values) => (key, values.get(databaseName).getOrElse(List()).map(_ + mySqlDbName))
-          }
+  def create(species: String): Either[String, AtlasSpecies] = {
+    AnnotationSource.getValues(species, List("databaseName", "mySqlDbName")) flatMap {
+      case List(databaseName, mySqlDbName) => 
+        Right(
+          AtlasSpecies(
+            species.capitalize,
+            defaultQueryFactorTypesMap(databaseName),
+            kingdomMap(databaseName),
+            resourcesMap.toList.map {
+              case (key, values) => (key, values(databaseName).map(_ + mySqlDbName.capitalize))
+            }
+          )
         )
     }
   }
 }
 
 // object Main extends App {
-  val allSpeciesJson = Species.allSpecies.map(AtlasSpeciesFactory.create).map(_.toJson)
+  val allSpeciesJson = Species.allSpecies.map(AtlasSpeciesFactory.create(_).right.get.toJson)
 
-  val filePath = "species.json"
+  val filePath = "species-properties.json"
   val str = "[" + allSpeciesJson.mkString(",\n") + "]"
   Files.write(Paths.get(filePath), str.getBytes(StandardCharsets.UTF_8))
+  println(s"${filePath} written successfully")
 
-  rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species.json" 
-  cp (pwd/"species.json", pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species.json")
+  val destPath = pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
+  rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json" 
+  cp (pwd/"species-properties.json", destPath)
+  println(s"${filePath} copied to ${destPath}")
 // }
