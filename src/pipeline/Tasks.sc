@@ -1,15 +1,19 @@
 import $file.^.property.AtlasProperty
 import AtlasProperty._
 import $file.^.property.AnnotationSource
+import AnnotationSource.AnnotationSource
 import $file.Paths
 
 type BioMartQuerySpecification = (Map[String, String],List[String]) //filters and attributes
-case class BioMartTask(species: String, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path){
+case class BioMartTask(annotationSource: AnnotationSource, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path){
   def seemsDone = destination.toNIO.toFile.exists
   def ensemblAttributesInvolved = queries.map(_._2).flatten.toSet
-  override def toString = s"BioMart task for ${species} : ${queries.size} queries, destination: ${destination}"
+  override def toString = s"BioMart task for ${annotationSource} : ${queries.size} queries, destination: ${destination}"
 }
 
+/*
+Still not sure we can use the same reference columns for both Ensembl and wbps - Maria's code has them in, but they don't validate right
+*/
 def ensemblNameOfReferenceColumn(atlasProperty: AtlasProperty) = {
   atlasProperty match {
     case AtlasBioentityProperty(species, GENE, atlasName)
@@ -23,14 +27,14 @@ def ensemblNameOfReferenceColumn(atlasProperty: AtlasProperty) = {
   }
 }
 
-def queriesForAtlasProperty(atlasProperty: AtlasProperty, ensemblProperties : List[String]) = {
+def queriesForAtlasProperty(atlasProperty: AtlasProperty, desiredCorrespondingProperties : List[String]) = {
   val shards =
-      AnnotationSource.getValue(atlasProperty.species,"chromosomeName")
+      AnnotationSource.getValue(atlasProperty.annotationSource,"chromosomeName")
       .right.map(_.split(",").toList.map{case chromosome => Map("chromosome_name"->chromosome)})
       .left.map{missingChromosome => List(Map[String,String]())}
       .merge
 
-  ensemblProperties
+  desiredCorrespondingProperties
   .flatMap{case ensemblName =>
     val attributes =
       List(
@@ -42,19 +46,19 @@ def queriesForAtlasProperty(atlasProperty: AtlasProperty, ensemblProperties : Li
   }
 }
 
-def retrievalPlanForAtlasProperty(atlasProperty: AtlasProperty, ensemblProperties : List[String]) = {
+def retrievalPlanForAtlasProperty(atlasProperty: AtlasProperty, desiredCorrespondingProperties : List[String]) = {
   BioMartTask(
-    atlasProperty.species,
-    queriesForAtlasProperty(atlasProperty, ensemblProperties),
+    atlasProperty.annotationSource,
+    queriesForAtlasProperty(atlasProperty, desiredCorrespondingProperties),
     Paths.destinationFor(atlasProperty)
   )
 }
 
 
 def allTasks = {
-  AtlasProperty.getMappingWithEnsemblProperties
-  .map{ case (atlasProperty, ensemblProperties) =>
-    retrievalPlanForAtlasProperty(atlasProperty, ensemblProperties)
+  AtlasProperty.getMappingWithDesiredCorrespondingProperties
+  .map{ case (atlasProperty, desiredCorrespondingProperties) =>
+    retrievalPlanForAtlasProperty(atlasProperty, desiredCorrespondingProperties)
   }
   .toSeq
 }

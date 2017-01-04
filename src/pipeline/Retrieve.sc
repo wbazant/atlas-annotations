@@ -1,22 +1,22 @@
 import $file.Tasks
 import $file.BioMart
-import $file.^.property.Species
-import Species.Species
 import $file.^.util.Combinators
 import $file.Log
 import scala.concurrent._
 import scala.util.{Success, Failure}
+import $file.^.property.AnnotationSource
+import AnnotationSource.AnnotationSource
 
 import collection.mutable.{ HashMap, Set }
 
 //private
-def performBioMartTask(aux:Map[Species, BioMart.BiomartAuxiliaryInfo], task: Tasks.BioMartTask) : Either[String, String] = {
+def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], task: Tasks.BioMartTask) : Either[String, String] = {
 
   val result = new HashMap[String, Set[String]]
 
   val t0 = System.nanoTime
   val errors = task.queries.flatMap { case (filters, attributes) =>
-    BioMart.fetchFromBioMart(aux)(task.species, filters, attributes) match {
+    BioMart.fetchFromBioMart(aux)(task.annotationSource, filters, attributes) match {
       case Right(res: Array[String])
         => res.flatMap{ case line =>
           if(line.filter(!Character.isWhitespace(_)).size == 0){
@@ -55,20 +55,46 @@ def performBioMartTask(aux:Map[Species, BioMart.BiomartAuxiliaryInfo], task: Tas
       => Left(s"${messageAboutTiming}\n ERRORS: \n ${xs.mkString("\n")}")
   }
 }
-
 def validate(tasks: Seq[Tasks.BioMartTask]) = {
+  Combinators.combine(
+    List(
+      validateDestinationsUnique(tasks),
+      validateAttributesCorrect(tasks)
+    )
+  )
+}
+
+def validateDestinationsUnique(tasks: Seq[Tasks.BioMartTask]) :Either[Iterable[String],_] = {
   tasks
-  .groupBy(_.species)
+  .groupBy{_.destination}
+  .filter {
+    case (destination, tasksPerDestination)
+      => tasksPerDestination.length > 1
+  }
+  .map {
+    case (destination, tasksPerDestination) =>
+    "Conflicting - same destinations: ${tasksPerDestination.mkString(\", \")}"
+  }
+  .toList match {
+    case List()
+      => Right(())
+    case x
+      => Left(x)
+  }
+}
+def validateAttributesCorrect(tasks: Seq[Tasks.BioMartTask]) :Either[Iterable[String],_]= {
+  tasks
+  .groupBy(_.annotationSource)
   .mapValues(_.map(_.ensemblAttributesInvolved).flatten.toSet)
-  .map{ case(species, allAttributesWeWantFromEnsembl) =>
-    BioMart.lookupAttributes(species)
+  .map{ case(annotationSource, allAttributesWeWantFromEnsembl) =>
+    BioMart.lookupAttributes(annotationSource)
     .right.map(_.map(_.propertyName).toSet)
     .right.flatMap { case bioMartAttributes =>
       (allAttributesWeWantFromEnsembl -- bioMartAttributes).toList match {
         case List()
           => Right(())
         case x
-          => Left(s"Validation error, properties for species ${species} not found in BioMart as valid attributes: ${x.mkString(", ")}")
+          => Left(s"Validation error, properties for annotationSource ${annotationSource} not found in BioMart as valid attributes: ${x.mkString(", ")}")
       }
     }
   }
@@ -79,7 +105,7 @@ def validate(tasks: Seq[Tasks.BioMartTask]) = {
 }
 
 def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
-    aux:Map[Species, BioMart.BiomartAuxiliaryInfo])
+    aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo])
   (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
   if(task.seemsDone){
     logOut(s"Task appears done, skipping: ${task}")
@@ -112,7 +138,7 @@ def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
     case Right(_)
       => {
         logOut(s"Validated ${tasks.size} tasks")
-        val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.species}.toSet.toSeq)
+        val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.annotationSource}.toSet.toSeq)
         aux match {
           case Right(auxiliaryInfo)
             => {

@@ -20,7 +20,7 @@ def doAll[In](f: In => Either[String, _])(ins: Seq[In]) : Either[String, Unit] =
 }
 
 //http://stackoverflow.com/questions/6489584/best-way-to-turn-a-lists-of-eithers-into-an-either-of-lists
-def combine[T](data: Seq[Either[String,T]]) = {
+def combine[A,B](data: Iterable[Either[A,B]]) : Either[Iterable[A], Iterable[B]] = {
   data.partition(_.isLeft) match {
     case (Nil,  results) => Right(for(Right(i) <- results) yield i)
     case (strings, _) => Left(for(Left(s) <- strings) yield s)
