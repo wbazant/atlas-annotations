@@ -4,9 +4,8 @@ import scala.xml.XML
 import scala.util.{Try, Success, Failure}
 
 import $file.^.util.Combinators
-import $file.^.property.Species
-import Species._
 import $file.^.property.AnnotationSource
+import AnnotationSource.AnnotationSource
 import $file.^.property.AtlasProperty
 
 def request(databaseName: String,properties: Map[String, String]) : HttpRequest = {
@@ -34,8 +33,8 @@ def getAsXml(request: HttpRequest): Either[String, xml.Elem] = {
   }
 }
 
-def registryRequest(species: Species) = {
-  AnnotationSource.getValue(species, "databaseName")
+def registryRequest(annotationSource: AnnotationSource) = {
+  AnnotationSource.getValue(annotationSource, "databaseName")
   .right.map {
     case (databaseName)
       => request(databaseName, Map("type"->"registry"))
@@ -57,8 +56,8 @@ def availableMartsAndTheirSchemas(responseXml: xml.Elem) = {
   .toMap
 }
 
-def lookupAvailableMartsAndTheirSchemas(species: Species) : Either[String, Map[String, String]] = {
-  registryRequest(species)
+def lookupAvailableMartsAndTheirSchemas(annotationSource: AnnotationSource) : Either[String, Map[String, String]] = {
+  registryRequest(annotationSource)
   .right.map {
     case (req)
       => getAsXml(req)
@@ -78,13 +77,13 @@ def pickMostAppropriateMart(expectedMart: String)(marts: Map[String, String]) : 
 }
 
 //TODO this is a very annoying way of finding out you're not using up to date versions of Ensembl Plants
-def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
-  AnnotationSource.getValues(species, List("software.name", "software.version"))
+def lookupServerVirtualSchema(annotationSource: AnnotationSource) :Either[String,String]  = {
+  AnnotationSource.getValues(annotationSource, List("software.name", "software.version"))
   .right.map {
     case params => params match {
       case List(softwareName, softwareVersion)
         => {
-            lookupAvailableMartsAndTheirSchemas(species)
+            lookupAvailableMartsAndTheirSchemas(annotationSource)
               .right.flatMap(pickMostAppropriateMart(s"${softwareName}_mart_${softwareVersion}"))
           }
       case x
@@ -93,8 +92,8 @@ def lookupServerVirtualSchema(species: Species) :Either[String,String]  = {
   }.joinRight
 }
 
-def attributesRequest(species:String) = {
-  AnnotationSource.getValues(species, List("databaseName", "datasetName"))
+def attributesRequest(annotationSource:AnnotationSource) = {
+  AnnotationSource.getValues(annotationSource, List("databaseName", "datasetName"))
   .right.flatMap {
     case params => params match {
       case List(databaseName, datasetName)
@@ -127,8 +126,8 @@ object Attribute {
 e.g.
 Right(Attribute("ensembl_gene_id", "Ensembl Gene ID/ Ensembl Stable ID of the Gene", "feature_page", "btaurus_gene_ensembl__gene__main", "stable_id_1023"))
 */
-def lookupAttributes(species:String) = {
-  attributesRequest(species)
+def lookupAttributes(annotationSource:AnnotationSource) = {
+  attributesRequest(annotationSource)
   .right.flatMap {case request =>
     Try(request.asString)
     .filter {case response => !response.isError}
@@ -149,23 +148,23 @@ def lookupAttributes(species:String) = {
 case class BiomartAuxiliaryInfo(databaseName: String, serverVirtualSchema: String, datasetName: String)
 
 object BiomartAuxiliaryInfo {
-  def getMap(speciesKeys: Seq[Species]) = {
+  def getMap(annotationSourceKeys: Seq[AnnotationSource]) = {
     Combinators.combine(
-      speciesKeys
-      .map{ case species : Species =>
-        getForSpecies(species)
-        .right.map((species, _))
+      annotationSourceKeys
+      .map{ case annotationSource : AnnotationSource =>
+        getForAnnotationSource(annotationSource)
+        .right.map((annotationSource, _))
       }
     )
     .right.map(_.toMap)
   }
 
-  def getForSpecies(species: Species) = {
-    AnnotationSource.getValues(species, List("databaseName", "datasetName"))
+  def getForAnnotationSource(annotationSource: AnnotationSource) = {
+    AnnotationSource.getValues(annotationSource, List("databaseName", "datasetName"))
     .right.flatMap {
       case params => params match {
         case List(databaseName, datasetName)
-          => lookupServerVirtualSchema(species)
+          => lookupServerVirtualSchema(annotationSource)
               .right.map{ case serverVirtualSchema =>
                 BiomartAuxiliaryInfo(databaseName,serverVirtualSchema, datasetName)
               }
@@ -207,9 +206,9 @@ def bioMartRequest(
   )
 }
 
-def fetchFromBioMart(aux:Map[Species, BiomartAuxiliaryInfo])(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, Array[String]]= {
-  aux.get(species).map(Right(_))
-  .getOrElse(BiomartAuxiliaryInfo.getForSpecies(species))
+def fetchFromBioMart(aux:Map[AnnotationSource, BiomartAuxiliaryInfo])(annotationSource: AnnotationSource, filters: Map[String, String], attributes: List[String]) : Either[String, Array[String]]= {
+  aux.get(annotationSource).map(Right(_))
+  .getOrElse(BiomartAuxiliaryInfo.getForAnnotationSource(annotationSource))
   .right.map{ case bioMartAuxiliaryInfo =>
     bioMartRequest(bioMartAuxiliaryInfo, filters, attributes)
   }
@@ -218,6 +217,6 @@ def fetchFromBioMart(aux:Map[Species, BiomartAuxiliaryInfo])(species: Species, f
   }
 }
 
-def fetchFromBioMart(species: Species, filters: Map[String, String], attributes: List[String]) : Either[String, Array[String]] = {
-  fetchFromBioMart(Map[Species, BiomartAuxiliaryInfo]())(species, filters, attributes)
+def fetchFromBioMart(annotationSource: AnnotationSource, filters: Map[String, String], attributes: List[String]) : Either[String, Array[String]] = {
+  fetchFromBioMart(Map[AnnotationSource, BiomartAuxiliaryInfo]())(annotationSource, filters, attributes)
 }

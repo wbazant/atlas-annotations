@@ -104,7 +104,6 @@ def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
   }
 }
 
-//TODO: this should already be writing to logging streams - if it crashes the results are lost!
 def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
   val logOut = Log.log(runId, "biomart")(_)
   val logErr = Log.err(runId, "biomart")(_)
