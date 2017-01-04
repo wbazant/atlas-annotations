@@ -27,6 +27,13 @@ def combine[A,B](data: Iterable[Either[A,B]]) : Either[Iterable[A], Iterable[B]]
   }
 }
 
+def combineAny[A,B](data: Iterable[Either[A,B]]) : Either[Iterable[A], Iterable[B]] = {
+  data.partition(_.isLeft) match {
+    case (strings, Nil) => Left(for(Left(s) <- strings) yield s)
+    case (_,  results) => Right(for(Right(i) <- results) yield i)
+  }
+}
+
 /*
 A module:
 

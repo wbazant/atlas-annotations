@@ -368,6 +368,15 @@
   }]
 },
 {
+  "name":"Schistosoma_mansoni",
+  "defaultQueryFactorType":"DEVELOPMENTAL_STAGE",
+  "kingdom":"animals",
+  "resources":[{
+    "type":"genome_browser",
+    "urls":["http://parasite.wormbase.org/Schistosoma_mansoni_prjea36577"]
+  }]
+},
+{
   "name":"Schizosaccharomyces_pombe",
   "defaultQueryFactorType":"ORGANISM_PART",
   "kingdom":"fungi",
@@ -473,14 +482,5 @@
   "resources":[{
     "type":"genome_browser",
     "urls":["http://plants.ensembl.org/Zea_mays","http://ensembl.gramene.org/Zea_mays"]
-  }]
-},
-{
-  "name":"Schistosoma_mansoni",
-  "defaultQueryFactorType":"DEVELOPMENTAL_STAGE",
-  "kingdom":"animals",
-  "resources":[{
-    "type":"genome_browser",
-    "urls":["http://parasite.wormbase.org/Schistosoma_mansoni_prjea36577"]
   }]
 }]

@@ -1,9 +1,10 @@
-import $ivy.`org.json4s:json4s-native_2.12:3.5.0`
+import $ivy.`org.json4s:json4s-native_2.11:3.5.0`
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.JsonDSL._
 import $file.^.property.AnnotationSource
-import $file.^.property.Species
+import AnnotationSource.AnnotationSource
+import $file.^.Directories
 import $file.^.util.Combinators
 import java.nio.file.{Paths, Files}
 import java.nio.charset.StandardCharsets
@@ -23,7 +24,7 @@ case class AtlasSpecies(species: String, defaultQueryFactorType: String, kingdom
 }
 
 object AtlasSpeciesFactory {
-  val defaultQueryFactorTypesMap = 
+  val defaultQueryFactorTypesMap =
     Map("parasite" -> "DEVELOPMENTAL_STAGE").withDefaultValue("ORGANISM_PART")
 
   val kingdomMap =
@@ -41,12 +42,12 @@ object AtlasSpeciesFactory {
                                   "plants" -> List("http://plants.ensembl.org/", "http://ensembl.gramene.org/"))
     )
 
-  def create(species: String): Either[String, AtlasSpecies] = {
-    AnnotationSource.getValues(species, List("databaseName", "mySqlDbName"))
+  def create(annotationSource: AnnotationSource): Either[String, AtlasSpecies] = {
+    AnnotationSource.getValues(annotationSource, List("databaseName", "mySqlDbName"))
     .right.map {
-      case List(databaseName, mySqlDbName) => 
+      case List(databaseName, mySqlDbName) =>
         AtlasSpecies(
-          species.capitalize,
+          speciesName(annotationSource),
           defaultQueryFactorTypesMap(databaseName),
           kingdomMap(databaseName),
           resourcesMap.toList.map {
@@ -57,6 +58,8 @@ object AtlasSpeciesFactory {
   }
 }
 
+def speciesName(annotationSource: AnnotationSource) = annotationSource.segments.last.capitalize
+
 // object Main extends App {
   // val allSpeciesJson = Species.allSpecies.map(AtlasSpeciesFactory.create(_).right.get.toJson)
   //
@@ -66,18 +69,34 @@ object AtlasSpeciesFactory {
   // println(s"${filePath} written successfully")
 
   // val destPath = pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
-  // rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json" 
+  // rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
   // cp (pwd/"species-properties.json", destPath)
   // println(s"${filePath} copied to ${destPath}")
 // }
 
-def dump(path: ammonite.ops.Path) = {
-  Combinators.combine(Species.allSpecies.map(AtlasSpeciesFactory.create))
+def atlasSpeciesFromAllAnnotationSources = {
+  Combinators.combine(
+    Directories.annotationSources
+    .groupBy{speciesName}
+    .map {
+      case (speciesName, annotationSourcesForSpecies)
+        => Combinators.combineAny(
+            annotationSourcesForSpecies.map(AtlasSpeciesFactory.create)
+          ).right.map {
+            _.head //unsafe but okay because combineAny guarantees there will be results
+          }
+    }
+  )
+}
+
+def dump(path: ammonite.ops.Path) : Unit = {
+  atlasSpeciesFromAllAnnotationSources
+  .right.map(_.toList.sortBy(_.species))
   .right.map(_.map(_.toJson).mkString(",\n"))
   .right.map {
-    case txt => s"[${txt}]"} match {
+    case txt => s"[${txt}]"
+  } match {
       case Right(res) => ammonite.ops.write(path, res)
       case Left(err) => print(err)
   }
 }
-

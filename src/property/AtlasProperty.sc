@@ -1,8 +1,6 @@
 import $file.AnnotationSource
 
-sealed abstract class AtlasProperty(val annotationSource: ammonite.ops.Path, val atlasName: String) {
-  def species : String = annotationSource.segments.last
-}
+sealed abstract class AtlasProperty(val annotationSource: ammonite.ops.Path, val atlasName: String)
 
 case class AtlasBioentityProperty(override val annotationSource: ammonite.ops.Path, bioentityType: BioentityType, override val atlasName: String) extends AtlasProperty(annotationSource,atlasName)
 
