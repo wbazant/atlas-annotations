@@ -4,9 +4,9 @@ if [[ -z "$outputDir" ]]; then
     echo "Usage: $0 outputDir" >&2
 fi
 
-# Source script from the same (prod or test) Atlas environment as this script
-scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-source ${scriptDir}/../bash_util/generic_routines.sh
+# I used to source this script from the same (prod or test) Atlas environment as this script
+# scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source ./generic_routines.sh
 atlasEnv=`atlas_env`
 
 today="`eval date +%Y-%m-%d`"

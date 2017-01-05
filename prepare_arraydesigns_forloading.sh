@@ -1,8 +1,8 @@
 # This script retrieves organisms for all bioenentities in ensembl (via ensgene) and mirbase (via hairpin) directories
 
-# Source script from the same (prod or test) Atlas environment as this script
-scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-source ${scriptDir}/../bash_util/generic_routines.sh
+# I used to source this script from the same (prod or test) Atlas environment as this script
+# scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source ../generic_routines.sh
 atlasEnv=`atlas_env`
 
 outputDir=$1
