@@ -331,45 +331,10 @@ ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/reacto
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest Reactome mappings" >&2
     exit 1
-fi 
+fi
 
 echo "Copy all files to the other public data directories"
 for dir in mirbase reactome go interpro; do
        cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
 done
 popd
-
-
-# Decorate all experiments
-aux=~/tmp/decorate.$$
-rm -rf $aux
-
-for decorationType in genenames tracks R cluster gsea coexpression; do 
-    echo "Decorate all experiments in ${ATLAS_PROD}/analysis with $decorationType"
-
-    # Delete all LSF log files from previous run (if any).
-    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out
-    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.err
-
-    submitted=`${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType`
-    echo "monitor_decorate_lsf_submission $submitted $decorationType" >> $aux
-done
-for l in $(cat $aux); do
-    echo "About to call: '$l'"
-    decorationType=`echo $l | awk '{print $NF}'`
-    failed=`eval $(echo $l)`
-    if [ ! -z "$failed" ]; then
-        echo "ERROR: $failed 'decorate_all_experiments.sh $decorationType' jobs failed"
-        exit 1
-    fi 
-    echo "Copy all $decorationType decorated files to the staging area"
-    ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/decorate_all_experiments.sh $decorationType copyonly
-done
-rm -rf $aux
-
-# Tidy up LSF log files.
-for decorationType in genenames tracks R cluster gsea coexpression; do 
-    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out
-    rm -rf ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.err
-done
-    
