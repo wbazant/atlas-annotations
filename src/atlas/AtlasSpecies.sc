@@ -60,20 +60,6 @@ object AtlasSpeciesFactory {
 
 def speciesName(annotationSource: AnnotationSource) = annotationSource.segments.last.capitalize
 
-// object Main extends App {
-  // val allSpeciesJson = Species.allSpecies.map(AtlasSpeciesFactory.create(_).right.get.toJson)
-  //
-  // val filePath = "species-properties.json"
-  // val str = "[" + allSpeciesJson.mkString(",\n") + "]"
-  // Files.write(Paths.get(filePath), str.getBytes(StandardCharsets.UTF_8))
-  // println(s"${filePath} written successfully")
-
-  // val destPath = pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
-  // rm! pwd/up/up/'atlas/'base/'src/'test/'resources/"data-files"/'species/"species-properties.json"
-  // cp (pwd/"species-properties.json", destPath)
-  // println(s"${filePath} copied to ${destPath}")
-// }
-
 def atlasSpeciesFromAllAnnotationSources = {
   Combinators.combine(
     Directories.annotationSources
