@@ -75,14 +75,14 @@ def atlasSpeciesFromAllAnnotationSources = {
   )
 }
 
-def dump(path: ammonite.ops.Path) : Unit = {
+def dump() : Unit = {
   atlasSpeciesFromAllAnnotationSources
   .right.map(_.toList.sortBy(_.species))
   .right.map(_.map(_.toJson).mkString(",\n"))
   .right.map {
     case txt => s"[${txt}]"
   } match {
-      case Right(res) => ammonite.ops.write(path, res)
-      case Left(err) => print(err)
+      case Right(res) => System.out.print(res)
+      case Left(err) => System.err.println(err)
   }
 }
