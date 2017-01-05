@@ -1,0 +1,22 @@
+software.name=fungi
+software.version=33
+url=http://fungi.ensembl.org/biomart/martservice?
+organism=schizosaccharomyces pombe
+databaseName=fungi
+datasetName=spombe_eg_gene
+mySqlDbName=schizosaccharomyces_pombe
+mySqlDbUrl=mysql-eg-mirror.ebi.ac.uk:4157
+types=ensgene,enstranscript,ensprotein
+chromosomeName=I,II,III,MT
+property.gene_biotype=gene_biotype
+property.description=description
+property.ensgene=ensembl_gene_id
+property.ensprotein=ensembl_peptide_id
+property.enstranscript=ensembl_transcript_id
+property.go=go_accession
+property.goterm=go_name_1006
+property.interpro=interpro_id
+property.interproterm=interpro_description
+property.symbol=external_gene_id
+property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+
