@@ -8,35 +8,6 @@ atlasEnv=`atlas_env`
 
 PROJECT_ROOT=`dirname $0`/..
 
-getPctComplete() {
-    numSubmittedJobs=$1
-    decorationType=$2
-    successful=`grep 'Successfully completed' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
-    failed=`grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out | wc -l`
-    if [ -z "$successful" ]; then
-        successful=0
-    fi
-    if [ -z "$failed" ]; then
-        failed=0
-    fi
-    done=$[$successful+$failed]
-    pctComplete=`echo "scale=0; $(($done*100/$numSubmittedJobs))" | bc`
-    echo $pctComplete
-}
-
-monitor_decorate_lsf_submission() {
-    numSubmittedJobs=$1
-    decorationType=$2
-    pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
-    while [ "$pctComplete" -lt "100" ]; do
-        sleep 60
-        pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
-    done
-    # Return number of failed jobs
-    echo `grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out`
-}
-
-
 # quit if not prod user
 check_prod_user
 if [ $? -ne 0 ]; then
@@ -204,7 +175,6 @@ popd
 #
 # echo "Finished checking mapping files against archive."
 #--------------------------------------------------
-
 
 echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
 for dir in ensembl mirbase reactome go interpro wbps; do
