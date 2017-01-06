@@ -27,7 +27,7 @@ def destinationFor(atlasProperty: AtlasProperty) = {
       case AtlasArrayDesign(species, atlasName)
         => "."
     }
-  ATLAS_PROD / "bioentity_properties" / "ensembl" / s"${atlasProperty.species}${middleBit}${atlasProperty.atlasName}.tsv"
+  ATLAS_PROD / "bioentity_properties" / atlasProperty.annotationSource.segments.reverse.apply(1) / s"${atlasProperty.annotationSource.segments.last}${middleBit}${atlasProperty.atlasName}.tsv"
 }
 
 /*

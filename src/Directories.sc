@@ -1,7 +1,5 @@
 import ammonite.ops._
 val PROJECT_ROOT = pwd // because we will call Ammonite like that
-val OUT = pwd / up /  "out" //TODO
-val LOG = pwd / up /  "log" //TODO
 
 if (!(PROJECT_ROOT/"annsrcs").isDir){
   throw new RuntimeException("Annotations directory not found, possibly ammonite calls this from a wrong place: "+(PROJECT_ROOT/"annsrcs"))
@@ -25,5 +23,3 @@ def annotationSources: Seq[Path] =
   .filter{ case path =>
     path.isFile && path.segments.last.matches("[a-z]+_[a-z]+")
   }
-
-def scriptOutDestination(fileName: String) = OUT/ fileName

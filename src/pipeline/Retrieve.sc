@@ -130,9 +130,10 @@ def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
   }
 }
 
-def performBioMartTasks(runId: String, tasks: Seq[Tasks.BioMartTask]) = {
-  val logOut = Log.log(runId, "biomart")(_)
-  val logErr = Log.err(runId, "biomart")(_)
+def performBioMartTasks(logDirectory: Path, tasks: Seq[Tasks.BioMartTask]) = {
+  val Logger = new Log.Logger(logDirectory)
+  val logOut = Logger.log(runId, "biomart")(_)
+  val logErr = Logger.err(runId, "biomart")(_)
 
   validate(tasks) match {
     case Right(_)
