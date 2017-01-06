@@ -4,19 +4,12 @@
 # scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 pushd `dirname $0`
 source ../generic_routines.sh
-atlasEnv=`atlas_env`
 
 PROJECT_ROOT=`dirname $0`/..
 
-# quit if not prod user
-check_prod_user
-if [ $? -ne 0 ]; then
-    exit 1
-fi
-
 if [ $# -lt 6 ]; then
-  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL dbUser dbSID"
-  echo "e.g. $0 75 21 75 22 ensemblgenomes atlasprd3 ATLASPRO"
+  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL OLD_WBPS_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL NEW_WBPS_REL "
+  echo "e.g. $0 85 33 7 86 34 8"
   exit 1
 fi
 
@@ -26,11 +19,6 @@ OLD_WBPS_REL=$3
 NEW_ENSEMBL_REL=$4
 NEW_ENSEMBLGENOMES_REL=$5
 NEW_WBPS_REL=$6
-dbUser=$7
-dbSID=$8
-
-dbPass=`get_pass $dbUser`
-dbConnection=${dbUser}/${dbPass}@${dbSID}
 
 # Note that if $NEW_ENSEMBL_REL must be greater than $OLD_ENSEMBL_REL
 # and $NEW_ENSEMBLGENOMES_REL must be greater than $OLD_ENSEMBLGENOMES_REL
@@ -94,7 +82,7 @@ popd
 
 echo "Fetching the latest GO mappings..."
 # This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
-${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
+$PROJECT_ROOT/sh/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest GO mappings" >&2
     exit 1
@@ -175,14 +163,6 @@ popd
 #
 # echo "Finished checking mapping files against archive."
 #--------------------------------------------------
-
-echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
-for dir in ensembl mirbase reactome go interpro wbps; do
-   rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
-done
-
-echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
-cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
 
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 echo "Copy all Ensembl matrices to the public Ensembl data directory"
@@ -266,21 +246,6 @@ if [ "$size" -lt 50 ]; then
 fi
 
 
-#################
-# Copy the files to the FTP directory.
-echo "Load bioentityOrganism.dat, bioentityName.dat, organismKingdom.dat and designelementMapping.dat into staging Oracle schema"
-for f in bioentityOrganism bioentityName organismKingdom designelementMapping; do
-    rm -rf ${f}.log; rm -rf ${f}.bad
-    sqlldr $dbConnection control=${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/db/sqlldr/${f}.ctl data=${f}.dat log=${f}.log bad=${f}.bad
-    if [ -s "${f}.bad" ]; then
-        echo "ERROR: Failed to load ${f} into ${dbUser}@${dbSID}"
-        exit 1
-    fi
-done
-#################
-
-
-
 # Archive the previous Reactome data. Note the files from Gramene need to be
 # dealt with manually, when they send us a new one.
 echo "Archive the previous Reactome Data - if not done already"
@@ -305,9 +270,3 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest Reactome mappings" >&2
     exit 1
 fi
-
-echo "Copy all files to the other public data directories"
-for dir in mirbase reactome go interpro; do
-       cp ${dir}/*.tsv ${ATLAS_FTP}/bioentity_properties/${dir}/
-done
-popd
