@@ -104,18 +104,17 @@ def validateAttributesCorrect(tasks: Seq[Tasks.BioMartTask]) :Either[Iterable[St
   }
 }
 
-def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
-    aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo])
+def scheduleAndLogResultOfBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo])
   (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
   if(task.seemsDone){
-    logOut(s"Task appears done, skipping: ${task}")
+    Log.log(s"Task appears done, skipping: ${task}")
   } else {
     future {
       performBioMartTask(aux, task) match {
         case Right(msg)
-          => logOut(msg)
+          => Log.log(msg)
         case Left(err)
-          => logErr(err)
+          => Log.err(err)
       }
     } onFailure {
       /*
@@ -123,45 +122,41 @@ def scheduleAndLogResultOfBioMartTask(logOut: Any => Unit, logErr: Any => Unit,
       Anyway we do not expect this kind of failure.
       */
        case e => {
-         logErr(s"Fatal failure for task: {task}")
-         logErr(e)
+         Log.err(s"Fatal failure for task: {task}")
+         Log.err(e)
        }
     }
   }
 }
 
-def performBioMartTasks(logDirectory: Path, tasks: Seq[Tasks.BioMartTask]) = {
-  val Logger = new Log.Logger(logDirectory)
-  val logOut = Logger.log(runId, "biomart")(_)
-  val logErr = Logger.err(runId, "biomart")(_)
-
+def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
   validate(tasks) match {
     case Right(_)
       => {
-        logOut(s"Validated ${tasks.size} tasks")
+        Log.log(s"Validated ${tasks.size} tasks")
         val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.annotationSource}.toSet.toSeq)
         aux match {
           case Right(auxiliaryInfo)
             => {
-              logOut(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
+              Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
 
               val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
               val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
               for(task <- tasks) {
-                scheduleAndLogResultOfBioMartTask(logOut, logErr, auxiliaryInfo)(task)(ec)
+                scheduleAndLogResultOfBioMartTask(auxiliaryInfo)(task)(ec)
               }
               Thread.sleep(1000)
             }
           case Left(err)
             => {
-              logErr("Failed retrieving auxiliary info:")
-              logErr(err)
+              Log.err("Failed retrieving auxiliary info:")
+              Log.err(err)
             }
         }
       }
     case Left(err)
       => {
-        logErr(err)
+        Log.err(err)
       }
   }
 }
