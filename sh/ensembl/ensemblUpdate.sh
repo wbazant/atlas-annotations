@@ -1,9 +1,12 @@
-#!/bin/bash     
+#!/bin/bash
 
 # I used to source this script from the same (prod or test) Atlas environment as this script
 # scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+pushd `dirname $0`
 source ../generic_routines.sh
 atlasEnv=`atlas_env`
+
+PROJECT_ROOT=`dirname $0`/..
 
 getPctComplete() {
     numSubmittedJobs=$1
@@ -28,7 +31,7 @@ monitor_decorate_lsf_submission() {
     while [ "$pctComplete" -lt "100" ]; do
         sleep 60
         pctComplete=`getPctComplete $numSubmittedJobs $decorationType`
-    done 
+    done
     # Return number of failed jobs
     echo `grep 'Exited with' ${ATLAS_PROD}/analysis/*/*/*/*/${decorationType}*.out`
 }
@@ -44,7 +47,7 @@ if [ $# -lt 6 ]; then
   echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL dbUser dbSID"
   echo "e.g. $0 75 21 75 22 ensemblgenomes atlasprd3 ATLASPRO"
   exit 1
-fi 
+fi
 
 OLD_ENSEMBL_REL=$1
 OLD_ENSEMBLGENOMES_REL=$2
@@ -74,7 +77,7 @@ if [ "$NEW_WBPS_REL" -lt "$OLD_WBPS_REL" ]; then
 fi
 
 
-pushd ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations
+pushd $PROJECT_ROOT/sh
 
 for annotationDB in ensembl wbps; do
     echo "Validate all $annotationDB annotation sources against the release specified in them"
@@ -90,7 +93,7 @@ popd
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 
 echo "Archive the previous Ensembl data - if not done already"
-if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
+if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then
     mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
     mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
 else
@@ -110,12 +113,12 @@ popd
 
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 echo "Obtain all the individual mapping files from Ensembl"
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/fetchAllEnsemblMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+$PROJECT_ROOT/sh/ensembl/fetchAllEnsemblMappings.sh $PROJECT_ROOT/sh/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
 popd
 
 pushd ${ATLAS_PROD}/bioentity_properties/wbps
 echo "Obtain all the individual mapping files from WBPS"
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/fetchAllWbpsMappings.sh ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_wbps_${NEW_WBPS_REL}_bioentity_properties_update.log 2>&1
+$PROJECT_ROOT/sh/wbps/fetchAllWbpsMappings.sh $PROJECT_ROOT/sh/wbps/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_wbps_${NEW_WBPS_REL}_bioentity_properties_update.log 2>&1
 popd
 
 echo "Fetching the latest GO mappings..."
@@ -124,12 +127,12 @@ ${ATLAS_PROD}/sw/atlasinstall_prod/atlasprod/bioentity_annotations/go/fetchGoIDT
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest GO mappings" >&2
     exit 1
-fi 
+fi
 
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
 a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
-if [ ! -s $a2cMappingFile ]; then 
+if [ ! -s $a2cMappingFile ]; then
     echo "ERROR: Missing $a2cMappingFile"
     exit 1
 fi
@@ -148,11 +151,11 @@ for gof in $(ls *.go.tsv); do
 done
 
 echo "Merge all individual Ensembl property files into matrices"
-for species in $(ls *ens*.tsv | awk -F"." '{print $1}' | sort | uniq); do 
-    for bioentity in ensgene enstranscript ensprotein; do 
-        ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir . 
-    done 
-done 
+for species in $(ls *ens*.tsv | awk -F"." '{print $1}' | sort | uniq); do
+    for bioentity in ensgene enstranscript ensprotein; do
+        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir .
+    done
+done
 popd
 
 pushd ${ATLAS_PROD}/bioentity_properties/wbps
@@ -160,7 +163,7 @@ pushd ${ATLAS_PROD}/bioentity_properties/wbps
 echo "Merge all individual WBPS property files into matrices"
 for species in $(ls *wbps*.tsv | awk -F"." '{print $1}' | sort | uniq); do
     for bioentity in wbpsgene wbpsprotein wbpstranscript; do
-        ${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir .
+        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir .
     done
 done
 popd
@@ -169,27 +172,27 @@ popd
 # # Compare the line counts of the new files against those in the previous
 # # versions downloaded.
 # echo "Checking all mapping files against archive ..."
-# 
+#
 # # Create the path to the directory containing the mapping files we just archived above.
 # previousArchive=${ATLAS_PROD}/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-# 
+#
 # # Go through the newly downloaded mapping files.
 # for mappingFile in $( ls *.tsv ); do
-# 
+#
 #     # Count the number of lines in the new file.
 #     newFileNumLines=`cat $mappingFile | wc -l`
-# 
+#
 #     # Cound the number of lines in the archived version of the same file.
 #     if [ -s ${previousArchive}/$mappingFile ]; then
 #         oldFileNumLines=`cat ${previousArchive}/$mappingFile | wc -l`
-# 
+#
 #         # Warn to STDOUT and STDERR if the number of lines in the new file is
 #         # significantly lower than the number of lines in the old file.
 #         if [ $newFileNumLines -lt $oldFileNumLines ]; then
-# 
+#
 #             # Calculate the difference between the numbers of lines.
 #             difference=`expr $oldFileNumLines - $newFileNumLines`
-# 
+#
 #             # Only warn if the difference is greater than 2000 genes.
 #             # tee is used to send the message to STDOUT as well.
 #             if [ $difference -gt 2000 ]; then
@@ -198,9 +201,9 @@ popd
 #         fi
 #     fi
 # done
-# 
+#
 # echo "Finished checking mapping files against archive."
-#-------------------------------------------------- 
+#--------------------------------------------------
 
 
 echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
@@ -213,10 +216,10 @@ cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_p
 
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 echo "Copy all Ensembl matrices to the public Ensembl data directory"
-for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do 
+for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
     for bioentity in ensgene enstranscript ensprotein; do
     	cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
-    done 
+    done
 done
 popd
 
@@ -234,13 +237,13 @@ popd
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat file"
 
 pushd ${ATLAS_PROD}/bioentity_properties
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
+$PROJECT_ROOT/sh/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
 size=`wc -l bioentityOrganism.dat | awk '{print $1}'`
 if [ "$size" -lt 200 ]; then
     echo "ERROR: Something went wrong with populating bioentityOrganism.dat file - should have more than 200 rows"
     exit 1
-fi 
+fi
 
 popd
 
@@ -248,16 +251,16 @@ echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityName.dat file"
 echo "... Generate miRBase component"
 pushd ${ATLAS_PROD}/bioentity_properties/mirbase
 rm -rf miRNAName.dat
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/mirbase/prepare_mirbasenames_forloading.sh
+$PROJECT_ROOT/sh/mirbase/prepare_mirbasenames_forloading.sh
 popd
 echo "... Generate Ensembl component"
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 rm -rf geneName.dat
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/ensembl/prepare_ensemblnames_forloading.sh
+$PROJECT_ROOT/sh/ensembl/prepare_ensemblnames_forloading.sh
 popd
 pushd ${ATLAS_PROD}/bioentity_properties/wbps
 rm -rf wbpsgeneName.dat
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/wbps/prepare_wbpsnames_forloading.sh
+$PROJECT_ROOT/sh/wbps/prepare_wbpsnames_forloading.sh
 popd
 
 pushd ${ATLAS_PROD}/bioentity_properties
@@ -270,27 +273,27 @@ size=`wc -l bioentityName.dat | awk '{print $1}'`
 if [ "$size" -lt 1000000 ]; then
     echo "ERROR: Something went wrong with populating bioentityName.dat file - should have more than 800k rows"
     exit 1
-fi 
+fi
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat file"
 rm -rf designelementMapping.dat
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
+$PROJECT_ROOT/sh/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
 size=`wc -l designelementMapping.dat | awk '{print $1}'`
 if [ "$size" -lt 2000000 ]; then
     echo "ERROR: Something went wrong with populating designelementMapping.dat file - should have more than 2mln rows"
     exit 1
-fi 
+fi
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat file"
 rm -rf organismKingdom.dat
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/prepare_organismKingdom_forloading.sh ${ATLAS_PROD}/bioentity_properties
+$PROJECT_ROOT/sh/prepare_organismKingdom_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
 size=`wc -l organismKingdom.dat | awk '{print $1}'`
 if [ "$size" -lt 50 ]; then
     echo "ERROR: Something went wrong with populating organismKingdom.dat file - should have more than 50 rows"
     exit 1
-fi 
+fi
 
 
 #################
@@ -311,7 +314,7 @@ done
 # Archive the previous Reactome data. Note the files from Gramene need to be
 # dealt with manually, when they send us a new one.
 echo "Archive the previous Reactome Data - if not done already"
-if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then 
+if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then
     mkdir -p $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
     cp $ATLAS_PROD/bioentity_properties/reactome/*.reactome.* $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
 else
@@ -327,7 +330,7 @@ fi
 echo "Fetching the latest Reactome mappings..."
 # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
 # gene ids - we need to use the mapping files we've just retrieved from Ensembl
-${ATLAS_PROD}/sw/atlasinstall_${atlasEnv}/atlasprod/bioentity_annotations/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
+$PROJECT_ROOT/sh/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest Reactome mappings" >&2
     exit 1
