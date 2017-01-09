@@ -108,26 +108,17 @@ def scheduleAndLogResultOfBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartA
   (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
   if(task.seemsDone){
     Log.log(s"Task appears done, skipping: ${task}")
+    future {
+      //
+    }
   } else {
     future {
-      performBioMartTask(aux, task) match {
-        case Right(msg)
-          => Log.log(msg)
-        case Left(err)
-          => Log.err(err)
-      }
-    } onFailure {
-      /*
-      this is not ideal because it gets submitted to a pool I think and might not happen for a while.
-      Anyway we do not expect this kind of failure.
-      */
-       case e => {
-         Log.err(s"Fatal failure for task: {task}")
-         Log.err(e)
-       }
+      performBioMartTask(aux, task)
+      .fold(l => Log.err(l), r => Log.log(r))
     }
   }
 }
+
 
 def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
   validate(tasks) match {
@@ -141,11 +132,21 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
               Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
 
               val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
-              val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
-              for(task <- tasks) {
+              implicit val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
+              val futures = tasks.map { case task =>
                 scheduleAndLogResultOfBioMartTask(auxiliaryInfo)(task)(ec)
               }
-              Thread.sleep(1000)
+              Future.sequence(futures) onComplete {
+                case Success(_) => {
+                  Log.log("All tasks completed, shutting down")
+                  executorService.shutdown()
+                }
+                case Failure(t) => {
+                  Log.log("Completed with execution errors")
+                  Log.err(t)
+                  executorService.shutdown()
+                }
+              }
             }
           case Left(err)
             => {
