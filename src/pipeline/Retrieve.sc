@@ -121,6 +121,7 @@ def scheduleAndLogResultOfBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartA
 
 
 def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
+  Log.log(s"Validating ${tasks.size} tasks")
   validate(tasks) match {
     case Right(_)
       => {
