@@ -1,27 +1,30 @@
 #!/bin/bash
 # A script to increment release numbers in annotation source config files for ensembl and ensemblgenoms to $ENSEMBL_RELNUM and $ENSEMBLGENOMES_RELNUM respectively
-# After the script is run, the annotation source config files need to be commited and pushed to git, so that they are propagated to ${ATLAS_PROD}/sw/atlasinstall_<env>/atlasprod
-# Author: rpetry@ebi.ac.uk
+# Author: rpetry@ebi.ac.uk, spruced up by wbazant@ebi.ac.uk
 
+function update {
+  filterPhrase=software.name=$1
+  updateCommand="s|software.version=\d+$|software.version=${2}|"
+  dir=$3
 
-prevEnsemblRelNum=$1
-prevEnsemblGenomesRelNum=$2
-newEnsemblRelNum=$3
-newEnsemblGenomesRelNum=$4
-annotSrcsDir=$5
+  find -X $dir -type f | xargs grep -l $filterPhrase | xargs perl -pi -e $updateCommand
+}
 
-if [ $# -lt 5 ]; then
-        echo "Usage: $0 ENSEMBL_RELNUM ENSEMBLGENOMES_RELNUM ANNSRCS_DIR"
-	echo "e.g. $0 74 21 75 21 <atlasprod clone>/bioentity_annotations/ensembl/annsrcs" 
-        exit;
+if [ $# -lt 3 ]; then
+  echo "Usage: $0 ENSEMBL_RELNUM ENSEMBLGENOMES_RELNUM WBPS_RELNUM"
+	echo "e.g. $0 86 34 8"
+  exit 1;
 fi
+scriptDir=`dirname $0`/../annsrcs
 
-pushd $annotSrcsDir
-if [ "$newEnsemblRelNum" != "$prevEnsemblRelNum" ]; then
-    for f in $(ls ); do perl -pi -e "s|software.version=${prevEnsemblRelNum}$|software.version=${newEnsemblRelNum}|" $f; done
+if [$(git diff --name-only --cached | wc -l ) != 0 ] ; then
+ echo "Dirty worktree: "
+ git diff --name-only --cached
+else
+  update "ensembl" $1 $scriptDir
+  update "plants" $2 $scriptDir
+  update "metazoa" $2 $scriptDir
+  update "fungi" $2 $scriptDir
+  update "parasite" $3 $scriptDir
+  git commit $scriptDir -m "Update release numbers- Ensembl $1 EnsemblGenomes $2 Wormbase $3"
 fi
-if [ "$newEnsemblGenomesRelNum" != "$prevEnsemblGenomesRelNum" ]; then
-    for f in $(ls ); do perl -pi -e "s|software.version=${prevEnsemblGenomesRelNum}$|software.version=${newEnsemblGenomesRelNum}|" $f; done
-fi
-grep 'software\.version=' * | awk -F":" '{print $NF}'
-popd
