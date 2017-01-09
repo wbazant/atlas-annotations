@@ -18,12 +18,8 @@ def writeResult(destination: Path, result: Stream[String], hasErrors: Boolean = 
 def destinationFor(atlasProperty: AtlasProperty) = {
   val middleBit =
     atlasProperty match {
-      case AtlasBioentityProperty(species, GENE, atlasName)
-        => ".ensgene."
-      case AtlasBioentityProperty(species, TRANSCRIPT, atlasName)
-        => ".enstranscript."
-      case AtlasBioentityProperty(species, PROTEIN, atlasName)
-        => ".ensprotein."
+      case AtlasBioentityProperty(species, bioentityType, atlasName)
+        => s".${bioentityType.name}."
       case AtlasArrayDesign(species, atlasName)
         => "."
     }

@@ -1,32 +1,30 @@
 import $file.AnnotationSource
 
-sealed abstract class AtlasProperty(val annotationSource: ammonite.ops.Path, val atlasName: String)
+sealed abstract class AtlasProperty(val annotationSource: AnnotationSource.AnnotationSource, val atlasName: String)
 
-case class AtlasBioentityProperty(override val annotationSource: ammonite.ops.Path, bioentityType: BioentityType, override val atlasName: String) extends AtlasProperty(annotationSource,atlasName)
+case class AtlasBioentityProperty(override val annotationSource: AnnotationSource.AnnotationSource,val bioentityType: AnnotationSource.Property, override val atlasName: String) extends AtlasProperty(annotationSource,atlasName)
 
-sealed abstract class BioentityType(val ensemblName: String)
-case object GENE extends BioentityType("ensembl_gene_id")
-case object TRANSCRIPT extends BioentityType("ensembl_transcript_id")
-case object PROTEIN extends BioentityType("ensembl_peptide_id")
+case class AtlasArrayDesign(override val annotationSource: AnnotationSource.AnnotationSource,override val atlasName: String) extends AtlasProperty(annotationSource,atlasName)
 
-case class AtlasArrayDesign(override val annotationSource: ammonite.ops.Path,override val atlasName: String) extends AtlasProperty(annotationSource,atlasName)
+private def atlasBioentityProperties(atlasName: String,ensemblNames: List[String], annotationSource: AnnotationSource.AnnotationSource) = {
+  AnnotationSource.getBioentityTypeProperties(annotationSource)
+  .fold(l => List(), r => r.map {
+    case bioentityType =>
+      new AtlasBioentityProperty(annotationSource, bioentityType, atlasName) -> ensemblNames
+  })
+  .toMap
+}
 
 def getMappingWithDesiredCorrespondingProperties = {
   AnnotationSource.properties
   .filter{case p: AnnotationSource.Property =>
-    ! List(GENE.ensemblName, PROTEIN.ensemblName, TRANSCRIPT.ensemblName).contains(p.value)
+    ! p.isBioentityType
   }
   .map{case p: AnnotationSource.Property =>
     val ensemblNames = p.value.split(",").toList
     p.name.split("\\.").toList match {
       case List("property", atlasName)
-        =>  {
-          Map(
-            new AtlasBioentityProperty(p.annotationSource, GENE, atlasName) -> ensemblNames,
-            new AtlasBioentityProperty(p.annotationSource, TRANSCRIPT, atlasName) -> ensemblNames,
-            new AtlasBioentityProperty(p.annotationSource, PROTEIN, atlasName) -> ensemblNames
-          )
-        }
+        =>  atlasBioentityProperties(atlasName, ensemblNames, p.annotationSource)
       case List("arrayDesign", arrayDesign)
         => Map(
           new AtlasArrayDesign(p.annotationSource, arrayDesign) -> ensemblNames

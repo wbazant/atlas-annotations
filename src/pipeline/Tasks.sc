@@ -16,12 +16,8 @@ Still not sure we can use the same reference columns for both Ensembl and wbps -
 */
 def ensemblNameOfReferenceColumn(atlasProperty: AtlasProperty) = {
   atlasProperty match {
-    case AtlasBioentityProperty(species, GENE, atlasName)
-      => "ensembl_gene_id"
-    case AtlasBioentityProperty(species, TRANSCRIPT, atlasName)
-      => "ensembl_peptide_id"
-    case AtlasBioentityProperty(species, PROTEIN, atlasName)
-      => "ensembl_transcript_id"
+    case AtlasBioentityProperty(species, bioentityType, atlasName)
+      => bioentityType.value
     case AtlasArrayDesign(species, atlasName)
       => "ensembl_gene_id"
   }

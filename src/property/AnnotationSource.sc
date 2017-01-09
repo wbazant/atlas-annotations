@@ -6,6 +6,9 @@ type AnnotationSource = ammonite.ops.Path
 
 case class Property(annotationSource: AnnotationSource, name: String, value: String){
   def isAboutArrayDesign = name.contains("arrayDesign")
+  def isBioentityType =
+    AnnotationSource.getBioentityTypeProperties(annotationSource)
+    .fold (l => false, r => r.contains(name))
 }
 
 object Property {
@@ -25,6 +28,27 @@ object Property {
     }
     .map {
       case (name,value) => Property(annotationSource, name, value)
+    }
+  }
+}
+
+/*
+A reference property is used in pairwise retrieval as an attribute through which other other attributes get tied.
+Typically gene/protein/transcript id.
+*/
+def getBioentityTypeProperties(annotationSource: AnnotationSource) : Either[String, Seq[Property]] = {
+  getValue(annotationSource, "types")
+  .right.flatMap{ case value =>
+    getValues(annotationSource, value.split(",").toList)
+  }.right.flatMap { case bioentityPropertyNames =>
+    val ps = Property.readFromAnnotationSource(annotationSource)
+    .filter {  case property =>
+      bioentityPropertyNames.contains(property.name)
+    }
+    if(ps.size == bioentityPropertyNames.size) {
+      Right(ps)
+    } else {
+      Left (s"Required : ${bioentityPropertyNames} but found: ${ps}")
     }
   }
 }
