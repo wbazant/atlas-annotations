@@ -5,6 +5,7 @@ software.version=7
 url=http://parasite.wormbase.org/biomart/martservice?
 organism=caenorhabditis elegans
 datasetName=wbps_gene
+databaseName=parasite
 mySqlDbName=caenorhabditis_elegans_prjna13758
 mySqlDbUrl=mysql-ps-intrel.ebi.ac.uk:4480
 types=wbpsgene,wbpstranscript,wbpsprotein

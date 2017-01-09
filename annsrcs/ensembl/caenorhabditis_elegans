@@ -3,7 +3,7 @@ software.version=33
 url=http://metazoa.ensembl.org/biomart/martservice?
 organism=caenorhabditis elegans
 datasetName=celegans_eg_gene
+databaseName=metazoa
 chromosomeName=I,II,III,IV,V,X,MtDNA
 property.ensgene=wormbase_gene
 arrayDesign.A-AFFY-60=affy_c_elegans
-

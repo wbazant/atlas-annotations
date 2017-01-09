@@ -5,6 +5,7 @@ software.version=7
 url=http://parasite.wormbase.org/biomart/martservice?
 organism=schistosoma mansoni
 datasetName=wbps_gene
+databaseName=parasite
 mySqlDbName=schistosoma_mansoni_prjea36577
 mySqlDbUrl=mysql-ps-intrel.ebi.ac.uk:4480
 types=wbpsgene,wbpstranscript,wbpsprotein
