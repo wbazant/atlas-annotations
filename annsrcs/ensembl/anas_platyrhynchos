@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=86
+software.version=87
 url=http://www.ensembl.org/biomart/martservice?
 organism=anas platyrhynchos
 databaseName=ensembl
