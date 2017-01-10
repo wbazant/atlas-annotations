@@ -4,6 +4,10 @@
 This is a repository for scripts that we use for retrieving annotations used by Atlas Solr searches and more.
 It also stores the config of Atlas properties per species name and which public BioMart database we retrieve it from.
 
+### Dependencies
+src - only java and [Ammonite](http://www.lihaoyi.com/Ammonite/)
+ensemblUpdate.sh - various bash utilities,mysql, environment variable $ATLAS_PROD (see util/create_test_env.sh to work with this script)
+
 ### Structure
 
 #### ./annsrcs
@@ -23,5 +27,5 @@ Tools that make the Atlas team's work easier, including scripts to automatically
 `sh/ensembl/ensemblUpdate.sh`
 the entry point to the whole process
 
-`sh/atlas-species.sh`
+`sh/atlas_species.sh`
 Regenerate the species file based on annotation sources config
