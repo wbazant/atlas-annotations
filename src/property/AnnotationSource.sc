@@ -38,16 +38,10 @@ Typically gene/protein/transcript id.
 */
 def getBioentityTypeProperties(annotationSource: AnnotationSource) : Either[String, Seq[Property]] = {
   getValue(annotationSource, "types")
-  .right.flatMap { case value =>
+  .right.map { case value =>
     value.split(",")
     .toList
     .map {case v => "property."+v }
-    .map {getValue(annotationSource, _)} match {
-      case List(Right(a),Right(b),Right(c))
-        => Right(List(a,b,c))
-      case x
-        => Left(s"Expected three references (for gene/transcript/proteome) and got : ${x}")
-    }
   }.right.flatMap { case bioentityPropertyNames =>
     val ps = Property.readFromAnnotationSource(annotationSource)
     .filter {  case property =>

@@ -19,7 +19,7 @@ def destinationFor(atlasProperty: AtlasProperty) = {
   val middleBit =
     atlasProperty match {
       case AtlasBioentityProperty(species, bioentityType, atlasName)
-        => s".${bioentityType.name}."
+        => s".${bioentityType.name.replace("property.", "")}."
       case AtlasArrayDesign(species, atlasName)
         => "."
     }

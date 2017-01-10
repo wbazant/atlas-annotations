@@ -10,8 +10,14 @@ private def atlasBioentityProperties(atlasName: String,ensemblNames: List[String
   AnnotationSource.getBioentityTypeProperties(annotationSource)
   .fold(l => List(), r => r.map {
     case bioentityType =>
-      new AtlasBioentityProperty(annotationSource, bioentityType, atlasName) -> ensemblNames
+      new AtlasBioentityProperty(annotationSource, bioentityType, atlasName) -> ensemblNames.filter(_!=bioentityType.value)
   })
+  .filter {
+    case (_, List())
+      => false
+    case _
+      => true
+  }
   .toMap
 }
 
