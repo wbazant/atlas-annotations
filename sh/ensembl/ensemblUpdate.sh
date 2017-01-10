@@ -2,10 +2,9 @@
 
 # I used to source this script from the same (prod or test) Atlas environment as this script
 # scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-pushd `dirname $0`
-source ../generic_routines.sh
 
-PROJECT_ROOT=`dirname $0`/..
+PROJECT_ROOT=`dirname $0`/../..
+source $PROJECT_ROOT/sh/generic_routines.sh
 
 if [ $# -lt 6 ]; then
   echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL OLD_WBPS_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL NEW_WBPS_REL "
@@ -35,20 +34,6 @@ if [ "$NEW_WBPS_REL" -lt "$OLD_WBPS_REL" ]; then
 	exit 1
 fi
 
-
-pushd $PROJECT_ROOT/sh
-
-for annotationDB in ensembl wbps; do
-    echo "Validate all $annotationDB annotation sources against the release specified in them"
-    ./validateAnnSrcs.sh $annotationDB/annsrcs
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Validation of $annotationDB annotation sources failed - please check notes on validation source failures on http://bar.ebi.ac.uk:8080/trac/wiki/BioentityAnnotationUpdates; fix and re-run"
-        exit 1
-    fi
-done
-
-popd
-
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 
 echo "Archive the previous Ensembl data - if not done already"
@@ -70,15 +55,15 @@ else
 fi
 popd
 
-pushd ${ATLAS_PROD}/bioentity_properties/ensembl
-echo "Obtain all the individual mapping files from Ensembl"
-$PROJECT_ROOT/sh/ensembl/fetchAllEnsemblMappings.sh $PROJECT_ROOT/sh/ensembl/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+pushd $PROJECT_ROOT
+echo "Obtain the mapping files from biomarts based on annotation sources"
+amm -s -c 'import $file.src.pipeline.main; main.runAll()' > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+if [ $? -ne 0 ]; then
+    echo "Ammonite errored out, exiting..." >&2
+    exit 1
+fi
 popd
 
-pushd ${ATLAS_PROD}/bioentity_properties/wbps
-echo "Obtain all the individual mapping files from WBPS"
-$PROJECT_ROOT/sh/wbps/fetchAllWbpsMappings.sh $PROJECT_ROOT/sh/wbps/annsrcs . > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_wbps_${NEW_WBPS_REL}_bioentity_properties_update.log 2>&1
-popd
 
 echo "Fetching the latest GO mappings..."
 # This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
@@ -126,62 +111,6 @@ for species in $(ls *wbps*.tsv | awk -F"." '{print $1}' | sort | uniq); do
     done
 done
 popd
-
-#--------------------------------------------------
-# # Compare the line counts of the new files against those in the previous
-# # versions downloaded.
-# echo "Checking all mapping files against archive ..."
-#
-# # Create the path to the directory containing the mapping files we just archived above.
-# previousArchive=${ATLAS_PROD}/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-#
-# # Go through the newly downloaded mapping files.
-# for mappingFile in $( ls *.tsv ); do
-#
-#     # Count the number of lines in the new file.
-#     newFileNumLines=`cat $mappingFile | wc -l`
-#
-#     # Cound the number of lines in the archived version of the same file.
-#     if [ -s ${previousArchive}/$mappingFile ]; then
-#         oldFileNumLines=`cat ${previousArchive}/$mappingFile | wc -l`
-#
-#         # Warn to STDOUT and STDERR if the number of lines in the new file is
-#         # significantly lower than the number of lines in the old file.
-#         if [ $newFileNumLines -lt $oldFileNumLines ]; then
-#
-#             # Calculate the difference between the numbers of lines.
-#             difference=`expr $oldFileNumLines - $newFileNumLines`
-#
-#             # Only warn if the difference is greater than 2000 genes.
-#             # tee is used to send the message to STDOUT as well.
-#             if [ $difference -gt 2000 ]; then
-#                 echo "WARNING - new version of $mappingFile has $newFileNumLines lines, old version has $oldFileNumLines lines!" | tee /dev/stderr
-#             fi
-#         fi
-#     fi
-# done
-#
-# echo "Finished checking mapping files against archive."
-#--------------------------------------------------
-
-pushd ${ATLAS_PROD}/bioentity_properties/ensembl
-echo "Copy all Ensembl matrices to the public Ensembl data directory"
-for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
-    for bioentity in ensgene enstranscript ensprotein; do
-    	cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
-    done
-done
-popd
-
-pushd ${ATLAS_PROD}/bioentity_properties/wbps
-echo "Copy all WBPS matrices to the public WBPS data directory"
-for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
-    for bioentity in wbpsgene wbpstranscript wbpsprotein; do
-        cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/wbps/
-    done
-done
-popd
-
 
 # Create files that will be loaded into the database.
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat file"

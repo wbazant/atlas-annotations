@@ -23,19 +23,7 @@ dbSID=$2
 dbPass=`get_pass $dbUser`
 dbConnection=${dbUser}/${dbPass}@${dbSID}
 
-
-
-echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
-for dir in ensembl mirbase reactome go interpro wbps; do
-   rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
-done
-
-echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
-cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
-
-
 #################
-# Copy the files to the FTP directory.
 echo "Load bioentityOrganism.dat, bioentityName.dat, organismKingdom.dat and designelementMapping.dat into staging Oracle schema"
 for f in bioentityOrganism bioentityName organismKingdom designelementMapping; do
     rm -rf ${f}.log; rm -rf ${f}.bad
@@ -45,7 +33,34 @@ for f in bioentityOrganism bioentityName organismKingdom designelementMapping; d
         exit 1
     fi
 done
+
 #################
+echo "Clear previous Ensembl data from the public all subdirs of ${ATLAS_FTP}/bioentity_properties"
+for dir in ensembl mirbase reactome go interpro wbps; do
+   rm -rf ${ATLAS_FTP}/bioentity_properties/${dir}/*
+done
+
+#################
+pushd ${ATLAS_PROD}/bioentity_properties/ensembl
+echo "Copy all Ensembl matrices to the public Ensembl data directory"
+for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
+    for bioentity in ensgene enstranscript ensprotein; do
+    	cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
+    done
+done
+popd
+
+pushd ${ATLAS_PROD}/bioentity_properties/wbps
+echo "Copy all WBPS matrices to the public WBPS data directory"
+for species in $(ls *.tsv | awk -F"." '{print $1}' | sort | uniq); do
+    for bioentity in wbpsgene wbpstranscript wbpsprotein; do
+        cp $species.$bioentity.tsv ${ATLAS_FTP}/bioentity_properties/wbps/
+    done
+done
+popd
+
+echo "Copy all array design mapping files into the public Ensembl data directory (this directory is used only for Solr index build)"
+cp ${ATLAS_PROD}/bioentity_properties/ensembl/*.A-*.tsv ${ATLAS_FTP}/bioentity_properties/ensembl/
 
 
 echo "Copy all files to the other public data directories"

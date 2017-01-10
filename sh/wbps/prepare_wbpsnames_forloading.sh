@@ -1,5 +1,5 @@
 # This script geneartes sqlloader file for bioentity_name table, containing Ensmebl genes, using $dir/../bioentityOrganisms.dat as the organism reference
-
+# TODO this has been duplicated, but - I think - needlessly.
 dir="${ATLAS_PROD}/bioentity_properties/wbps"
 
 IFS="
@@ -14,12 +14,12 @@ for f in $(ls *.wbpsgene.symbol.tsv); do
 	echo "ERROR: Could not retrieve organismid for '$prettyOrganism'" >&2
 	exit 1
     fi
-    
+
     IFS=$'\t'
-    cat $f | while read identifier name; do 
-	if [ ! -z "$name" ]; then 
+    cat $f | while read identifier name; do
+	if [ ! -z "$name" ]; then
 	    echo -e "${identifier}\t${organismId}\tgene\t${name}"
-	else 
+	else
 	    echo -e "${identifier}\t${organismId}\tgene"
 	fi
     done
