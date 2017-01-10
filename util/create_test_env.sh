@@ -10,3 +10,6 @@ done
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/ensembl_x_y $ATLAS_PROD/bioentity_properties/ensembl
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/reactome_ensx_y $ATLAS_PROD/bioentity_properties/reactome
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/wbps_z $ATLAS_PROD/bioentity_properties/wbps
+
+
+echo id1 id2 > $ATLAS_PROD/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
