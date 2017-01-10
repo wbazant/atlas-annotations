@@ -63,82 +63,73 @@ for gof in $(ls *.go.tsv); do
     done
     echo "${gof} done "
 done
+popd
 
 echo "Merge all individual Ensembl property files into matrices"
-for species in $(ls *ens*.tsv | awk -F"." '{print $1}' | sort | uniq); do
+for species in $(ls $PROJECT_ROOT/annsrcs/ensembl | awk -F"." '{print $1}' | sort | uniq); do
     for bioentity in ensgene enstranscript ensprotein; do
-        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir .
+        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir ${ATLAS_PROD}/bioentity_properties/ensembl -species $species -bioentity $bioentity -outdir ${ATLAS_PROD}/bioentity_properties/ensembl
     done
 done
-popd
 
-pushd ${ATLAS_PROD}/bioentity_properties/wbps
 # Do the same for WBPS.
 echo "Merge all individual WBPS property files into matrices"
-for species in $(ls *wbps*.tsv | awk -F"." '{print $1}' | sort | uniq); do
+for species in $(ls $PROJECT_ROOT/annsrcs/wbps  | awk -F"." '{print $1}' | sort | uniq); do
     for bioentity in wbpsgene wbpsprotein wbpstranscript; do
-        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir . -species $species -bioentity $bioentity -outdir .
+        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir ${ATLAS_PROD}/bioentity_properties/wbps -species $species -bioentity $bioentity -outdir ${ATLAS_PROD}/bioentity_properties/wbps
     done
 done
-popd
 
 # Create files that will be loaded into the database.
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat file"
-
-pushd ${ATLAS_PROD}/bioentity_properties
 $PROJECT_ROOT/sh/prepare_bioentityorganisms_forloading.sh ${ATLAS_PROD}/bioentity_properties
+
 # Apply sanity test
-size=`wc -l bioentityOrganism.dat | awk '{print $1}'`
+size=`wc -l ${ATLAS_PROD}/bioentity_properties/bioentityOrganism.dat | awk '{print $1}'`
 if [ "$size" -lt 200 ]; then
     echo "ERROR: Something went wrong with populating bioentityOrganism.dat file - should have more than 200 rows"
     exit 1
 fi
 
-popd
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/bioentityName.dat file"
 echo "... Generate miRBase component"
-pushd ${ATLAS_PROD}/bioentity_properties/mirbase
-rm -rf miRNAName.dat
+rm -rf ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat
 $PROJECT_ROOT/sh/mirbase/prepare_mirbasenames_forloading.sh
-popd
-echo "... Generate Ensembl component"
-pushd ${ATLAS_PROD}/bioentity_properties/ensembl
-rm -rf geneName.dat
-$PROJECT_ROOT/sh/ensembl/prepare_ensemblnames_forloading.sh
-popd
-pushd ${ATLAS_PROD}/bioentity_properties/wbps
-rm -rf wbpsgeneName.dat
-$PROJECT_ROOT/sh/wbps/prepare_wbpsnames_forloading.sh
-popd
 
-pushd ${ATLAS_PROD}/bioentity_properties
+echo "... Generate Ensembl component"
+rm -rf ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat
+$PROJECT_ROOT/sh/ensembl/prepare_ensemblnames_forloading.sh
+
+rm -rf ${ATLAS_PROD}/bioentity_properties/wbps/wbpsgeneName.dat
+$PROJECT_ROOT/sh/wbps/prepare_wbpsnames_forloading.sh
+
 echo "Merge miRNAName.dat, geneName.dat and wbpsgeneName.dat into bioentityName.dat"
 cp ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
 cat ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
 cat ${ATLAS_PROD}/bioentity_properties/wbps/wbpsgeneName.dat >> ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
 # Apply sanity test
-size=`wc -l bioentityName.dat | awk '{print $1}'`
+size=`wc -l ${ATLAS_PROD}/bioentity_properties/bioentityName.dat | awk '{print $1}'`
 if [ "$size" -lt 1000000 ]; then
     echo "ERROR: Something went wrong with populating bioentityName.dat file - should have more than 800k rows"
     exit 1
 fi
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat file"
-rm -rf designelementMapping.dat
+rm -rf ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
 $PROJECT_ROOT/sh/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
-size=`wc -l designelementMapping.dat | awk '{print $1}'`
+size=`wc -l ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat | awk '{print $1}'`
 if [ "$size" -lt 2000000 ]; then
     echo "ERROR: Something went wrong with populating designelementMapping.dat file - should have more than 2mln rows"
     exit 1
 fi
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat file"
-rm -rf organismKingdom.dat
+rm -rf ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat
 $PROJECT_ROOT/sh/prepare_organismKingdom_forloading.sh ${ATLAS_PROD}/bioentity_properties
 # Apply sanity test
-size=`wc -l organismKingdom.dat | awk '{print $1}'`
+size=`wc -l ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat | awk '{print $1}'`
 if [ "$size" -lt 50 ]; then
     echo "ERROR: Something went wrong with populating organismKingdom.dat file - should have more than 50 rows"
     exit 1
