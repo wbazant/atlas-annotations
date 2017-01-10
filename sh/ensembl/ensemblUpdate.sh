@@ -6,54 +6,24 @@
 PROJECT_ROOT=`dirname $0`/../..
 source $PROJECT_ROOT/sh/generic_routines.sh
 
-if [ $# -lt 6 ]; then
-  echo "Usage: $0 OLD_ENSEMBL_REL OLD_ENSEMBLGENOMES_REL OLD_WBPS_REL NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL NEW_WBPS_REL "
-  echo "e.g. $0 85 33 7 86 34 8"
+if [ $# -lt 3 ]; then
+  echo "Usage: $0 NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL NEW_WBPS_REL "
+  echo "e.g. $0 86 34 8"
   exit 1
 fi
 
-OLD_ENSEMBL_REL=$1
-OLD_ENSEMBLGENOMES_REL=$2
-OLD_WBPS_REL=$3
-NEW_ENSEMBL_REL=$4
-NEW_ENSEMBLGENOMES_REL=$5
-NEW_WBPS_REL=$6
+NEW_ENSEMBL_REL=$1
+NEW_ENSEMBLGENOMES_REL=$2
+NEW_WBPS_REL=$3
 
-# Note that if $NEW_ENSEMBL_REL must be greater than $OLD_ENSEMBL_REL
-# and $NEW_ENSEMBLGENOMES_REL must be greater than $OLD_ENSEMBLGENOMES_REL
-if [ "$NEW_ENSEMBL_REL" -le "$OLD_ENSEMBL_REL" ]; then
-	echo "ERROR: NEW_ENSEMBL_REL must be greater than OLD_ENSEMBL_REL"
-	exit 1
-fi
-if [ "$NEW_ENSEMBLGENOMES_REL" -le "$OLD_ENSEMBLGENOMES_REL" ]; then
-	echo "ERROR: NEW_ENSEMBLGENOMES_REL must be greater than OLD_ENSEMBLGENOMES_REL"
-	exit 1
-fi
-if [ "$NEW_WBPS_REL" -lt "$OLD_WBPS_REL" ]; then
-	echo "ERROR: NEW_WBPS_REL must not be less than OLD_WBPS_REL"
-	exit 1
-fi
-
-pushd ${ATLAS_PROD}/bioentity_properties/ensembl
-
-echo "Archive the previous Ensembl data - if not done already"
-if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then
-    mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-    mv * $ATLAS_PROD/bioentity_properties/archive/ensembl_${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-else
-    echo "Not archiving as this has already been done."
-fi
-popd
-
-pushd ${ATLAS_PROD}/bioentity_properties/wbps
-echo "Archive the previous WBPS data - if not done already"
-if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}" ]; then
-    mkdir -p $ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}
-    mv * $ATLAS_PROD/bioentity_properties/archive/wbps_${OLD_WBPS_REL}
-else
-    echo "Not archiving as this has already been done."
-fi
-popd
+function symlinkAndArchive() {
+  mkdir -p $2
+  ln -fhs $2 $1
+}
+echo "Shifting the symlinks to new versions of Ensembl, Ensembl Genomes and WBPS"
+symlinkAndArchive $ATLAS_PROD/bioentity_properties/ensembl $ATLAS_PROD/bioentity_properties/archive/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
+symlinkAndArchive $ATLAS_PROD/bioentity_properties/reactome $ATLAS_PROD/bioentity_properties/archive/reactome_ens${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
+symlinkAndArchive $ATLAS_PROD/bioentity_properties/wbps $ATLAS_PROD/bioentity_properties/archive/wbps_${NEW_WBPS_REL}
 
 pushd $PROJECT_ROOT
 echo "Obtain the mapping files from biomarts based on annotation sources"
@@ -172,23 +142,6 @@ size=`wc -l organismKingdom.dat | awk '{print $1}'`
 if [ "$size" -lt 50 ]; then
     echo "ERROR: Something went wrong with populating organismKingdom.dat file - should have more than 50 rows"
     exit 1
-fi
-
-
-# Archive the previous Reactome data. Note the files from Gramene need to be
-# dealt with manually, when they send us a new one.
-echo "Archive the previous Reactome Data - if not done already"
-if [ ! -d "$ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}" ]; then
-    mkdir -p $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}
-    cp $ATLAS_PROD/bioentity_properties/reactome/*.reactome.* $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
-else
-    ls $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL} | grep reactome.tsv > /dev/null
-    grepCode=$?
-    if [ $grepCode == 1 ]; then
-        cp $ATLAS_PROD/bioentity_properties/reactome/*.reactome.* $ATLAS_PROD/bioentity_properties/archive/reactome_ens${OLD_ENSEMBL_REL}_${OLD_ENSEMBLGENOMES_REL}/
-    else
-        echo "Not archiving Reactome data as this has already been done."
-    fi
 fi
 
 echo "Fetching the latest Reactome mappings..."
