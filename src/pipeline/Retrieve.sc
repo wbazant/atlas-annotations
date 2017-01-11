@@ -26,7 +26,7 @@ def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], 
             val brokenLine = line.split("\t")
 
             result.put(brokenLine.head,
-              result.get("x").getOrElse(Set())++=brokenLine.tail
+              result.get(brokenLine.head).getOrElse(Set())++=brokenLine.tail
             )
             None
           } else {
