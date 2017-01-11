@@ -23,8 +23,8 @@
     ENSG000123	value1
     ENSG000123	value2
     ENSG000456	value2
-    ENSG000789	value3 
-	etc. 
+    ENSG000789	value3 value4 value5
+	etc.
 
   The file name provide information on the species (e.g. homo_sapiens), 
   the bioentity (e.g. gene) and the property we have the values for (e.g. uniprot)
@@ -208,15 +208,20 @@ sub parseTSVfile {
 
                 chomp $line ; #remove final /n
 
-                ## Assuming a line is composed of: bioentity identifier TAB value 
+                ## Assuming a line is composed of: bioentity identifier TAB value1 TAB value2 etc.
                 # ENSG-1 val1
                 # ENSG-1 val2
                 # ENSG-2 val3
-                my ($entityID, $value) = split ("\t", $line) ;
-                
+                # ENSG-3 val4 val5 val6
+                my @ar= split ("\t", $line) ;
+                my $entityID = shift @ar;
+
                 #Store the data
                 #Populate the existing hash as we want a single data structure
-                $H_dataMatrix{$entityID}{$prop}{$value} = 1
+                foreach(@ar)
+                {
+                  $H_dataMatrix{$entityID}{$prop}{$_} = 1
+                }
 	}
 	close F ; 
 	return \%H_dataMatrix ; #return the hash reference
