@@ -1,4 +1,4 @@
-interp.load.ivy("org.scalaj" %% "scalaj-http" % "2.2.0")
+interp.load.ivy("org.scalaj" %% "scalaj-http" % "2.3.0")
 import scalaj.http._
 import scala.xml.XML
 import scala.util.{Try, Success, Failure}
