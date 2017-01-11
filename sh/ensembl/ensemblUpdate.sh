@@ -28,7 +28,7 @@ symlinkAndArchive $ATLAS_PROD/bioentity_properties/wbps $ATLAS_PROD/bioentity_pr
 
 pushd $PROJECT_ROOT
 echo "Obtain the mapping files from biomarts based on annotation sources"
-amm -s -c 'import $file.src.pipeline.main; main.runAll()' > ~/tmp/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_bioentity_properties_update.log 2>&1
+amm -s -c 'import $file.src.pipeline.main; main.runAll()'
 if [ $? -ne 0 ]; then
     echo "Ammonite errored out, exiting..." >&2
     exit 1
