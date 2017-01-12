@@ -100,11 +100,14 @@ rm -rf ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat
 $PROJECT_ROOT/sh/mirbase/prepare_mirbasenames_forloading.sh
 
 echo "... Generate Ensembl component"
-rm -rf ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat
-$PROJECT_ROOT/sh/ensembl/prepare_ensemblnames_forloading.sh
+find -L $ATLAS_PROD/bioentity_properties/ensembl -name '*ensgene.symbol.tsv' \
+| xargs $PROJECT_ROOT/sh/ensembl/prepare_names_for_loading.sh $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat \
+> ${ATLAS_PROD}/bioentity_properties/ensembl/geneName.dat
 
-rm -rf ${ATLAS_PROD}/bioentity_properties/wbps/wbpsgeneName.dat
-$PROJECT_ROOT/sh/wbps/prepare_wbpsnames_forloading.sh
+echo "... Generate WBPS component"
+find -L $ATLAS_PROD/bioentity_properties/wbps -name '*wbpsgene.symbol.tsv' \
+| xargs $PROJECT_ROOT/sh/ensembl/prepare_names_for_loading.sh $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat
+> ${ATLAS_PROD}/bioentity_properties/wbps/wbpsgeneName.dat
 
 echo "Merge miRNAName.dat, geneName.dat and wbpsgeneName.dat into bioentityName.dat"
 cp ${ATLAS_PROD}/bioentity_properties/mirbase/miRNAName.dat ${ATLAS_PROD}/bioentity_properties/bioentityName.dat
@@ -113,7 +116,7 @@ cat ${ATLAS_PROD}/bioentity_properties/wbps/wbpsgeneName.dat >> ${ATLAS_PROD}/bi
 # Apply sanity test
 size=`wc -l ${ATLAS_PROD}/bioentity_properties/bioentityName.dat | awk '{print $1}'`
 if [ "$size" -lt 1000000 ]; then
-    echo "ERROR: Something went wrong with populating bioentityName.dat file - should have more than 800k rows"
+    echo "ERROR: Something went wrong with populating bioentityName.dat file - should have more than 1mln rows, only had $size"
     exit 1
 fi
 

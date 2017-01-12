@@ -13,3 +13,5 @@ ln -fhs $ATLAS_PROD/bioentity_properties/archive/wbps_z $ATLAS_PROD/bioentity_pr
 
 
 echo id1 id2 > $ATLAS_PROD/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
+
+scp ebi-005:/nfs/production3/ma/home/atlas3-production/bioentity_properties/bioentityOrganism.dat $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat
