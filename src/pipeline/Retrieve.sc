@@ -106,16 +106,9 @@ def validateAttributesCorrect(tasks: Seq[Tasks.BioMartTask]) :Either[Iterable[St
 
 def scheduleAndLogResultOfBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo])
   (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
-  if(task.seemsDone){
-    Log.log(s"Task appears done, skipping: ${task}")
-    future {
-      //
-    }
-  } else {
-    future {
-      performBioMartTask(aux, task)
-      .fold(l => Log.err(l), r => Log.log(r))
-    }
+  future {
+    performBioMartTask(aux, task)
+    .fold(l => Log.err(l), r => Log.log(r))
   }
 }
 
@@ -126,15 +119,18 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
     case Right(_)
       => {
         Log.log(s"Validated ${tasks.size} tasks")
-        val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasks.map{_.annotationSource}.toSet.toSeq)
+        val tasksToComplete = tasks.filter(!_.seemsDone)
+        if(tasksToComplete.size < tasks.size) {
+          Log.log(s"Skipped tasks that seem completed, remaining ${tasksToComplete.size} tasks")
+        }
+        val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasksToComplete.map{_.annotationSource}.toSet.toSeq)
         aux match {
           case Right(auxiliaryInfo)
             => {
               Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
-
-              val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
+              val executorService = java.util.concurrent.Executors.newFixedThreadPool(7)
               implicit val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
-              val futures = tasks.map { case task =>
+              val futures = tasksToComplete.map { case task =>
                 scheduleAndLogResultOfBioMartTask(auxiliaryInfo)(task)(ec)
               }
               Future.sequence(futures) onComplete {
@@ -146,6 +142,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
                   Log.log("Completed with execution errors")
                   Log.err(t)
                   executorService.shutdown()
+                  System.exit(1)
                 }
               }
             }
