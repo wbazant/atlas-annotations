@@ -28,6 +28,7 @@ symlinkAndArchive $ATLAS_PROD/bioentity_properties/wbps $ATLAS_PROD/bioentity_pr
 
 pushd $PROJECT_ROOT
 echo "Obtain the mapping files from biomarts based on annotation sources"
+export $JAVA_OPTS=-Xmx3000M
 amm -s -c 'import $file.src.pipeline.main; main.runAll()'
 if [ $? -ne 0 ]; then
     echo "Ammonite errored out, exiting..." >&2

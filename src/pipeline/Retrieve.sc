@@ -128,7 +128,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
           case Right(auxiliaryInfo)
             => {
               Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
-              val executorService = java.util.concurrent.Executors.newFixedThreadPool(7)
+              val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
               implicit val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
               val futures = tasksToComplete.map { case task =>
                 scheduleAndLogResultOfBioMartTask(auxiliaryInfo)(task)(ec)
