@@ -83,7 +83,7 @@ find -L $ATLAS_PROD/bioentity_properties/ensembl -name '*ensgene.symbol.tsv' \
 
 echo "... Generate WBPS component"
 find -L $ATLAS_PROD/bioentity_properties/wbps -name '*wbpsgene.symbol.tsv' \
-| xargs $PROJECT_ROOT/sh/ensembl/prepare_names_for_loading.sh $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat
+| xargs $PROJECT_ROOT/sh/ensembl/prepare_names_for_loading.sh $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat \
 > ${ATLAS_PROD}/bioentity_properties/wbps/wbpsgeneName.dat
 
 echo "Merge miRNAName.dat, geneName.dat and wbpsgeneName.dat into bioentityName.dat"
@@ -101,11 +101,11 @@ echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat file"
 rm -rf ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
 
 find -L $ATLAS_PROD/bioentity_properties/ensembl -name '*A-*.tsv' \
-| xargs $PROJECT_ROOT/sh/ensembl/prepare_array_designs_for_loading.sh "gene" \
+| xargs $PROJECT_ROOT/sh/prepare_array_designs_for_loading.sh "gene" \
 >> ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
 
 find -L $ATLAS_PROD/bioentity_properties/mirbase -name '*A-*.tsv' \
-| xargs $PROJECT_ROOT/sh/ensembl/prepare_array_designs_for_loading.sh "mature_miRNA" \
+| xargs $PROJECT_ROOT/sh/prepare_array_designs_for_loading.sh "mature_miRNA" \
 >> ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
 
 # Apply sanity test
