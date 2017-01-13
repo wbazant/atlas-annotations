@@ -26,6 +26,14 @@ symlinkAndArchive $ATLAS_PROD/bioentity_properties/ensembl $ATLAS_PROD/bioentity
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/reactome $ATLAS_PROD/bioentity_properties/archive/reactome_ens${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/wbps $ATLAS_PROD/bioentity_properties/archive/wbps_${NEW_WBPS_REL}
 
+echo "Fetching the latest GO mappings..."
+# This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
+$PROJECT_ROOT/sh/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the latest GO mappings" >&2
+    exit 1
+fi
+
 pushd $PROJECT_ROOT
 echo "Obtain the mapping files from biomarts based on annotation sources"
 export JAVA_OPTS=-Xmx3000M
@@ -35,15 +43,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 popd
-
-
-echo "Fetching the latest GO mappings..."
-# This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
-$PROJECT_ROOT/sh/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the latest GO mappings" >&2
-    exit 1
-fi
 
 pushd ${ATLAS_PROD}/bioentity_properties/ensembl
 echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
