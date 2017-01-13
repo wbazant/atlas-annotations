@@ -122,7 +122,15 @@ fi
 
 echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat file"
 rm -rf ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
-$PROJECT_ROOT/sh/prepare_arraydesigns_forloading.sh ${ATLAS_PROD}/bioentity_properties
+
+find -L $ATLAS_PROD/bioentity_properties/ensembl -name '*A-*.tsv' \
+| xargs $PROJECT_ROOT/sh/ensembl/prepare_array_designs_for_loading.sh "gene" \
+>> ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
+
+find -L $ATLAS_PROD/bioentity_properties/mirbase -name '*A-*.tsv' \
+| xargs $PROJECT_ROOT/sh/ensembl/prepare_array_designs_for_loading.sh "mature_miRNA" \
+>> ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
+
 # Apply sanity test
 size=`wc -l ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat | awk '{print $1}'`
 if [ "$size" -lt 2000000 ]; then

@@ -13,8 +13,8 @@
 ### ENSAPLG00000011140	8	gene
 ### ENSAPLG00000011141	8	gene	CHD2
 
-if [ $# -lt 3 ]; then
-  echo "Usage: $0 organismReference source1 source2 ... sourceN"
+if [ $# -lt 2 ]; then
+  echo "Usage: $0 organismReference source1 ... sourceN"
   exit 1
 fi
 
@@ -32,7 +32,7 @@ for f in $@; do
   fi
 
   IFS=$'\t'
-  cat $f | while read identifier name
+  cat $f | while read identifier name #danger - the lines could have n elements, only this particular mapping has one or two
   do
 	if [ ! -z "$name" ]; then
 	    echo -e "${identifier}\t${organismId}\tgene\t${name}"
