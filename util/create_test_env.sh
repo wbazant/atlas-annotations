@@ -12,6 +12,6 @@ ln -fhs $ATLAS_PROD/bioentity_properties/archive/reactome_ensx_y $ATLAS_PROD/bio
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/wbps_z $ATLAS_PROD/bioentity_properties/wbps
 
 
-echo id1 id2 > $ATLAS_PROD/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
+echo -e "GO:0019952\tGO:0000003" > $ATLAS_PROD/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
 
 scp ebi-005:/nfs/production3/ma/home/atlas3-production/bioentity_properties/bioentityOrganism.dat $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat

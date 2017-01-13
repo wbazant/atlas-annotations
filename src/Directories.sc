@@ -15,6 +15,18 @@ lazy val ATLAS_PROD = Option(System.getenv.get("ATLAS_PROD")).map(Path(_)).filte
     }
 }
 
+lazy val alternativeToCanonicalGoTermMapping = {
+  (read.lines!(ATLAS_PROD / "bioentity_properties" /"go" / "go.alternativeID2CanonicalID.tsv"))
+  .flatMap{ case line =>
+      line.split("\t").toList match {
+        case List(mapping, mapped)
+          => Some((mapping,mapped))
+        case _
+          => None
+      }
+  }.toMap
+}
+
 val annsrcsPath = PROJECT_ROOT/"annsrcs"/"ensembl"
 val wbpsAnnsrcsPath = PROJECT_ROOT/"annsrcs"/"wbps"
 

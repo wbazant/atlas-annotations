@@ -5,7 +5,8 @@ import AnnotationSource.AnnotationSource
 import $file.Paths
 
 type BioMartQuerySpecification = (Map[String, String],List[String]) //filters and attributes
-case class BioMartTask(annotationSource: AnnotationSource, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path){
+case class BioMartTask(atlasProperty: AtlasProperty, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path){
+  def annotationSource: AnnotationSource = atlasProperty.annotationSource
   def seemsDone = destination.toNIO.toFile.exists
   def ensemblAttributesInvolved = queries.map(_._2).flatten.toSet
   override def toString = s"BioMart task for ${annotationSource} : ${queries.size} queries, destination: ${destination}"
@@ -44,7 +45,7 @@ def queriesForAtlasProperty(atlasProperty: AtlasProperty, desiredCorrespondingPr
 
 def retrievalPlanForAtlasProperty(atlasProperty: AtlasProperty, desiredCorrespondingProperties : List[String]) = {
   BioMartTask(
-    atlasProperty.annotationSource,
+    atlasProperty,
     queriesForAtlasProperty(atlasProperty, desiredCorrespondingProperties),
     Paths.destinationFor(atlasProperty)
   )

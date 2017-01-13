@@ -6,44 +6,50 @@ import scala.concurrent._
 import scala.util.{Success, Failure}
 import $file.^.property.AnnotationSource
 import AnnotationSource.AnnotationSource
+import $file.Transform
 
-import collection.mutable.{ HashMap, Set }
+
 
 //private
 def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], task: Tasks.BioMartTask) : Either[String, String] = {
-
-  val result = new HashMap[String, Set[String]]
-
-  val t0 = System.nanoTime
-  val errors = task.queries.flatMap { case (filters, attributes) =>
-    BioMart.fetchFromBioMart(aux)(task.annotationSource, filters, attributes) match {
-      case Right(res: Array[String])
-        => res.flatMap{ case line =>
-          if(line.filter(!Character.isWhitespace(_)).size == 0){
-            //Filter out empty lines
-            None
-          }else if(line.map(_.isValidChar).reduce(_&&_)){
-            val brokenLine = line.split("\t")
-
-            result.put(brokenLine.head,
-              result.get(brokenLine.head).getOrElse(Set())++=brokenLine.tail
-            )
-            None
-          } else {
-            Some(s"Result for ${task} contains invalid line: ${line}")
-          }
-        }
-      case Left(err)
-        => List(err)
+  val readResults : PartialFunction[String, Either[String,(String,Option[String])]] = {
+    case line if line.filter(!Character.isWhitespace(_)).size > 0 => { // ignore empty lines
+      (line.map(_.isValidChar).reduce(_&&_), line.split("\t")) match {
+        case (true, Array(k))
+          => Right((k, None))
+        case (true, Array(k, v))
+          => Right((k, Some(v)))
+        case _
+          => Left(s"Result for ${task} contains invalid line: ${line}")
+      }
     }
   }
+
+  val t0 = System.nanoTime
+  val x =
+    task.queries
+    .map { case (filters, attributes) =>
+      BioMart.fetchFromBioMart(aux)(task.annotationSource, filters, attributes)
+    }.map {
+      case Right(res: Array[String])
+        => res.collect(readResults)
+      case Left(err)
+        => Array(Left(err))
+    }
+  val result = for(returnedResult <- x; Right(line) <- returnedResult) yield line
+  val errors = for(returnedResult <- x; Left(err) <- returnedResult) yield err
+
   val messageAboutTiming = s"Retrieved data for ${task} in ${(System.nanoTime - t0) / 1000000} ms"
 
   Paths.writeResult(
     destination = task.destination,
     result =
-      result.toStream
+      Transform.transform(task,result)
+      .toStream
+      .groupBy(_._1)
+      .mapValues(_.map(_._2).flatten)
       .map{case(k,s) => k+"\t"+s.mkString("\t")+"\n"}
+      .toStream
       .sorted,
     hasErrors = errors.size > 0
    )
