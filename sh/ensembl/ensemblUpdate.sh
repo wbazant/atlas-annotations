@@ -44,28 +44,6 @@ if [ $? -ne 0 ]; then
 fi
 popd
 
-pushd ${ATLAS_PROD}/bioentity_properties/ensembl
-echo "Replace any alternative GO ids in Ensembl mapping files with their canonical equivalents, according to ${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv"
-a2cMappingFile=${ATLAS_PROD}/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
-if [ ! -s $a2cMappingFile ]; then
-    echo "ERROR: Missing $a2cMappingFile"
-    exit 1
-fi
-for gof in $(ls *.go.tsv); do
-    echo "${gof} ... "
-    for l in $(cat $a2cMappingFile); do
-	alternativeID=`echo $l | awk -F"\t" '{print $1}'`
-	canonicalID=`echo $l | awk -F"\t" '{print $2}'`
-	grep "${alternativeID}$" $gof > /dev/null
-	if [ $? -eq 0 ]; then
-	    perl -pi -e "s|${alternativeID}$|${canonicalID}|g" $gof
-	    printf "$alternativeID -> $canonicalID "
-	fi
-    done
-    echo "${gof} done "
-done
-popd
-
 echo "Merge all individual Ensembl property files into matrices"
 for species in $(ls $PROJECT_ROOT/annsrcs/ensembl | awk -F"." '{print $1}' | sort | uniq); do
     for bioentity in ensgene enstranscript ensprotein; do
