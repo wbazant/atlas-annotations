@@ -24,4 +24,5 @@ property.refseq=refseq_peptide
 property.symbol=external_gene_id
 property.unigene=unigene
 property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
-
+arrayDesign.A-AFFY-2=affy_ath1_121501
+arrayDesign.A-AFFY-145=affy_rhesus
