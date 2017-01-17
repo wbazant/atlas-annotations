@@ -11,13 +11,13 @@ import $file.Transform
 
 private def lineOk(line:String) = {
   // ignore empty lines and lines with first empty reference column
-  return line.takeWhile(_!='\t').filter(!Character.isWhitespace(_)).size > 0
+  line.takeWhile(_!='\t').filter(!Character.isWhitespace(_)).size > 0
 }
 
 //private
 def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], task: Tasks.BioMartTask) : Either[String, String] = {
   val readResults : PartialFunction[String, Either[String,(String,Option[String])]] = {
-    case line if lineOk(line) => { 
+    case line if lineOk(line) => {
       (line.map(_.isValidChar).reduce(_&&_), line.split("\t")) match {
         case (true, Array(k))
           => Right((k, None))
@@ -49,10 +49,12 @@ def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], 
     destination = task.destination,
     result =
       Transform.transform(task,result)
-      .toStream
-      .groupBy(_._1)
-      .mapValues(_.map(_._2).flatten)
-      .map{case(k,s) => k+"\t"+s.mkString("\t")+"\n"}
+      .map {
+        case (k, Some(v))
+          => s"${k}\t${v}\n"
+        case (k, None)
+          => s"${k}\n"
+      }
       .toStream
       .sorted,
     hasErrors = errors.size > 0
