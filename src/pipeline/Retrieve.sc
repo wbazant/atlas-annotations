@@ -49,11 +49,11 @@ def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], 
     destination = task.destination,
     result =
       Transform.transform(task,result)
-      .map {
+      .map { //the output really needs to be rectangular so that the files can be understood by R
         case (k, Some(v))
           => s"${k}\t${v}\n"
         case (k, None)
-          => s"${k}\n"
+          => s"${k}\t\n"
       }
       .toStream
       .sorted,
