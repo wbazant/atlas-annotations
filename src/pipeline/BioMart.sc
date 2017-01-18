@@ -16,7 +16,7 @@ def request(databaseName: String,properties: Map[String, String]) : HttpRequest 
     case "parasite" => "http://parasite.wormbase.org"
     case _ => "http://www.ensembl.org"
   }
-  Http(base+"/biomart/martservice").params(properties).timeout(connTimeoutMs = 5000, readTimeoutMs = 30000)
+  Http(base+"/biomart/martservice").params(properties).timeout(connTimeoutMs = 5000, readTimeoutMs = 1000000)
 }
 
 def getAsXml(request: HttpRequest): Either[String, xml.Elem] = {
