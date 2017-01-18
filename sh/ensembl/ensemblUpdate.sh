@@ -122,16 +122,6 @@ if [ "$size" -lt 2000000 ]; then
     exit 1
 fi
 
-echo "Generate ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat file"
-rm -rf ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat
-$PROJECT_ROOT/sh/prepare_organismKingdom_forloading.sh ${ATLAS_PROD}/bioentity_properties
-# Apply sanity test
-size=`wc -l ${ATLAS_PROD}/bioentity_properties/organismKingdom.dat | awk '{print $1}'`
-if [ "$size" -lt 50 ]; then
-    echo "ERROR: Something went wrong with populating organismKingdom.dat file - should have more than 50 rows"
-    exit 1
-fi
-
 echo "Fetching the latest Reactome mappings..."
 # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
 # gene ids - we need to use the mapping files we've just retrieved from Ensembl
