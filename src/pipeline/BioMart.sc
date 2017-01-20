@@ -212,8 +212,13 @@ def fetchFromBioMart(aux:Map[AnnotationSource, BiomartAuxiliaryInfo])(annotation
   .right.map{ case bioMartAuxiliaryInfo =>
     bioMartRequest(bioMartAuxiliaryInfo, filters, attributes)
   }
-  .right.map { case request =>
-    request.asString.body.split('\n')
+  .right.flatMap { case request =>
+    request.asString.body match {
+      case ""
+        => Left("Received response with an empty body for: "+request.toString)
+      case x
+        => Right(x.split('\n'))
+    }
   }
 }
 
