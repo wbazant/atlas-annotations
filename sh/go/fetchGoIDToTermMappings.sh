@@ -113,3 +113,6 @@ rm -rf $outputDir/poIDToTerm.tsv
 join -t $'\t' -a 1 -1 1 -2 1 $outputDir/goIDToTerm.tsv $outputDir/goIDToDepth.tsv > $outputDir/goIDToTermDepth.tsv
 rm -rf $outputDir/goIDToDepth.tsv
 mv $outputDir/goIDToTermDepth.tsv $outputDir/goIDToTerm.tsv
+
+# this 'thin' file is needed for GSEA plots as irap_GSE_piano expects two column annotations
+cut -d "\t" -f 1,2 $outputDir/goIDToTerm.tsv > $outputDir/goIDToTerm.tsv.decorate.aux
