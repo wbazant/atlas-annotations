@@ -35,3 +35,10 @@ def annotationSources: Seq[Path] =
   .filter{ case path =>
     path.isFile && path.segments.last.matches("[a-z]+_[a-z]+")
   }
+
+lazy val ANALYSIS_EXPERIMENTS = List(
+  ls (Directories.ATLAS_PROD / "analysis" / "baseline" / "proteomics" / "experiments"),
+  ls (Directories.ATLAS_PROD / "analysis" / "baseline" / "rna-seq" / "experiments"),
+  ls (Directories.ATLAS_PROD / "analysis" / "differential" / "microarray" / "experiments"),
+  ls (Directories.ATLAS_PROD / "analysis" / "differential" / "rna-seq" / "experiments")
+).flatten.filter(_.name startsWith "E-")
