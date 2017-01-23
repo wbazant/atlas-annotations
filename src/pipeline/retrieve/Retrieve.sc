@@ -50,14 +50,14 @@ def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], 
     destination = task.destination,
     result =
       Transform.transform(task,result)
+      .sorted // the output needs to be sorted as equivalent to Unix's join -k1,1
       .map { //the output really needs to be rectangular so that the files can be understood by R
         case (k, Some(v))
           => s"${k}\t${v}\n"
         case (k, None)
           => s"${k}\t\n"
       }
-      .toStream
-      .sorted,
+      .toStream,
     hasErrors = errors.size > 0
    )
 
