@@ -34,6 +34,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "Fetching the latest Interpro mappings..."
+# I've only put it here for symmetry - we currently do not transform on Interpro file output
+$PROJECT_ROOT/sh/intepro/fetchInterproIDToTypeTermMappings.sh ${ATLAS_PROD}/bioentity_properties/interpro
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the latest Interpro mappings" >&2
+    exit 1
+fi
+
 pushd $PROJECT_ROOT
 echo "Obtain the mapping files from biomarts based on annotation sources"
 export JAVA_OPTS=-Xmx3000M
