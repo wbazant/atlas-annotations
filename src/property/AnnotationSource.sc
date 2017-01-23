@@ -5,10 +5,17 @@ import Directories.annotationSources
 type AnnotationSource = ammonite.ops.Path
 
 case class Property(annotationSource: AnnotationSource, name: String, value: String){
-  def isAboutArrayDesign = name.contains("arrayDesign")
   def isBioentityType =
     AnnotationSource.getBioentityTypeProperties(annotationSource)
     .fold (l => false, r => r.contains(name))
+
+  def getAsArrayDesignAccession = {
+    if (name startsWith "arrayDesign.") {
+      Some(name.replace("arrayDesign.", ""))
+    } else {
+      None
+    }
+  }
 }
 
 object Property {

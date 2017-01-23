@@ -33,24 +33,3 @@ def combineAny[A,B](data: Iterable[Either[A,B]]) : Either[Iterable[A], Iterable[
     case (_,  results) => Right(for(Right(i) <- results) yield i)
   }
 }
-
-/*
-A module:
-
-prepares itself for doing these tasks:
-- figures out what auxiliary information it needs
-- validates that it can do it
-
-does them but at a pace the upstream wants:
-- do requests
-
-so, BioMart shouldn't know that we save results to a file :)
-
-How about Future[Arg, Result]
-
-
-def doAsync[In, Result](f: In => scala.concurrent.Future[Either[String, Result]])(ins: Seq[In])(implicit ec: scala.concurrent.ExecutionContext) = {
-  //you can Future.sequence
-}
-
-*/
