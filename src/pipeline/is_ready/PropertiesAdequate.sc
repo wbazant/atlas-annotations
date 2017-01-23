@@ -15,8 +15,8 @@ private def arrayDesignsMissingFromAnnotationSources = {
 
   ExperimentDirectory.allArrayDesigns
   .collect {
-    case (arrayDesign, experimentAccessions) if ! arrayDesignsPresent.contains(arrayDesign)
-      => s"${arrayDesign} missing from annotations but required for experiments ${experimentAccessions.mkString(", ")}"
+    case (arrayDesigns, experimentAccessions) if ! (arrayDesigns.toSet -- arrayDesignsPresent).isEmpty
+      => s"${(arrayDesigns.toSet -- arrayDesignsPresent).mkString(", ")} missing from annotations but required for experiments ${experimentAccessions.mkString(", ")}"
   }
 }
 

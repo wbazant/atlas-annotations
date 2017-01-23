@@ -27,4 +27,5 @@ mkdir -p $ATLAS_PROD/analysis/differential/rna-seq/experiments
 scp -r $REMOTE_ATLAS_PROD/analysis/baseline/proteomics/experiments/E-PROT-1 $ATLAS_PROD/analysis/baseline/proteomics/experiments
 scp -r $REMOTE_ATLAS_PROD/analysis/baseline/rna-seq/experiments/E-MTAB-513 $ATLAS_PROD/analysis/baseline/rna-seq/experiments
 scp -r $REMOTE_ATLAS_PROD/analysis/differential/microarray/experiments/E-GEOD-57907 $ATLAS_PROD/analysis/differential/microarray/experiments
+scp -r $REMOTE_ATLAS_PROD/analysis/differential/microarray/experiments/E-GEOD-1301 $ATLAS_PROD/analysis/differential/microarray/experiments
 scp -r $REMOTE_ATLAS_PROD/analysis/differential/rna-seq/experiments/E-GEOD-54705 $ATLAS_PROD/analysis/differential/rna-seq/experiments

@@ -16,14 +16,16 @@ case class ExperimentDirectory(path: Path) {
 
   def accession = path.name
 
-  def configurationXml =
-    ls(path)
-    .collectFirst {
-      case p if p.name == accession+"-configuration.xml"
-       => XML.loadFile(p.toNIO.toFile)
-     }
+  def configurationXml = XML.loadFile((path / (accession+"-configuration.xml")).toNIO.toFile)
 
-  def arrayDesign = configurationXml.map(_ \\ "array_design").map(_.text.trim).filter(!_.isEmpty)
+  def arrayDesigns = {
+    if(path.segments.contains("microarray")) {
+      (configurationXml \\ "array_design")
+      .map(_.text.trim)
+    } else {
+      List()
+    }
+  }
 }
 
 
@@ -33,9 +35,8 @@ lazy val all = Directories.ANALYSIS_EXPERIMENTS.map(ExperimentDirectory(_))
 def allArrayDesigns =
   ANALYSIS_EXPERIMENTS
   .map(ExperimentDirectory(_))
-  .groupBy(_.arrayDesign)
-  .toList
+  .groupBy(_.arrayDesigns)
   .collect {
-    case (Some(arrayDesign), experiments)
-      => (arrayDesign, experiments.map(_.accession))
+    case (arrayDesigns, experiments) if ! arrayDesigns.isEmpty
+      => (arrayDesigns, experiments.map(_.accession))
   }
