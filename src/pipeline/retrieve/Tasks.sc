@@ -1,8 +1,8 @@
-import $file.^.property.AtlasProperty
+import $file.^.^.property.AtlasProperty
 import AtlasProperty._
-import $file.^.property.AnnotationSource
+import $file.^.^.property.AnnotationSource
 import AnnotationSource.AnnotationSource
-import $file.Paths
+import $file.^.Paths
 
 type BioMartQuerySpecification = (Map[String, String],List[String]) //filters and attributes
 case class BioMartTask(atlasProperty: AtlasProperty, queries: List[BioMartQuerySpecification], destination: ammonite.ops.Path){

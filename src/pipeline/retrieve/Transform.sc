@@ -1,7 +1,7 @@
 import $file.Tasks
-import $file.^.property.AtlasProperty
+import $file.^.^.property.AtlasProperty
 import AtlasProperty.{AtlasBioentityProperty,AtlasArrayDesign}
-import $file.^.Directories
+import $file.^.^.Directories
 
 type Res = Seq[(String, Option[String])]
 

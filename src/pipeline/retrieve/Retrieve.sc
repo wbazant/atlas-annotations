@@ -1,12 +1,13 @@
-import $file.Tasks
-import $file.BioMart
-import $file.^.util.Combinators
-import $file.Log
 import scala.concurrent._
 import scala.util.{Success, Failure}
-import $file.^.property.AnnotationSource
-import AnnotationSource.AnnotationSource
+import $file.BioMart
+import $file.Tasks
 import $file.Transform
+import $file.^.Log
+import $file.^.Paths
+import $file.^.^.util.Combinators
+import $file.^.^.property.AnnotationSource
+import AnnotationSource.AnnotationSource
 
 
 private def lineOk(line:String) = {
@@ -71,7 +72,7 @@ def validate(tasks: Seq[Tasks.BioMartTask]) = {
   Combinators.combine(
     List(
       validateDestinationsUnique(tasks),
-      validateAttributesCorrect(tasks)
+      validateAttributesPresentInBioMart(tasks)
     )
   )
 }
@@ -94,7 +95,7 @@ def validateDestinationsUnique(tasks: Seq[Tasks.BioMartTask]) :Either[Iterable[S
       => Left(x)
   }
 }
-def validateAttributesCorrect(tasks: Seq[Tasks.BioMartTask]) :Either[Iterable[String],_]= {
+def validateAttributesPresentInBioMart(tasks: Seq[Tasks.BioMartTask]) :Either[Iterable[String],_]= {
   tasks
   .groupBy(_.annotationSource)
   .mapValues(_.map(_.ensemblAttributesInvolved).flatten.toSet)
