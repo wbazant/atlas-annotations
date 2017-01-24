@@ -6,34 +6,34 @@ Stdout: <interpro_name><tab><interpro id><tab><interpro description>
 import scala.io.Source
 import scala.xml.pull._
 
+sealed trait ParseContext {
+  def accumulatedOutput: List[String]
+}
+case class OutsideRelevantTasks(accumulatedOutput: List[String]) extends ParseContext
+case class PassedInterproTag(accumulatedOutput: List[String], attributes: scala.xml.MetaData) extends ParseContext
+case class PassedInterproAndNameTag(accumulatedOutput: List[String], attributes: scala.xml.MetaData) extends ParseContext
+
+def parseStep(ctx: ParseContext,evt: XMLEvent) = {
+  (evt,ctx) match {
+    case (EvElemStart(_, "interpro", attributes,_), context)
+      => PassedInterproTag(context.accumulatedOutput, attributes)
+    case (EvElemStart(_, "name", _, _), PassedInterproTag(accumulatedOutput, attributes))
+      => PassedInterproAndNameTag(accumulatedOutput, attributes)
+    case (EvText(t), PassedInterproAndNameTag(accumulatedOutput, attributes))
+      => OutsideRelevantTasks(s"${t}\t${attributeFromMetaData("id", attributes)}\t${attributeFromMetaData("type",attributes)}" :: accumulatedOutput)
+    case (_, context)
+      => context
+  }
+}
+
 def attributeFromMetaData(attr: String, metaData: scala.xml.MetaData) = {
   metaData.get(attr).map(_.text).getOrElse("")
 }
 
-private def parseRecursively(xml: XMLEventReader, accTag: Option[scala.xml.MetaData],parsingName: Boolean, accOut: Stream[String]) : Stream[String] = {
-  if(xml.hasNext) {
-    xml.next match {
-      case EvElemStart(_, "interpro", attributes, _)
-        => parseRecursively(xml, Some(attributes), false, accOut)
-      case EvElemStart(_, "name", attributes, _)
-        => parseRecursively(xml, accTag, true, accOut)
-      case EvText(t)
-        => (accTag, parsingName) match {
-          case (Some(metadata), true)
-            => parseRecursively(xml, None, false,s"${t}\t${attributeFromMetaData("id", metadata)}\t${attributeFromMetaData("type",metadata)}" #:: accOut)
-          case _
-            => parseRecursively(xml, accTag, parsingName, accOut)
-        }
-      case _
-        => parseRecursively(xml, accTag, parsingName, accOut)
-    }
-  } else {
-    accOut
-  }
-}
-
 def parse(fileLocation: String) = {
-  parseRecursively(new XMLEventReader(Source.fromFile(fileLocation)), None, false, Stream.empty)
+  new XMLEventReader(Source.fromFile(fileLocation))
+  .foldLeft(OutsideRelevantTasks(List()): ParseContext)(parseStep)
+  .accumulatedOutput
   .reverse
 }
 
