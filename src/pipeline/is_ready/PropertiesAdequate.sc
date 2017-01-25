@@ -20,8 +20,19 @@ private def arrayDesignsMissingFromAnnotationSources = {
   }
 }
 
-def annotationSourcesHaveAdequateArrayDesigns = {
-  arrayDesignsMissingFromAnnotationSources match {
+private def annotationsRequiredForRedecorationMissingPerSpecies = {
+  AnnotationSource.properties
+  .groupBy(_.annotationSource.name) // file name of annotation corresponds to species name
+  .mapValues(_.map(_.name).toSet)
+  .mapValues(Set("property.go", "property.interpro", "property.symbol") -- _)
+  .collect {
+    case (species, l) if ! l.isEmpty
+      => s"${l.mkString(", ")} missing for species ${species} but required for experiment decoration!"
+  }
+}
+
+def main = {
+  (arrayDesignsMissingFromAnnotationSources ++ annotationsRequiredForRedecorationMissingPerSpecies) match {
     case List()
       => Right(())
     case errs

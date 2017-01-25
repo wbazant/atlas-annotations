@@ -5,7 +5,7 @@ import $file.Log
 
 def runAll() = {
   Log.log("Going through experiment directories to verify our annotation sources")
-  PropertiesAdequate.annotationSourcesHaveAdequateArrayDesigns match {
+  PropertiesAdequate.main match {
     case Left(err)
       => Log.err(err)
     case Right(_)
