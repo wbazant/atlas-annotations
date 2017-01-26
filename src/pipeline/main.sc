@@ -11,7 +11,11 @@ def runAll() = {
     case Right(_)
       => {
         Log.log("Validated annotation sources contain the array designs we need")
-        Retrieve.performBioMartTasks(Tasks.allTasks)
+        forceAll()
       }
   }
+}
+
+def forceAll() = {
+  Retrieve.performBioMartTasks(Tasks.allTasks)
 }
