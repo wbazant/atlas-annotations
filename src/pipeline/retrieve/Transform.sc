@@ -48,13 +48,13 @@ private val allTransforms = List(
             => l.map(_._1).toList match {
               case List(singleGene)
                 => true
-              case xs
-                => {
-                  false
-                }
+              case _
+                => false
             }
-        }.flatMap(_._2)
-        .toList
+        }
+        .values
+        .flatten
+        .toSeq
       })
 )
 
