@@ -3,7 +3,6 @@
 PROJECT_ROOT=`dirname $0`/../..
 
 function fetchGeneSynonyms {
-    echo `date` " fetching gene synonyms: " $@
     annSrc=$1
     mySqlDbHost=$2
     mySqlDbPort=$3
@@ -35,8 +34,12 @@ for path in $(find $PROJECT_ROOT/annsrcs -type f) ; do
   softwareVersion=`grep '^software.version=' $path | awk -F"=" '{print $NF}'`
   mySqlDbName=`grep '^mySqlDbName=' $path | awk -F"=" '{print $NF}'`
   mySqlDbUrl=`grep '^mySqlDbUrl=' $path | awk -F"=" '{print $NF}'`
-  mySqlDbHost=`echo $mySqlDbUrl | awk -F":" '{print $1}'`
-  mySqlDbPort=`echo $mySqlDbUrl | awk -F":" '{print $2}'`
-
-  fetchGeneSynonyms $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion $annSrcsDir > $ATLAS_PROD/bioentity_properties/${annSrcsDir}/${organism}.ensgene.synonym.tsv
+  if [ -e "$mySqlDbUrl" ] ; then
+    mySqlDbHost=`echo $mySqlDbUrl | awk -F":" '{print $1}'`
+    mySqlDbPort=`echo $mySqlDbUrl | awk -F":" '{print $2}'`
+    echo `date` " fetching gene synonyms: " $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion $annSrcsDir
+    fetchGeneSynonyms $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion $annSrcsDir > $ATLAS_PROD/bioentity_properties/${annSrcsDir}/${organism}.ensgene.synonym.tsv
+  else
+    echo "Skipping: " $path
+  fi
 done
