@@ -52,6 +52,13 @@ if [ $? -ne 0 ]; then
 fi
 popd
 
+echo "Fetching the synonyms from biomart databases..."
+$PROJECT_ROOT/sh/ensembl/fetchGeneSynonyms.sh
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the synonyms from biomart databases" >&2
+    exit 1
+fi
+
 # sadly the "join" in decorations package expects the Unix sort, the Scala one is different and it breaks
 function sortInPlace(){
   sort -k1,1 $1 -o $1
