@@ -34,7 +34,7 @@ for path in $(find $PROJECT_ROOT/annsrcs -type f) ; do
   softwareVersion=`grep '^software.version=' $path | awk -F"=" '{print $NF}'`
   mySqlDbName=`grep '^mySqlDbName=' $path | awk -F"=" '{print $NF}'`
   mySqlDbUrl=`grep '^mySqlDbUrl=' $path | awk -F"=" '{print $NF}'`
-  if [ -z "$mySqlDbUrl" ] ; then
+  if [ ! -z "$mySqlDbUrl" ] ; then
     mySqlDbHost=`echo $mySqlDbUrl | awk -F":" '{print $1}'`
     mySqlDbPort=`echo $mySqlDbUrl | awk -F":" '{print $2}'`
     echo `date` " fetching gene synonyms: " $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion $annSrcsDir
