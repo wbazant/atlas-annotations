@@ -38,5 +38,5 @@ for path in $(find $PROJECT_ROOT/annsrcs -type f) ; do
   mySqlDbHost=`echo $mySqlDbUrl | awk -F":" '{print $1}'`
   mySqlDbPort=`echo $mySqlDbUrl | awk -F":" '{print $2}'`
 
-  fetchGeneSynonyms $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion $annSrcsDir > $ATLAS_PROD/${annSrcsDir}/${organism}.ensgene.synonym.tsv
+  fetchGeneSynonyms $organism $mySqlDbHost $mySqlDbPort $mySqlDbName $softwareVersion $annSrcsDir > $ATLAS_PROD/bioentity_properties/${annSrcsDir}/${organism}.ensgene.synonym.tsv
 done
