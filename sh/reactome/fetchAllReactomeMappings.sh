@@ -66,7 +66,7 @@ for file in UniProt2Reactome UniProt2PlantReactome; do
     # First prepare the ${lcOrganism} portion of file
     grep "\b$lcOrganism\b" aux.$file | awk -F"\t" '{print $1"\t"$3"\t"$4}' | sort -k1,1 | uniq > aux.${lcOrganism}.$file.tsv.tmp
     uniprotMappingFile=$(find_properties_file $lcOrganism "uniprot")
-    if [ -s $uniprotMappingFile ]; then
+    if [ -e "$uniprotMappingFile" ]; then
       # Now prepare Ensembl's UniProt to Ensembl mapping file - in the right order, ready for joining with the $lcOrganism portion of Ensembl2Reactome
       grep -E '^\w+\W\w+$' $uniprotMappingFile | awk -F"\t" '{print $2"\t"$1}' | sort -u -k1,1 > aux.${lcOrganism}.ensembl.tsv.tmp
       # Join to Ensmebl mapping file, then remove protein accessions before appending the UniProt only-annotated pathways to ${lcOrganism}.reactome.tsv
