@@ -76,7 +76,7 @@ for file in UniProt2Reactome UniProt2PlantReactome; do
 done
 for outFile in $(ls *reactome.tsv.tmp); do
   resultFile=$(echo $outFile | sed 's/tsv.tmp/tsv/')
-  cat <(echo -e "ensgene\tpathwayid\tpathwayname") <(sort -u -k1,1 -t$'\t' $outFile) > $resultFile
+  cat <(echo -e "ensgene\tpathwayid\tpathwayname") <(sort -k1,1 -t$'\t' $outFile | uniq) > $resultFile
 done
 
 # Prepare head-less ensgene to pathway name mapping files for the downstream GSEA analysis
@@ -101,7 +101,8 @@ for f in $(ls *.reactome.tsv.decorate.aux); do
 done
 
 rm -rf aux
-rm -rf aux*tmp
+rm -rf aux.*
+rm -rf *tmp
 end=`date +%s`
 echo "Operation took: "`expr $end - $start`" s"
 
