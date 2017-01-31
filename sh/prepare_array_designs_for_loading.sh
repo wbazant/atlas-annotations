@@ -14,7 +14,7 @@ function probesFromFile() {
   idType=$1
   filePath=$2
   arrayDesign=$(basename $filePath | cut -f 2 -d ".")
-  grep -E "^\w+\t\w+" $filePath | awk -v idType=$1 -v arrayDesign=$arrayDesign -F '\t' '{print $2"\t"$1"\t"idType"\t"arrayDesign}'
+  grep -E "^\w+[[:space:]]\w+" $filePath | awk -v idType=$1 -v arrayDesign=$arrayDesign -F '\t' '{print $2"\t"$1"\t"idType"\t"arrayDesign}'
 }
 
 if [ $# -lt 2 ]; then
