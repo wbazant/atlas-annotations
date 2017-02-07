@@ -115,4 +115,4 @@ rm -rf $outputDir/goIDToDepth.tsv
 mv $outputDir/goIDToTermDepth.tsv $outputDir/goIDToTerm.tsv
 
 # this 'thin' file is needed for GSEA plots as irap_GSE_piano expects two column annotations
-cut -d "\t" -f 1,2 $outputDir/goIDToTerm.tsv > $outputDir/goIDToTerm.tsv.decorate.aux
+cut -d $'\t' -f 1,2 $outputDir/goIDToTerm.tsv > $outputDir/goIDToTerm.tsv.decorate.aux
