@@ -18,7 +18,7 @@ function probesFromFile() {
 }
 
 if [ $# -lt 2 ]; then
-  echo "Usage: $0 thirdColumnName source1 ... sourceN"
+  echo "Usage: $0 thirdColumnName source1 ... sourceN" >&2
   exit 1
 fi
 
