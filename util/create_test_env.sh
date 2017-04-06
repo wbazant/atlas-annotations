@@ -1,4 +1,4 @@
-#Use me like this:
+#Use me by pasting this line into shell so that the env variable ATLAS_PROD gets set up where you choose:
 #source ./util/create_test_env.sh /var/tmp/ATLAS_PROD
 
 export ATLAS_PROD=${1:-"/var/tmp/atlas_prod"}
