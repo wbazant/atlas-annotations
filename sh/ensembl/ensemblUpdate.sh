@@ -59,13 +59,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# sadly the "join" in decorations package expects the Unix sort, the Scala one is different and it breaks
-function sortInPlace(){
-  sort -k1,1 $1 -o $1
-}
-echo "Sorting the outputs skipped - if join returns errors during redecoration come back to this line. Otherwise remove me."
-# cat <(find -L ${ATLAS_PROD}/bioentity_properties/ensembl -name '*tsv') <(find -L ${ATLAS_PROD}/bioentity_properties/wbps -name '*tsv') | xargs -n1 sortInPlace
-
 echo "Merge all individual Ensembl property files into matrices"
 for species in $(ls $PROJECT_ROOT/annsrcs/ensembl | awk -F"." '{print $1}' | sort | uniq); do
     for bioentity in ensgene enstranscript ensprotein; do
