@@ -13,8 +13,8 @@ if [[ -z "$outputDir" ]]; then
 fi
 
 echo "Fetching GO and PO owl files"
-#curl -s "http://geneontology.org/ontology/go.owl" > $outputDir/go.owl
-#curl -s "http://palea.cgrb.oregonstate.edu/viewsvn/Poc/tags/live/plant_ontology.owl?view=co" > $outputDir/po.owl
+curl -s "http://geneontology.org/ontology/go.owl" > $outputDir/go.owl
+curl -s "http://palea.cgrb.oregonstate.edu/viewsvn/Poc/tags/live/plant_ontology.owl?view=co" > $outputDir/po.owl
 
 pushd $PROJECT_ROOT > /dev/null
 echo "Extracting GO id -> term"
