@@ -36,7 +36,7 @@ fi
 
 echo "Fetching the latest Interpro mappings..."
 # I've only put it here for symmetry - we currently do not transform on Interpro file output
-$PROJECT_ROOT/sh/intepro/fetchInterproIDToTypeTermMappings.sh ${ATLAS_PROD}/bioentity_properties/interpro
+$PROJECT_ROOT/sh/interpro/fetchInterproIDToTypeTermMappings.sh ${ATLAS_PROD}/bioentity_properties/interpro
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest Interpro mappings" >&2
     exit 1
