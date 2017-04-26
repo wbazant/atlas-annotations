@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=87
+software.version=88
 url=http://www.ensembl.org/biomart/martservice?
 organism=ornithorhynchus anatinus
 databaseName=ensembl

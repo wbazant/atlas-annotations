@@ -1,7 +1,7 @@
 software.name=parasite
 speciesFilterField=species_id_1010
 speciesFilterValue=mansoprjea36577
-software.version=8
+software.version=9
 url=http://parasite.wormbase.org/biomart/martservice?
 organism=schistosoma mansoni
 datasetName=wbps_gene
