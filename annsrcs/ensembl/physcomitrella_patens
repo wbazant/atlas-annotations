@@ -13,12 +13,12 @@ property.ensgene=ensembl_gene_id
 property.ensprotein=ensembl_peptide_id
 property.enstranscript=ensembl_transcript_id
 property.entrezgene=entrezgene
-property.go=go_accession
-property.goterm=go_name_1006
-property.interpro=interpro_id
+property.go=go_id
+property.goterm=name_1006
+property.interpro=interpro
 property.interproterm=interpro_description
 property.refseq=refseq_peptide
-property.symbol=external_gene_id
+property.symbol=external_gene_name
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot_accession
+property.uniprot=uniprotsptrembl,uniprotswissprot
 

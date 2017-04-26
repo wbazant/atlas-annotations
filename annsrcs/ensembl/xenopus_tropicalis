@@ -26,6 +26,6 @@ property.ortholog=acarolinensis_homolog_ensembl_gene,dnovemcinctus_homolog_ensem
 property.refseq=refseq_peptide
 property.symbol=external_gene_name
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot
-arrayDesign.A-AFFY-154=affy_xtropicalis
+property.uniprot=uniprotsptrembl,uniprotswissprot
+arrayDesign.A-AFFY-154=affy_x_tropicalis
 

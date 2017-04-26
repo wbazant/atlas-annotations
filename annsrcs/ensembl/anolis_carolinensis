@@ -27,5 +27,5 @@ property.ortholog=dnovemcinctus_homolog_ensembl_gene,cintestinalis_homolog_ensem
 property.refseq=refseq_peptide
 property.symbol=external_gene_name
 property.unigene=unigene
-property.uniprot=uniprot_sptrembl,uniprot_swissprot
+property.uniprot=uniprotsptrembl,uniprotswissprot
 
