@@ -8,8 +8,8 @@ if [[ -z "$outputDir" ]]; then
     exit 1
 fi
 
-curl ftp://ftp.ebi.ac.uk/pub/databases/interpro/62.0/interpro.xml.gz | zcat > $outputDir/interpro.xml
-curl ftp://ftp.ebi.ac.uk/pub/databases/interpro/62.0/interpro.dtd > $outputDir/interpro.dtd
+curl -s ftp://ftp.ebi.ac.uk/pub/databases/interpro/62.0/interpro.xml.gz | zcat > $outputDir/interpro.xml
+curl -s ftp://ftp.ebi.ac.uk/pub/databases/interpro/62.0/interpro.dtd > $outputDir/interpro.dtd
 
 pushd $PROJECT_ROOT
 echo "Parse the file we obtained from Interpro's FTP site"
