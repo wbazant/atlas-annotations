@@ -1,10 +1,10 @@
 software.name=parasite
-speciesFilterField=species_id_1010
-speciesFilterValue=mansoprjea36577
 software.version=9
 url=http://parasite.wormbase.org/biomart/martservice?
 organism=schistosoma mansoni
 datasetName=wbps_gene
+datasetFilterName=species_id_1010
+datasetFilterValue=mansoprjea36577
 databaseName=parasite
 mySqlDbName=schistosoma_mansoni_prjea36577
 mySqlDbUrl=mysql-ps-intrel.ebi.ac.uk:4480
