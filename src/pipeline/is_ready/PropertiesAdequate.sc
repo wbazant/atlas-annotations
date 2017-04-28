@@ -8,10 +8,11 @@ import $file.^.^.experiment.ExperimentDirectory
 import $file.^.^.property.AnnotationSource
 
 private def arrayDesignsMissingFromAnnotationSources = {
+  val arrayDesignsWeHaveInMirbaseFolder = Set("A-GEOD-6955", "A-MEXP-1551", "A-MEXP-1663")
   val arrayDesignsPresent =
     AnnotationSource.properties
     .flatMap(_.getAsArrayDesignAccession)
-    .toSet
+    .toSet ++ arrayDesignsWeHaveInMirbaseFolder
 
   ExperimentDirectory.allArrayDesigns
   .collect {
