@@ -145,7 +145,11 @@ def lookupAttributes(annotationSource:AnnotationSource) = {
   }
 }
 
-case class BiomartAuxiliaryInfo(databaseName: String, serverVirtualSchema: String, datasetName: String)
+case class BiomartAuxiliaryInfo(
+  databaseName: String,
+  serverVirtualSchema: String,
+  datasetName: String,
+  datasetFilters: Map[String, String] = Map())
 
 object BiomartAuxiliaryInfo {
   def getMap(annotationSourceKeys: Seq[AnnotationSource]) = {
@@ -159,50 +163,74 @@ object BiomartAuxiliaryInfo {
     .right.map(_.toMap)
   }
 
-  def getForAnnotationSource(annotationSource: AnnotationSource) = {
-    AnnotationSource.getValues(annotationSource, List("databaseName", "datasetName"))
-    .right.flatMap {
-      case params => params match {
-        case List(databaseName, datasetName)
-          => lookupServerVirtualSchema(annotationSource)
-              .right.map{ case serverVirtualSchema =>
-                BiomartAuxiliaryInfo(databaseName,serverVirtualSchema, datasetName)
-              }
-        case x
-          => Left(s"Unexpected: ${x}")
-      }
+  private def datasetFiltersForAnnotationSource(annotationSource: AnnotationSource) = {
+    ( AnnotationSource.getOptionalValue(annotationSource, "datasetFilterName"),
+      AnnotationSource.getOptionalValue(annotationSource, "datasetFilterValue")
+    ) match {
+      case (Some(datasetFilterName), Some(datasetFilterValue))
+        => Right(Map(datasetFilterName -> datasetFilterValue))
+      case (None,None)
+        => Right(Map[String,String]())
+      case _
+        => Left("Bad dataset filters for annotation source ${annotationSource}")
     }
   }
+
+  def getForAnnotationSource(annotationSource: AnnotationSource) = {
+    ( AnnotationSource.getValue(annotationSource, "databaseName"),
+      lookupServerVirtualSchema(annotationSource),
+      AnnotationSource.getValue(annotationSource, "datasetName"),
+      datasetFiltersForAnnotationSource(annotationSource)
+    ) match {
+      case (
+          Right(databaseName),
+          Right(serverVirtualSchema),
+          Right(datasetName),
+          Right(datasetFilters)
+        )
+        => Right(BiomartAuxiliaryInfo(databaseName, serverVirtualSchema, datasetName, datasetFilters))
+      case xs
+        => Left("Can not create BiomartAuxiliaryInfo: "+ xs.productIterator.mkString(", "))
+    }
+  }
+}
+
+def queryParameter(
+  biomartAuxiliaryInfo : BiomartAuxiliaryInfo,
+  filters: Map[String, String],
+  attributes: List[String]) = {
+  <Query
+    virtualSchemaName={biomartAuxiliaryInfo.serverVirtualSchema}
+    formatter="TSV"
+    header="0"
+    uniqueRows="1"
+    count="0">
+    <Dataset
+      name={biomartAuxiliaryInfo.datasetName}
+      interface="default">
+      {(biomartAuxiliaryInfo.datasetFilters ++ filters)
+        .map {case (k,v) =>
+          <Filter name={k} value={v} />
+        }
+      }
+      {attributes
+       .map {case attr =>
+         <Attribute name={attr} />
+        }
+      }
+    </Dataset>
+  </Query>
 }
 
 def bioMartRequest(
   biomartAuxiliaryInfo : BiomartAuxiliaryInfo,
   filters: Map[String, String],
   attributes: List[String]) = {
-    val query =
-      <Query
-        virtualSchemaName={biomartAuxiliaryInfo.serverVirtualSchema}
-        formatter="TSV"
-        header="0"
-        uniqueRows="1"
-        count="0">
-        <Dataset
-          name={biomartAuxiliaryInfo.datasetName}
-          interface="default">
-          {filters
-            .map {case (k,v) =>
-              <Filter name={k} value={v} />
-            }
-          }
-          {attributes
-           .map {case attr =>
-             <Attribute name={attr} />
-            }
-          }
-        </Dataset>
-      </Query>
+    val query = queryParameter(biomartAuxiliaryInfo, filters, attributes)
 
-  request(biomartAuxiliaryInfo.databaseName, Map(("query","<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query>"+ query.toString))
+    request(biomartAuxiliaryInfo.databaseName, Map(("query",
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE Query>"+ query.toString)
+    )
   )
 }
 

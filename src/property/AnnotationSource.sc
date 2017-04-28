@@ -64,14 +64,19 @@ def getBioentityTypeProperties(annotationSource: AnnotationSource) : Either[Stri
 
 lazy val properties = annotationSources.flatMap{Property.readFromAnnotationSource(_)}
 
-def getValue(annotationSource: AnnotationSource, propertyName: String) : Either[String, String] = {
+def getOptionalValue(annotationSource: AnnotationSource, propertyName: String) : Option[String] = {
   properties
   .filter {
     case p =>
       p.annotationSource == annotationSource && p.name == propertyName
   }
   .headOption
-  .map{_.value} match {
+  .map{_.value}
+}
+
+def getValue(annotationSource: AnnotationSource, propertyName: String) : Either[String, String] = {
+  getOptionalValue(annotationSource, propertyName)
+  match {
     case Some(result)
       => Right(result)
     case None
