@@ -114,9 +114,9 @@ if (scalar @A_fileList == 0) { die "[WARNING] Could not retrieve any files in $i
 ##     - And store the property name in an array
 ##       (retrieve them in order when printing)
 for my $file (@A_fileList) {
-	print STDERR "Parsing $file\n" ;	
-		
-	# Get the property 
+	# print STDERR "Parsing $file\n" ;
+
+	# Get the property
 	# File name should be: <species>.<bioentity>.<property>.tsv
 	my $property ;
 	if ($file =~ /\w+?\.\w+?\.(\w+?).tsv/) { $property = $1 ; }
