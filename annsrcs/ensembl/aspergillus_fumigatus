@@ -1,5 +1,5 @@
 software.name=fungi
-software.version=35
+software.version=36
 url=http://fungi.ensembl.org/biomart/martservice?
 organism=aspergillus fumigatus
 databaseName=fungi

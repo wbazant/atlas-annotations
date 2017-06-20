@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=88
+software.version=89
 url=http://www.ensembl.org/biomart/martservice?
 organism=papio anubis
 databaseName=ensembl

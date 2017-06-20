@@ -1,5 +1,5 @@
 software.name=metazoa
-software.version=35
+software.version=36
 url=http://metazoa.ensembl.org/biomart/martservice?
 organism=anopheles gambiae
 databaseName=metazoa
