@@ -138,3 +138,10 @@ if [ $? -ne 0 ]; then
     echo "ERROR: Failed to get the latest Reactome mappings" >&2
     exit 1
 fi
+
+echo "Downloading gtfs..."
+$PROJECT_ROOT/sh/gtf/download_gtfs.sh "$NEW_ENSEMBL_REL" "$NEW_ENSEMBLGENOMES_REL" "$NEW_WBPS_REL"
+if [ $? -ne 0 ]; then
+    echo "ERROR: Failed to get the gtfs" >&2
+    exit 1
+fi

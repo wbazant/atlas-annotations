@@ -21,6 +21,8 @@ mkdir -p $ATLAS_PROD/analysis/baseline/rna-seq/experiments
 mkdir -p $ATLAS_PROD/analysis/differential/microarray/experiments
 mkdir -p $ATLAS_PROD/analysis/differential/rna-seq/experiments
 
+mkdir -p $ATLAS_PROD/gtfs
+
 scp $REMOTE_ATLAS_PROD/bioentity_properties/bioentityOrganism.dat $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat
 
 scp -r $REMOTE_ATLAS_PROD/analysis/baseline/proteomics/experiments/E-PROT-1 $ATLAS_PROD/analysis/baseline/proteomics/experiments
