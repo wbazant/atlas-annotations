@@ -75,6 +75,7 @@ def atlasSpeciesFromAllAnnotationSources = {
   )
 }
 
+@main
 def dump() : Unit = {
   atlasSpeciesFromAllAnnotationSources
   .right.map(_.toList.sortBy(_.species))

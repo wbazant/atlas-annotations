@@ -53,14 +53,26 @@ def parseStep(propertyNamespace: String, property:String)(x: X, evt: XMLEvent) :
 }
 
 
-def parse(propertyNamespace: String, property:String)(fileLocation: String) = {
-  new XMLEventReader(Source.fromFile(fileLocation))
+def parse(propertyNamespace: String, property:String)(fileLocation: ammonite.ops.Path) = {
+  new XMLEventReader(Source.fromFile(fileLocation.toIO))
   .foldLeft(xInit)(parseStep(propertyNamespace, property))
   ._3
   .reverse
 }
 
-def terms(fileLocation: String) = {
+@main
+def main(what: String, fileLocation: ammonite.ops.Path) = {
+    what match {
+        case "terms"
+            => terms(fileLocation)
+        case "alternativeIds"
+            => alternativeIds(fileLocation)
+        case _
+            => System.err.println("Usage: <terms or alternativeIds> <fileLocation>")
+    }
+}
+
+def terms(fileLocation: ammonite.ops.Path) = {
   parse("rdfs", "label")(fileLocation)
   .foreach{
     case (id, goTermText)
@@ -68,7 +80,7 @@ def terms(fileLocation: String) = {
   }
 }
 
-def alternativeIds(fileLocation: String) = {
+def alternativeIds(fileLocation: ammonite.ops.Path) = {
   parse("oboInOwl", "hasAlternativeId")(fileLocation)
   .map(_.swap)
   .foreach{

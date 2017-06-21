@@ -3,9 +3,7 @@
 
 target=${1:-`pwd`/speciesProperties.json}
 
-pushd `dirname $0`
-
-amm -s -c 'import $file.^.src.atlas.AtlasSpecies; AtlasSpecies.dump()' > $target
+amm -s `dirname $0`/../src/atlas/AtlasSpecies.sc > $target
 
 if [ -s $target ]
 then
@@ -13,5 +11,3 @@ then
 else
   rm $target
 fi
-
-popd

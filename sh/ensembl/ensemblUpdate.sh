@@ -45,7 +45,7 @@ fi
 pushd $PROJECT_ROOT
 echo "Obtain the mapping files from biomarts based on annotation sources"
 export JAVA_OPTS=-Xmx3000M
-amm -s -c 'import $file.src.pipeline.main; main.runAll()'
+amm -s src/pipeline/Start.sc
 if [ $? -ne 0 ]; then
     echo "Ammonite errored out, exiting..." >&2
     exit 1

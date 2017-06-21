@@ -37,6 +37,7 @@ def parse(fileLocation: String) = {
   .reverse
 }
 
+@main
 def main(fileLocation: String) = {
   parse(fileLocation)
   .foreach(println(_))

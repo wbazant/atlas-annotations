@@ -16,19 +16,18 @@ echo "Fetching GO and PO owl files"
 curl -s "http://geneontology.org/ontology/go.owl" > $outputDir/go.owl
 curl -s "http://palea.cgrb.oregonstate.edu/viewsvn/Poc/tags/live/plant_ontology.owl?view=co" > $outputDir/po.owl
 
-pushd $PROJECT_ROOT > /dev/null
 echo "Extracting GO id -> term"
-amm -s -c "import \$file.src.go.PropertiesFromOwlFile; PropertiesFromOwlFile.terms(\"$outputDir/go.owl\")" \
-  > $outputDir/goIDToTerm.tsv
+amm -s $PROJECT_ROOT/src/go/PropertiesFromOwlFile.sc terms $outputDir/go.owl \
+    > $outputDir/goIDToTerm.tsv
 
 echo "Extracting PO id -> term"
-amm -s -c "import \$file.src.go.PropertiesFromOwlFile; PropertiesFromOwlFile.terms(\"$outputDir/po.owl\")" \
-  > $outputDir/poIDToTerm.tsv
+amm -s $PROJECT_ROOT/src/go/PropertiesFromOwlFile.sc terms $outputDir/po.owl \
+    > $outputDir/poIDToTerm.tsv
 
 echo "Extracting GO alternativeId -> id"
-amm -s -c "import \$file.src.go.PropertiesFromOwlFile; PropertiesFromOwlFile.alternativeIds(\"$outputDir/go.owl\")" \
-  > $outputDir/go.alternativeID2CanonicalID.tsv
-popd > /dev/null
+amm -s $PROJECT_ROOT/src/go/PropertiesFromOwlFile.sc alternativeIds $outputDir/go.owl \
+    > $outputDir/go.alternativeID2CanonicalID.tsv
+
 
 # This is just for GO (i.e. not PO)
 get_ontology_id2Depth_mappings() {
