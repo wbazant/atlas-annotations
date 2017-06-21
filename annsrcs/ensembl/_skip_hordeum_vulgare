@@ -1,5 +1,5 @@
 software.name=plants
-software.version=36
+software.version=35
 url=http://plants.ensembl.org/biomart/martservice?
 organism=hordeum vulgare
 databaseName=plants
@@ -20,5 +20,4 @@ property.interproterm=interpro_description
 property.refseq=refseq_peptide
 property.symbol=external_gene_name
 property.uniprot=uniprotsptrembl,uniprotswissprot
-arrayDesign.A-AFFY-31=affy_hordeum_vulgare
-
+#arrayDesign.A-AFFY-31=affy_hordeum_vulgare it's gone in EG36 - backfilled
