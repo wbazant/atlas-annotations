@@ -23,9 +23,8 @@ property.goterm=name_1006
 property.interpro=interpro
 property.interproterm=interpro_description
 property.mirbase_id=mirbase_id
-property.refseq=refseq_mrna,refseq_ncrna,refseq_peptide
+property.refseq=refseq_peptide
 property.symbol=external_gene_name
 property.uniprot=uniprotsptrembl,uniprotswissprot
 arrayDesign.A-AFFY-17=affy_drosgenome1
 arrayDesign.A-AFFY-35=affy_drosophila_2
-

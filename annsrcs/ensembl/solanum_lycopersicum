@@ -18,6 +18,4 @@ property.goterm=name_1006
 property.interpro=interpro
 property.interproterm=interpro_description
 property.symbol=external_gene_name
-property.unigene=unigene
 property.uniprot=uniprotsptrembl,uniprotswissprot
-
