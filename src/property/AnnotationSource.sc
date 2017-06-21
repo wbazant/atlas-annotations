@@ -21,6 +21,7 @@ case class Property(annotationSource: AnnotationSource, name: String, value: Str
 object Property {
   def readFromAnnotationSource(annotationSource: AnnotationSource) : Seq[Property] = {
     read.lines(annotationSource)
+    .filter {! _.startsWith("#")}
     .map {
       line => {
         (line.split("=").toList.headOption.getOrElse(""), line.split("=").toList.lastOption.getOrElse(""))
