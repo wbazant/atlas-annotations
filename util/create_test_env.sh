@@ -1,3 +1,4 @@
+#!/bin/bash
 #Use me by pasting this line into shell so that the env variable ATLAS_PROD gets set up where you choose:
 #source ./util/create_test_env.sh /var/tmp/ATLAS_PROD
 
@@ -15,14 +16,12 @@ ln -fhs $ATLAS_PROD/bioentity_properties/archive/wbps_z $ATLAS_PROD/bioentity_pr
 
 echo -e "GO:0019952\tGO:0000003" > $ATLAS_PROD/bioentity_properties/go/go.alternativeID2CanonicalID.tsv
 
-scp $REMOTE_ATLAS_PROD/bioentity_properties/bioentityOrganism.dat $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat
-
-
 mkdir -p $ATLAS_PROD/analysis/baseline/proteomics/experiments
 mkdir -p $ATLAS_PROD/analysis/baseline/rna-seq/experiments
 mkdir -p $ATLAS_PROD/analysis/differential/microarray/experiments
 mkdir -p $ATLAS_PROD/analysis/differential/rna-seq/experiments
 
+scp $REMOTE_ATLAS_PROD/bioentity_properties/bioentityOrganism.dat $ATLAS_PROD/bioentity_properties/bioentityOrganism.dat
 
 scp -r $REMOTE_ATLAS_PROD/analysis/baseline/proteomics/experiments/E-PROT-1 $ATLAS_PROD/analysis/baseline/proteomics/experiments
 scp -r $REMOTE_ATLAS_PROD/analysis/baseline/rna-seq/experiments/E-MTAB-513 $ATLAS_PROD/analysis/baseline/rna-seq/experiments
