@@ -5,13 +5,14 @@
 export ATLAS_PROD=${1:-"/var/tmp/atlas_prod"}
 REMOTE_ATLAS_PROD=ebi-cli:/nfs/production3/ma/home/atlas3-production
 
-for dir in "" archive archive/ensembl_x_y archive/wbps_z archive/reactome_ensx_y go interpro mirbase
-  do mkdir -p $ATLAS_PROD/bioentity_properties/$dir
+for dir in "" archive archive/ensembl_x_y archive/wbps_z archive/reactome_ensx_y archive/array_designs_x_y_z go interpro mirbase array_designs array_designs/current array_designs/backfill ; do
+    mkdir -p $ATLAS_PROD/bioentity_properties/$dir
 done
 
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/ensembl_x_y $ATLAS_PROD/bioentity_properties/ensembl
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/reactome_ensx_y $ATLAS_PROD/bioentity_properties/reactome
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/wbps_z $ATLAS_PROD/bioentity_properties/wbps
+ln -fhs $ATLAS_PROD/bioentity_properties/archive/array_designs_x_y_z $ATLAS_PROD/bioentity_properties/array_designs/current
 
 
 echo -e "GO:0019952\tGO:0000003" > $ATLAS_PROD/bioentity_properties/go/go.alternativeID2CanonicalID.tsv

@@ -15,13 +15,22 @@ def writeResult(destination: Path, result: Stream[String], hasErrors: Boolean = 
   }
 }
 
-def destinationFor(atlasProperty: AtlasProperty) = {
-  val middleBit =
+def destinationFor(atlasProperty: AtlasProperty) = directoryFor(atlasProperty) / fileNameFor(atlasProperty)
+
+def fileNameFor(atlasProperty: AtlasProperty) = {
     atlasProperty match {
-      case AtlasBioentityProperty(species, bioentityType, atlasName)
-        => s".${bioentityType.name.replace("property.", "")}."
-      case AtlasArrayDesign(species, atlasName)
-        => "."
+      case AtlasBioentityProperty(annotationSource, bioentityType, atlasName)
+        => s"${annotationSource.segments.last}.${bioentityType.name.replace("property.", "")}.${atlasName}.tsv"
+      case AtlasArrayDesign(annotationSource, atlasName)
+        => s"${annotationSource.segments.last}.${atlasName}.tsv"
     }
-  ATLAS_PROD / "bioentity_properties" / atlasProperty.annotationSource.segments.reverse.apply(1) / s"${atlasProperty.annotationSource.segments.last}${middleBit}${atlasProperty.atlasName}.tsv"
+}
+
+def directoryFor(atlasProperty: AtlasProperty) = {
+    atlasProperty match {
+      case AtlasBioentityProperty(_,_,_)
+        => ATLAS_PROD / "bioentity_properties" / atlasProperty.annotationSource.segments.reverse.apply(1)
+      case AtlasArrayDesign(_, _)
+        => ATLAS_PROD / "bioentity_properties" / "array_designs" / "current"
+    }
 }

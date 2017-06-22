@@ -25,6 +25,7 @@ echo "Shifting the symlinks to new versions of Ensembl, Ensembl Genomes and WBPS
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/ensembl $ATLAS_PROD/bioentity_properties/archive/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/reactome $ATLAS_PROD/bioentity_properties/archive/reactome_ens${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/wbps $ATLAS_PROD/bioentity_properties/archive/wbps_${NEW_WBPS_REL}
+symlinkAndArchive $ATLAS_PROD/bioentity_properties/array_designs/current $ATLAS_PROD/bioentity_properties/archive/array_designs_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_${NEW_WBPS_REL}
 
 echo "Fetching the latest GO mappings..."
 # This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
@@ -115,7 +116,7 @@ fi
 echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat file"
 rm -rf ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
 
-find -L $ATLAS_PROD/bioentity_properties/ensembl -name '*A-*.tsv' \
+find -L $ATLAS_PROD/bioentity_properties/array_designs -name '*A-*.tsv' \
 | xargs $PROJECT_ROOT/sh/prepare_array_designs_for_loading.sh "gene" \
 >> ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
 

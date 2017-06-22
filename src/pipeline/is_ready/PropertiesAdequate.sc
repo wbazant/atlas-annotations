@@ -7,12 +7,23 @@ import $file.^.^.experiment.ExperimentDirectory
 
 import $file.^.^.property.AnnotationSource
 
+import $file.^.^.Directories
+import ammonite.ops._
+
+def arrayDesignsBackfilled = {
+    ls (Directories.ATLAS_PROD / "bioentity_properties" / "array_designs" / "backfill" )
+    .map(_.name.split("\\.").toList)
+    .collect {
+        case _ :: arrayDesignAccession :: "tsv" :: List()
+            => arrayDesignAccession
+    }
+}
+
 private def arrayDesignsMissingFromAnnotationSources = {
-  val arrayDesignsWeHaveInMirbaseFolder = Set("A-GEOD-6955", "A-MEXP-1551", "A-MEXP-1663")
   val arrayDesignsPresent =
     AnnotationSource.properties
     .flatMap(_.getAsArrayDesignAccession)
-    .toSet ++ arrayDesignsWeHaveInMirbaseFolder
+    .toSet ++ arrayDesignsBackfilled.toSet
 
   ExperimentDirectory.allArrayDesigns
   .collect {
