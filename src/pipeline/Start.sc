@@ -16,7 +16,7 @@ def runAll(force:Boolean=false) = {
     case _
       => {
         Log.log("Validated annotation sources contain the array designs we need")
-        forceAll()
+        Retrieve.performBioMartTasks(Tasks.allTasks)
       }
   }
 }
