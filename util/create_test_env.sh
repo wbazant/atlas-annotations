@@ -5,7 +5,7 @@
 export ATLAS_PROD=${1:-"/var/tmp/atlas_prod"}
 REMOTE_ATLAS_PROD=ebi-cli:/nfs/production3/ma/home/atlas3-production
 
-for dir in "" archive archive/ensembl_x_y archive/wbps_z archive/reactome_ensx_y archive/array_designs_x_y_z go interpro mirbase array_designs array_designs/current array_designs/backfill ; do
+for dir in "" archive archive/ensembl_x_y archive/wbps_z archive/reactome_ensx_y archive/array_designs_x_y_z go interpro mirbase array_designs array_designs/current array_designs/backfill annotations annotations/ensembl annotations/wbps annotations/mirbase ; do
     mkdir -p $ATLAS_PROD/bioentity_properties/$dir
 done
 
