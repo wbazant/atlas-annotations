@@ -113,16 +113,21 @@ if [ "$size" -lt 1000000 ]; then
     exit 1
 fi
 
+nonuniqueArrayDesignFiles = $(
+    find -L $ATLAS_PROD/bioentity_properties/array_designs -name '*A-*.tsv' \
+    | xargs -n 1 basename \
+    | sort \
+    | uniq -d )
+
+if [[ ! nonuniqueArrayDesignFiles ]] ; then
+    echo "ERROR: Check $ATLAS_PROD/bioentity_properties/array_designs/backfill - no need to backfill for: " nonuniqueArrayDesignFiles
+    exit 1
+fi
+
 echo "Generate ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat file"
-rm -rf ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
-
 find -L $ATLAS_PROD/bioentity_properties/array_designs -name '*A-*.tsv' \
-| xargs $PROJECT_ROOT/sh/prepare_array_designs_for_loading.sh "gene" \
->> ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
-
-find -L $ATLAS_PROD/bioentity_properties/mirbase -name '*A-*.tsv' \
-| xargs $PROJECT_ROOT/sh/prepare_array_designs_for_loading.sh "mature_miRNA" \
->> ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
+    | xargs $PROJECT_ROOT/sh/prepare_array_designs_for_loading.sh  \
+    > ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat
 
 # Apply sanity test
 size=`wc -l ${ATLAS_PROD}/bioentity_properties/designelementMapping.dat | awk '{print $1}'`

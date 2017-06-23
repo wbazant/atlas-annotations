@@ -1,6 +1,5 @@
 #!/bin/bash
 # This script geneartes sqlloader content for <some DB table>
-# $1 name of third column - "gene" or "mature_miRNA"
 # $n - file in - lines like:
 ### Bt.9082.1.S1_at   ENSBTAG00000016312
 ### Bt.24457.1.S1_at
@@ -11,20 +10,22 @@
 
 # out: gene id \t probe set \t gene/mirna \t array design
 function probesFromFile() {
-  idType=$1
-  filePath=$2
+  filePath=$1
+  if (head -n 2 $filePath | grep "MIMAT" > /dev/null) ; then
+      idType="mature_miRNA"
+  else
+      idType="gene"
+  fi
+
   arrayDesign=$(basename $filePath | cut -f 2 -d ".")
-  grep -E "^\w+[[:space:]]\w+" $filePath | awk -v idType=$1 -v arrayDesign=$arrayDesign -F '\t' '{print $2"\t"$1"\t"idType"\t"arrayDesign}'
+  grep -E "^\w+[[:space:]]\w+" $filePath | awk -v idType=$idType -v arrayDesign=$arrayDesign -F '\t' '{print $2"\t"$1"\t"idType"\t"arrayDesign}'
 }
 
-if [ $# -lt 2 ]; then
-  echo "Usage: $0 thirdColumnName source1 ... sourceN" >&2
+if [ $# -lt 1 ]; then
+  echo "Usage: $0 source1 ... sourceN" >&2
   exit 1
 fi
 
-thirdColumnName=$1
-shift
-
 for f in $@; do
-  probesFromFile $thirdColumnName $f
+  probesFromFile $f
 done
