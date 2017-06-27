@@ -1,4 +1,5 @@
 import scala.concurrent._
+import scala.concurrent.duration._
 import scala.util.{Success, Failure}
 import $file.BioMart
 import $file.Tasks
@@ -143,13 +144,12 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Integer = {
               Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
               val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
               implicit val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
-              val futures = tasksToComplete.map { case task =>
+              val futures = Future.sequence(tasksToComplete.map { case task =>
                 scheduleAndLogResultOfBioMartTask(auxiliaryInfo)(task)(ec)
-              }
-              Future.sequence(futures) onComplete {
+              })
+              futures onComplete {
                 case Success(_) => {
                   Log.log("All tasks completed, shutting down")
-                  executorService.shutdown()
                 }
                 case Failure(t) => {
                   Log.log("Completed with execution errors")
@@ -159,6 +159,8 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Integer = {
                   System.exit(1)
                 }
               }
+              Await.result(futures, 5 hours)
+              executorService.shutdown()
               0
             }
           case Left(err)
