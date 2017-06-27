@@ -5,7 +5,6 @@
 set -euo pipefail
 
 PROJECT_ROOT=`dirname $0`/../..
-source $PROJECT_ROOT/sh/generic_routines.sh
 
 if [ $# -lt 3 ]; then
   echo "Usage: $0 NEW_ENSEMBL_REL NEW_ENSEMBLGENOMES_REL NEW_WBPS_REL "
