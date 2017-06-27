@@ -20,4 +20,4 @@ property.interproterm=interpro_description
 property.refseq=refseq_peptide
 property.symbol=external_gene_name
 property.uniprot=uniprotsptrembl,uniprotswissprot
-arrayDesign.A-AFFY-31=affy_hordeum_vulgare
+arrayDesign.A-AFFY-31=affy_affymetrixbarleygenomearray
