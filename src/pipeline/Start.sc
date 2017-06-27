@@ -13,10 +13,14 @@ def runAll(force:Boolean=false) = {
         Log.err(err)
         System.exit(1)
       }
-    case _
+    case (t, _)
       => {
-        Log.log("Validated annotation sources contain the array designs we need")
-        Retrieve.performBioMartTasks(Tasks.allTasks)
+        Log.log(t.right.map(Function.const("Validated annotation sources contain the array designs we need")).merge)
+        System.exit(
+            Retrieve.performBioMartTasks(
+                Tasks.allTasks
+            )
+        )
       }
   }
 }

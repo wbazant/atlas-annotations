@@ -126,7 +126,7 @@ def scheduleAndLogResultOfBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartA
 }
 
 
-def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
+def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Integer = {
   Log.log(s"Validating ${tasks.size} tasks")
   validate(tasks) match {
     case Right(_)
@@ -155,20 +155,24 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
                   Log.log("Completed with execution errors")
                   Log.err(t)
                   executorService.shutdown()
+                  //I cheated, I know! Please refactor!
                   System.exit(1)
                 }
               }
+              0
             }
           case Left(err)
             => {
               Log.err("Failed retrieving auxiliary info:")
               Log.err(err)
+              1
             }
         }
       }
     case Left(err)
       => {
         Log.err(err)
+        1
       }
   }
 }
