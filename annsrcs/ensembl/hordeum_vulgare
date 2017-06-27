@@ -20,4 +20,4 @@ property.interproterm=interpro_description
 property.refseq=refseq_peptide
 property.symbol=external_gene_name
 property.uniprot=uniprotsptrembl,uniprotswissprot
-#arrayDesign.A-AFFY-31=affy_hordeum_vulgare it's gone in EG36 - backfilled
+arrayDesign.A-AFFY-31=affy_hordeum_vulgare
