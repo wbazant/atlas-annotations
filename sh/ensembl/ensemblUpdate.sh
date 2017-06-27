@@ -17,9 +17,11 @@ NEW_ENSEMBLGENOMES_REL=$2
 NEW_WBPS_REL=$3
 
 function symlinkAndArchive() {
-  mkdir -p $2
-  rm $1 2>/dev/null
-  ln -s $2 $1
+    mkdir -p $2
+    if [[ -e $1 ]] ; then
+        rm $1
+    fi
+    ln -s $2 $1
 }
 echo "Shifting the symlinks to new versions of Ensembl, Ensembl Genomes and WBPS"
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/ensembl $ATLAS_PROD/bioentity_properties/archive/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
