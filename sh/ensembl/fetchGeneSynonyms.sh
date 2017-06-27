@@ -34,7 +34,7 @@ for path in $(find $PROJECT_ROOT/annsrcs -type f) ; do
   if [[ $annSrcsDir =~ ensembl ]]; then
       target=$ATLAS_PROD/bioentity_properties/${annSrcsDir}/${organism}.ensgene.synonym.tsv
   elif [[ $annSrcsDir =~ wbps ]]; then
-      target=$ATLAS_PROD/bioentity_properties/${annSrcsDir}/${organism}.wbps.synonym.tsv
+      target=$ATLAS_PROD/bioentity_properties/${annSrcsDir}/${organism}.wbpsgene.synonym.tsv
   else
       echo "ERROR: for $annSrc: neither ensembl or wbps" >&2
       exit 1
