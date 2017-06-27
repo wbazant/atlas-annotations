@@ -2,6 +2,7 @@
 
 # I used to source this script from the same (prod or test) Atlas environment as this script
 # scriptDir=$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+set -euo pipefail
 
 PROJECT_ROOT=`dirname $0`/../..
 source $PROJECT_ROOT/sh/generic_routines.sh
@@ -32,35 +33,19 @@ symlinkAndArchive $ATLAS_PROD/bioentity_properties/annotations/wbps $ATLAS_PROD/
 echo "Fetching the latest GO mappings..."
 # This needs to be done because we need to replace any alternative GO ids in Ensembl mapping files with their canonical equivalents
 $PROJECT_ROOT/sh/go/fetchGoIDToTermMappings.sh ${ATLAS_PROD}/bioentity_properties/go
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the latest GO mappings" >&2
-    exit 1
-fi
 
 echo "Fetching the latest Interpro mappings..."
 # I've only put it here for symmetry - we currently do not transform on Interpro file output
 $PROJECT_ROOT/sh/interpro/fetchInterproIDToTypeTermMappings.sh ${ATLAS_PROD}/bioentity_properties/interpro
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the latest Interpro mappings" >&2
-    exit 1
-fi
 
 pushd $PROJECT_ROOT
 echo "Obtain the mapping files from biomarts based on annotation sources"
 export JAVA_OPTS=-Xmx3000M
 amm -s src/pipeline/Start.sc
-if [ $? -ne 0 ]; then
-    echo "Ammonite errored out, exiting..." >&2
-    exit 1
-fi
 popd
 
 echo "Fetching the synonyms from biomart databases..."
 $PROJECT_ROOT/sh/ensembl/fetchGeneSynonyms.sh
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the synonyms from biomart databases" >&2
-    exit 1
-fi
 
 echo "Merge all individual Ensembl property files into matrices"
 for species in $(ls $PROJECT_ROOT/annsrcs/ensembl | awk -F"." '{print $1}' | sort | uniq); do
@@ -121,7 +106,7 @@ nonuniqueArrayDesignFiles = $(
     | sort \
     | uniq -d )
 
-if [[ ! nonuniqueArrayDesignFiles ]] ; then
+if [[ ! $nonuniqueArrayDesignFiles ]] ; then
     echo "ERROR: Check $ATLAS_PROD/bioentity_properties/array_designs/backfill - no need to backfill for: " nonuniqueArrayDesignFiles
     exit 1
 fi
@@ -142,14 +127,6 @@ echo "Fetching the latest Reactome mappings..."
 # This needs to be done because some of Reactome's pathways are mapped to UniProt accessions only, hence so as to map them to
 # gene ids - we need to use the mapping files we've just retrieved from Ensembl
 $PROJECT_ROOT/sh/reactome/fetchAllReactomeMappings.sh $ATLAS_PROD/bioentity_properties/reactome/
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the latest Reactome mappings" >&2
-    exit 1
-fi
 
 echo "Downloading gtfs..."
 $PROJECT_ROOT/sh/gtf/download_gtfs.sh "$NEW_ENSEMBL_REL" "$NEW_ENSEMBLGENOMES_REL" "$NEW_WBPS_REL"
-if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to get the gtfs" >&2
-    exit 1
-fi
