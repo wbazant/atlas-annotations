@@ -29,3 +29,4 @@ property.refseq=refseq_mrna,refseq_ncrna,refseq_peptide
 property.symbol=external_gene_name
 property.unigene=unigene
 property.uniprot=uniprotsptrembl,uniprotswissprot
+arrayDesign.A-AFFY-103=affy_chicken
