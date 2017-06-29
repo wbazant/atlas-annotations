@@ -127,7 +127,7 @@ def scheduleAndLogResultOfBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartA
 }
 
 
-def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Integer = {
+def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Unit = {
   Log.log(s"Validating ${tasks.size} tasks")
   validate(tasks) match {
     case Right(_)
@@ -144,37 +144,34 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Integer = {
               Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
               val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
               implicit val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
-              val futures = Future.sequence(tasksToComplete.map { case task =>
+              val futures = tasksToComplete.map { case task =>
                 scheduleAndLogResultOfBioMartTask(auxiliaryInfo)(task)(ec)
-              })
-              futures onComplete {
+              }
+              Future.sequence(futures) onComplete {
                 case Success(_) => {
                   Log.log("All tasks completed, shutting down")
+                  executorService.shutdown()
                 }
                 case Failure(t) => {
                   Log.log("Completed with execution errors")
                   Log.err(t)
                   executorService.shutdown()
-                  //I cheated, I know! Please refactor!
                   System.exit(1)
                 }
               }
-              Await.result(futures, 5 hours)
-              executorService.shutdown()
-              0
             }
           case Left(err)
             => {
               Log.err("Failed retrieving auxiliary info:")
               Log.err(err)
-              1
+              System.exit(1)
             }
         }
       }
     case Left(err)
       => {
         Log.err(err)
-        1
+        System.exit(1)
       }
   }
 }

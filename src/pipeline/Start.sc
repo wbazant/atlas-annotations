@@ -16,10 +16,8 @@ def runAll(force:Boolean=false) = {
     case (t, _)
       => {
         Log.log(t.right.map(Function.const("Validated annotation sources contain the array designs we need")).merge)
-        System.exit(
-            Retrieve.performBioMartTasks(
-                Tasks.allTasks
-            )
+        Retrieve.performBioMartTasks(
+            Tasks.allTasks
         )
       }
   }
