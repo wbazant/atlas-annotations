@@ -170,6 +170,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Unit = {
       }
     case Left(err)
       => {
+        Log.err("Error:")
         Log.err(err)
         System.exit(1)
       }
