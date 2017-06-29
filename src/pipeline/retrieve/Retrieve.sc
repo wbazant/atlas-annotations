@@ -1,6 +1,3 @@
-import scala.concurrent._
-import scala.concurrent.duration._
-import scala.util.{Success, Failure}
 import $file.BioMart
 import $file.Tasks
 import $file.Transform
@@ -118,16 +115,7 @@ def validateAttributesPresentInBioMart(tasks: Seq[Tasks.BioMartTask]) :Either[It
   }
 }
 
-def scheduleAndLogResultOfBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo])
-  (task : Tasks.BioMartTask)(implicit ec: ExecutionContext) = {
-  future {
-    performBioMartTask(aux, task)
-    .fold(l => Log.err(l), r => Log.log(r))
-  }
-}
-
-
-def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Unit = {
+def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
   Log.log(s"Validating ${tasks.size} tasks")
   validate(tasks) match {
     case Right(_)
@@ -142,29 +130,34 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Unit = {
           case Right(auxiliaryInfo)
             => {
               Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
+              var errors = 0
               val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
-              implicit val ec : ExecutionContext = scala.concurrent.ExecutionContext.fromExecutorService(executorService)
-              val futures = tasksToComplete.map { case task =>
-                scheduleAndLogResultOfBioMartTask(auxiliaryInfo)(task)(ec)
+              for(task <- tasksToComplete) {
+                  executorService.submit(new java.lang.Runnable {
+                      def run = {
+                          performBioMartTask(auxiliaryInfo, task) match {
+                              case Left(l)
+                                => {
+                                    Log.err(l)
+                                    errors+=1
+                                }
+                              case Right(r)
+                                => Log.log(r)
+                          }
+                      }
+                  })
               }
-              Future.sequence(futures) onComplete {
-                case Success(_) => {
-                  Log.log("All tasks completed, shutting down")
-                  executorService.shutdown()
-                }
-                case Failure(t) => {
-                  Log.log("Completed with execution errors")
-                  Log.err(t)
-                  executorService.shutdown()
-                  System.exit(1)
-                }
-              }
+              executorService.shutdown()
+              executorService.awaitTermination(8, java.util.concurrent.TimeUnit.HOURS)
+
+              Log.log("Finished!")
+              errors
             }
           case Left(err)
             => {
               Log.err("Failed retrieving auxiliary info:")
               Log.err(err)
-              System.exit(1)
+              1
             }
         }
       }
@@ -172,7 +165,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) : Unit = {
       => {
         Log.err("Error:")
         Log.err(err)
-        System.exit(1)
+        1
       }
   }
 }
