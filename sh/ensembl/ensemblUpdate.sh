@@ -117,7 +117,7 @@ nonuniqueArrayDesignFiles=$(
     | sort \
     | uniq -d )
 
-if [[ ! $nonuniqueArrayDesignFiles ]] ; then
+if [[ -n "$nonuniqueArrayDesignFiles" ]] ; then
     echo "ERROR: Check $ATLAS_PROD/bioentity_properties/array_designs/backfill - no need to backfill for: " $nonuniqueArrayDesignFiles
     exit 1
 fi
