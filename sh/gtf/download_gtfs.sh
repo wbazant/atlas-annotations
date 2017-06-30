@@ -28,7 +28,7 @@ gtfsDir=$ATLAS_PROD/gtfs
 while read -r organism gtf; do
     localGtf="${gtfsDir}/${organism}/"`echo $gtf | awk -F"/" '{print $NF}' | sed 's|.gz$||'`
     localGff3=$(echo $localGtf | sed 's|.gtf$|.gff3|')
-    if [[ -s $localGtf -a -s $localGff3 ]] ; then
+    if [ -s "$localGtf" -a -s "$localGff3" ] ; then
         echo "Skipping: " $localGtf $localGff3 >&2
     else
         mkdir -p ${gtfsDir}/${organism}
