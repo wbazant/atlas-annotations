@@ -111,14 +111,14 @@ if [ "$size" -lt 1000000 ]; then
     exit 1
 fi
 
-nonuniqueArrayDesignFiles = $(
+nonuniqueArrayDesignFiles=$(
     find -L $ATLAS_PROD/bioentity_properties/array_designs -name '*A-*.tsv' \
     | xargs -n 1 basename \
     | sort \
     | uniq -d )
 
 if [[ ! $nonuniqueArrayDesignFiles ]] ; then
-    echo "ERROR: Check $ATLAS_PROD/bioentity_properties/array_designs/backfill - no need to backfill for: " nonuniqueArrayDesignFiles
+    echo "ERROR: Check $ATLAS_PROD/bioentity_properties/array_designs/backfill - no need to backfill for: " $nonuniqueArrayDesignFiles
     exit 1
 fi
 
