@@ -51,7 +51,12 @@ $PROJECT_ROOT/sh/ensembl/fetchGeneSynonyms.sh
 echo "Merge all individual Ensembl property files into matrices"
 for species in $(find -L ${ATLAS_PROD}/bioentity_properties/ensembl -name '*tsv' -type f | xargs -n 1 basename | awk -F"." '{print $1}' | sort -u ); do
     for bioentity in ensgene enstranscript ensprotein; do
-        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir ${ATLAS_PROD}/bioentity_properties/ensembl -species $species -bioentity $bioentity -outdir ${ATLAS_PROD}/bioentity_properties/annotations/ensembl
+        mergedFile=${ATLAS_PROD}/bioentity_properties/annotations/ensembl/$species.$bioentity.tsv
+        [[ -s $mergedFile ]] \
+        || $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl \
+            -indir ${ATLAS_PROD}/bioentity_properties/ensembl \
+            -species $species -bioentity $bioentity \
+        > $mergedFile
     done
 done
 
@@ -59,7 +64,12 @@ done
 echo "Merge all individual WBPS property files into matrices"
 for species in $(find -L ${ATLAS_PROD}/bioentity_properties/wbps -name '*tsv' -type f | xargs -n 1 basename | awk -F"." '{print $1}' | sort -u ); do
     for bioentity in wbpsgene wbpsprotein wbpstranscript; do
-        $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl -indir ${ATLAS_PROD}/bioentity_properties/wbps -species $species -bioentity $bioentity -outdir ${ATLAS_PROD}/bioentity_properties/annotations/wbps
+        mergedFile=${ATLAS_PROD}/bioentity_properties/annotations/wbps/$species.$bioentity.tsv
+        [[ -s $mergedFile ]] \
+        || $PROJECT_ROOT/sh/ensembl/mergePropertiesIntoMatrix.pl \
+            -indir ${ATLAS_PROD}/bioentity_properties/wbps \
+            -species $species -bioentity $bioentity \
+        > $mergedFile
     done
 done
 
