@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script downloads, cleans up and coverts to gff3 format the gtf files as defined in the atlasprod/irap/gxa_references.conf
+set -euo pipefail
 
 if [ $# -lt 3 ]; then
   echo "Usage: $0 ENSEMBL_REL ENSEMBLGENOMES_REL WBPS"
@@ -26,23 +27,14 @@ gtfsDir=$ATLAS_PROD/gtfs
 # Download gtfs specified in $gxaRefs
 while read -r organism gtf; do
     localGtf="${gtfsDir}/${organism}/"`echo $gtf | awk -F"/" '{print $NF}' | sed 's|.gz$||'`
-    # Clean up any previous files for $organism, prior to downloading new ones
-    mkdir -p ${gtfsDir}/${organism}
-    rm -rf ${gtfsDir}/${organism}/*
-    # Download $gtf
-    curl $gtf > $localGtf.gz
-    if [ $? -ne 0 ]; then
-	echo "ERROR: failed to fetch: $gtf" >&2
-	exit 1
-    fi
+    localGff3=$(echo $localGtf | sed 's|.gtf$|.gff3|')
+    if [[ -s $localGtf -a -s $localGff3 ]] ; then
+        echo "Skipping: " $localGtf $localGff3 >&2
+    else
+        mkdir -p ${gtfsDir}/${organism}
+        rm -rf ${gtfsDir}/${organism}/*
 
-    # Convert gtf to gff3
-    gunzip -c $localGtf.gz > $localGtf
-
-    # Convert gtf to gff3 for the downstream bedGraph file generation for Atlas
-    $(dirname ${BASH_SOURCE[0]})/gtf2gff3.pl $localGtf > `echo $localGtf | sed 's|.gtf$|.gff3|'`
-    if [ $? -ne 0 ]; then
-	echo "ERROR: Failed to convert: $localGtf to gff3" >&2
-	exit 1
+        curl $gtf | gunzip -c > $localGtf
+        $(dirname ${BASH_SOURCE[0]})/gtf2gff3.pl $localGtf > $localGff3
     fi
 done < $gxaRefs
