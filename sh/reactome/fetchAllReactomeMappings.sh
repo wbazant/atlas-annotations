@@ -43,7 +43,7 @@ pushd $outputDir
 
 for file in Ensembl2Reactome UniProt2Reactome UniProt2PlantReactome Ensembl2PlantReactome; do
   # Lower-case and replace space with underscore in all organism names; create files with headers for each organism
-  awk -F"\t" '{print $2}' aux.$file | sort | uniq > aux.$file.organisms
+  awk -F"\t" '{print $2}' aux.$file | sort -u > aux.$file.organisms
   for organism in $(cat aux.$file.organisms); do
      lcOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`
      perl -pi -e "s|$organism|$lcOrganism|g" aux.$file

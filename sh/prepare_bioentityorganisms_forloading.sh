@@ -21,7 +21,7 @@ for f in $(ls *.wbpsgene.tsv); do echo $f | awk -F"." '{print $1}' >> $aux ; don
 popd
 
 i=1
-for organism in $(cat $aux | sort | uniq); do
+for organism in $(sort -u $aux); do
   # Upper-case the first letter and replace underscrores with spaces in organism
   prettyOrganism=`echo "$organism" | sed 's/.*/\u&/' | tr "_" " "`
   echo -e "$i\t$prettyOrganism" >> $outputDir/bioentityOrganism.dat

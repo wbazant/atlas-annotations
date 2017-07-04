@@ -110,7 +110,7 @@ for f in $(ls *.hairpin.tsv); do
     organism=`echo $f | awk -F"." '{print $1}'`
     idprefix=`tail -1 $f| awk -F"-" '{print $1}'`
     echo -e "$idprefix\t$organism" 
-done | sort | uniq > idprefix_to_organism.tsv
+done | sort -u > idprefix_to_organism.tsv
 popd
 
 exit 0
