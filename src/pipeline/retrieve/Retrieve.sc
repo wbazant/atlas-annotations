@@ -116,21 +116,20 @@ def validateAttributesPresentInBioMart(tasks: Seq[Tasks.BioMartTask]) :Either[It
 }
 
 def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
+  val tasksToComplete = tasks.filter(!_.seemsDone)
+  if(tasksToComplete.size < tasks.size) {
+      Log.log(s"Skipped tasks that seem completed, remaining ${tasksToComplete.size} tasks")
+  }
   Log.log(s"Validating ${tasks.size} tasks")
-  validate(tasks) match {
+  validate(tasksToComplete) match {
     case Right(_)
       => {
         Log.log(s"Validated ${tasks.size} tasks")
-        val tasksToComplete = tasks.filter(!_.seemsDone)
-        if(tasksToComplete.size < tasks.size) {
-          Log.log(s"Skipped tasks that seem completed, remaining ${tasksToComplete.size} tasks")
-        }
-        val aux = BioMart.BiomartAuxiliaryInfo.getMap(tasksToComplete.map{_.annotationSource}.toSet.toSeq)
-        aux match {
+        BioMart.BiomartAuxiliaryInfo.getMap(tasksToComplete.map{_.annotationSource}.toSet.toSeq) match {
           case Right(auxiliaryInfo)
             => {
               Log.log(s"Retrieved auxiliary info of ${auxiliaryInfo.size} items")
-              var errors = 0
+              var errorCount = 0
               val executorService = java.util.concurrent.Executors.newFixedThreadPool(10)
               for(task <- tasksToComplete) {
                   executorService.submit(new java.lang.Runnable {
@@ -139,7 +138,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
                               case Left(l)
                                 => {
                                     Log.err(l)
-                                    errors+=1
+                                    errorCount+=1
                                 }
                               case Right(r)
                                 => Log.log(r)
@@ -151,7 +150,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
               executorService.awaitTermination(8, java.util.concurrent.TimeUnit.HOURS)
 
               Log.log("Finished!")
-              errors
+              errorCount
             }
           case Left(err)
             => {
@@ -163,7 +162,6 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
       }
     case Left(err)
       => {
-        Log.err("Error:")
         Log.err(err)
         1
       }
