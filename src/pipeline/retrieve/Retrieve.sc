@@ -120,7 +120,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
   if(tasksToComplete.size < tasks.size) {
       Log.log(s"Skipped tasks that seem completed, remaining ${tasksToComplete.size} tasks")
   }
-  Log.log(s"Validating ${tasks.size} tasks")
+  Log.log(s"Validating ${tasksToComplete.size} tasks")
   validate(tasksToComplete) match {
     case Right(_)
       => {
