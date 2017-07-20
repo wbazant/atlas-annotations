@@ -124,7 +124,7 @@ def performBioMartTasks(tasks: Seq[Tasks.BioMartTask]) = {
   validate(tasksToComplete) match {
     case Right(_)
       => {
-        Log.log(s"Validated ${tasks.size} tasks")
+        Log.log(s"Validated ${tasksToComplete.size} tasks")
         BioMart.BiomartAuxiliaryInfo.getMap(tasksToComplete.map{_.annotationSource}.toSet.toSeq) match {
           case Right(auxiliaryInfo)
             => {
