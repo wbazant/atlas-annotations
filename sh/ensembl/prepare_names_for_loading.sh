@@ -32,7 +32,7 @@ for f in $@; do
   fi
 
   IFS=$'\t'
-  cat $f | while read identifier name #danger - the lines could have n elements, only this particular mapping has one or two
+  cat $f | while read identifier name
   do
 	if [ ! -z "$name" ]; then
 	    echo -e "${identifier}\t${organismId}\tgene\t${name}"

@@ -18,9 +18,9 @@ import scala.io.Source
 import scala.xml.pull._
 
 type Result = (String, String)
-case class OwlClassResult(maybeId: Option[String] = None, properties: List[String] = List()) {
-  def noteId(id: String) = OwlClassResult(Some(id), properties)
-  def noteProperty(property: String) = OwlClassResult(maybeId, property :: properties)
+case class OwlClassResult(maybeId: Option[String] = None, properties: List[String] = List(), skippingTag: Option[String] = None) {
+  def noteId(id: String) = OwlClassResult(Some(id), properties, skippingTag)
+  def noteProperty(property: String) = OwlClassResult(maybeId, property :: properties, skippingTag)
   def toList : List[Result] = maybeId.map{ case id => properties.map{case property => (id,property)}}.toList.flatten
 }
 
@@ -30,33 +30,37 @@ case object ReadingProperty extends ReadingNodeText
 case object NotReadingNodeText extends ReadingNodeText
 
 
-type X = (Option[OwlClassResult],ReadingNodeText, List[Result])
-val xInit : X = (None, NotReadingNodeText, List[(String,String)]())
+
+type X = (Option[String], Option[OwlClassResult],ReadingNodeText, List[Result])
+val xInit : X = (None, None, NotReadingNodeText, List[(String,String)]())
 def parseStep(propertyNamespace: String, property:String)(x: X, evt: XMLEvent) : X = {
-  val (currentOwlClass, isReadingNodeText, acc) = x
-  (evt,currentOwlClass, isReadingNodeText) match {
-    case (EvElemStart("owl", "Class", _ , _),None, _)
-      => (Some(OwlClassResult()), NotReadingNodeText, acc )
-    case (EvElemStart(pns, p, _, _),Some(owl), _) if pns == propertyNamespace && p == property
-      => (currentOwlClass,ReadingProperty, acc)
-    case (EvElemStart("oboInOwl", "id", _, _),Some(owl), _)
-      => (currentOwlClass,ReadingId, acc)
-    case (EvText(t), Some(owl), ReadingProperty)
-      => (Some(owl.noteProperty(t)),NotReadingNodeText, acc)
-    case (EvText(t), Some(owl), ReadingId)
-      => (Some(owl.noteId(t)), NotReadingNodeText, acc)
-    case (EvElemEnd("owl", "Class"),Some(owl), _)
-      => (None, NotReadingNodeText, owl.toList ::: acc )
+  val (skipping, currentOwlClass, isReadingNodeText, acc) = x
+  (skipping, evt,currentOwlClass, isReadingNodeText) match {
+    case (None, EvElemStart("owl", "Class", _, _),None, _)
+      => (None, Some(OwlClassResult()), NotReadingNodeText, acc )
+    case (None, EvElemStart("owl", owlElement, _, _),Some(owl), _)
+      => (Some(owlElement), currentOwlClass, isReadingNodeText, acc)
+    case (Some(owlElementSkipping), EvElemEnd("owl", owlElement), _, _ ) if owlElement == owlElementSkipping
+      => (None, currentOwlClass, isReadingNodeText, acc)
+    case (None, EvElemStart(pns, p, _, _),Some(owl), _) if pns == propertyNamespace && p == property
+      => (None, currentOwlClass,ReadingProperty, acc)
+    case (None, EvElemStart("oboInOwl", "id", _, _),Some(owl), _)
+      => (None, currentOwlClass,ReadingId, acc)
+    case (None, EvText(t), Some(owl), ReadingProperty)
+      => (None, Some(owl.noteProperty(t)),NotReadingNodeText, acc)
+    case (None, EvText(t), Some(owl), ReadingId)
+      => (None, Some(owl.noteId(t)), NotReadingNodeText, acc)
+    case (None, EvElemEnd("owl", "Class"),Some(owl), _)
+      => (None,None, NotReadingNodeText, owl.toList ::: acc )
     case _
       => x
   }
 }
 
-
 def parse(propertyNamespace: String, property:String)(fileLocation: ammonite.ops.Path) = {
   new XMLEventReader(Source.fromFile(fileLocation.toIO))
   .foldLeft(xInit)(parseStep(propertyNamespace, property))
-  ._3
+  ._4
   .reverse
 }
 
