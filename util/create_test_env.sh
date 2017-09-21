@@ -5,9 +5,22 @@
 export ATLAS_PROD=${1:-"/var/tmp/atlas_prod"}
 REMOTE_ATLAS_PROD=ebi-cli:/nfs/production3/ma/home/atlas3-production
 
-for dir in "" archive archive/ensembl_x_y archive/wbps_z archive/reactome_ensx_y archive/array_designs_x_y_z go interpro mirbase array_designs array_designs/current array_designs/backfill annotations annotations/ensembl annotations/wbps annotations/mirbase ; do
-    mkdir -p $ATLAS_PROD/bioentity_properties/$dir
-done
+mkdir -p $ATLAS_PROD/bioentity_properties
+mkdir -p $ATLAS_PROD/bioentity_properties/archive
+mkdir -p $ATLAS_PROD/bioentity_properties/archive/ensembl_x_y
+mkdir -p $ATLAS_PROD/bioentity_properties/archive/wbps_z
+mkdir -p $ATLAS_PROD/bioentity_properties/archive/reactome_ensx_y
+mkdir -p $ATLAS_PROD/bioentity_properties/archive/array_designs_x_y_z
+mkdir -p $ATLAS_PROD/bioentity_properties/go
+mkdir -p $ATLAS_PROD/bioentity_properties/interpro
+mkdir -p $ATLAS_PROD/bioentity_properties/mirbase
+mkdir -p $ATLAS_PROD/bioentity_properties/array_designs
+mkdir -p $ATLAS_PROD/bioentity_properties/array_designs/current
+mkdir -p $ATLAS_PROD/bioentity_properties/array_designs/backfill
+mkdir -p $ATLAS_PROD/bioentity_properties/annotations
+mkdir -p $ATLAS_PROD/bioentity_properties/annotations/ensembl
+mkdir -p $ATLAS_PROD/bioentity_properties/annotations/wbps
+mkdir -p $ATLAS_PROD/bioentity_properties/annotations/mirbase
 
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/ensembl_x_y $ATLAS_PROD/bioentity_properties/ensembl
 ln -fhs $ATLAS_PROD/bioentity_properties/archive/reactome_ensx_y $ATLAS_PROD/bioentity_properties/reactome
