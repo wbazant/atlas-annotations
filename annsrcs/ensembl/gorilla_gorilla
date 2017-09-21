@@ -1,5 +1,5 @@
 software.name=ensembl
-software.version=89
+software.version=90
 url=http://www.ensembl.org/biomart/martservice?
 organism=gorilla gorilla
 databaseName=ensembl

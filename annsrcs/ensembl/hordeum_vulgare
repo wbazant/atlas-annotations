@@ -1,5 +1,5 @@
 software.name=plants
-software.version=36
+software.version=37
 url=http://plants.ensembl.org/biomart/martservice?
 organism=hordeum vulgare
 databaseName=plants
