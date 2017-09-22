@@ -50,11 +50,9 @@ def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], 
       Transform.transform(task,result)
       .sorted // the output needs to be sorted as equivalent to Unix's join -k1,1
       .distinct // skip duplicate lines - biomart's uniqueRows="1" can't be trusted unfortunately
-      .map { //the output really needs to be rectangular so that the files can be understood by R
+      .collect { //the output really needs to be rectangular so that the files can be understood by R
         case (k, Some(v))
           => s"${k}\t${v}\n"
-        case (k, None) // Consider skipping these lines. If you want to, remove this case statement and change "map" to "collect"
-          => s"${k}\t\n"
       }
       .toStream,
     hasErrors = errors.size > 0
