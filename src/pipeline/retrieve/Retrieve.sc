@@ -53,7 +53,7 @@ def performBioMartTask(aux:Map[AnnotationSource, BioMart.BiomartAuxiliaryInfo], 
       .map { //the output really needs to be rectangular so that the files can be understood by R
         case (k, Some(v))
           => s"${k}\t${v}\n"
-        case (k, None) // Consider skipping these lines. If you want to, remove this case statement and change "map" to "collect"
+        case (k, None) // Consider skipping these lines. If you want to, remove this case statement and change "map" to "collect". But if a table bioentity_name still exists, that makes up vw_diffanalytics, then don't.
           => s"${k}\t\n"
       }
       .toStream,
