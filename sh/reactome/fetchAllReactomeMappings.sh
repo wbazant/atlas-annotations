@@ -30,14 +30,15 @@ IFS="
 start=`date +%s`
 # Please note that the two files are currently provided manually by Justin Preece from Gramene project
 # we check them in and keep them with source code
-cat `dirname $0`/UniProt2PlantReactome_All_Levels.txt | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > $outputDir/aux.UniProt2PlantReactome
-cat `dirname $0`/Ensembl2PlantReactome_All_Levels.txt | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > $outputDir/aux.Ensembl2PlantReactome
+curl -s -X GET "http://plantreactome.gramene.org/download/current/UniProt2PlantReactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > $outputDir/aux.UniProt2PlantReactome
+curl -s -X GET "http://plantreactome.gramene.org/download/current/Ensembl2PlantReactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | grep -Ev '^ENST' | sort -k 1,1 > $outputDir/aux.Ensembl2PlantReactome
+
 #Download the other files
-curl -s -X GET "http://plantreactome.gramene.org/download/current/UniProt2PlantReactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > $outputDir/aux.UniProt2Reactome
+curl -s -X GET "http://www.reactome.org/download/current/UniProt2Reactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > $outputDir/aux.UniProt2Reactome
 # Ensembl2Reactome appears to map to pathways a combination of gene and transcript identifiers (I've seen evidence of a gene and its transcript
 # being mapped to the same pathway in separate lines of the same file). Exluding transcript identifers to avoid Solr index (that consumes these files)
 # from being corrupted.
-curl -s -X GET "http://plantreactome.gramene.org/download/current/Ensembl2PlantReactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | grep -Ev '^ENST' | sort -k 1,1 > $outputDir/aux.Ensembl2Reactome
+curl -s -X GET "http://www.reactome.org/download/current/Ensembl2Reactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | grep -Ev '^ENST' | sort -k 1,1 > $outputDir/aux.Ensembl2Reactome
 
 pushd $outputDir
 
