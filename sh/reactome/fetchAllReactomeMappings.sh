@@ -92,10 +92,18 @@ for file in Ensembl2Reactome Ensembl2PlantReactome ;do
 done
 
 #columns are meant to be in order: Uniprot accession, organism, Reactome pathway accession, Reactome Pathway name
-# For UniProt file we first need to map UniProt accessions to Ensembl identifiers,
-# before appending the data to ${lcOrganism}.reactome.tsv.tmp
-map_uniprot_ids aux.UniProt2Reactome.organisms.NoPlants
-map_uniprot_ids aux.UniProt2PlantReactome.organisms
+for file in UniProt2Reactome UniProt2PlantReactome; do
+  # For UniProt file we first need to map UniProt accessions to Ensembl identifiers,
+  # before appending the data to ${lcOrganism}.reactome.tsv.tmp
+    ## Non-Plants
+    if [ $file == "UniProt2Reactome" ]; then
+        map_uniprot_ids aux.$file.organisms.NoPlants
+    	
+    ## Plants
+    elif [ $file == "UniProt2PlantReactome" ]; then	
+        map_uniprot_ids aux.$file.organisms
+	fi
+done
 
 for outFile in $(ls *reactome.tsv.tmp); do
   resultFile=$(echo $outFile | sed 's/tsv.tmp/tsv/')
