@@ -34,47 +34,90 @@ curl -s -X GET "http://plantreactome.gramene.org/download/current/UniProt2PlantR
 curl -s -X GET "http://plantreactome.gramene.org/download/current/Ensembl2PlantReactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | grep -Ev '^ENST' | sort -k 1,1 > $outputDir/aux.Ensembl2PlantReactome
 
 #Download the other files
-curl -s -X GET "http://www.reactome.org/download/current/UniProt2Reactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > $outputDir/aux.UniProt2Reactome
+curl -s -X GET "https://reactome.org/download/current/UniProt2Reactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | sort -k 1,1 > $outputDir/aux.UniProt2Reactome
 # Ensembl2Reactome appears to map to pathways a combination of gene and transcript identifiers (I've seen evidence of a gene and its transcript
 # being mapped to the same pathway in separate lines of the same file). Exluding transcript identifers to avoid Solr index (that consumes these files)
 # from being corrupted.
-curl -s -X GET "http://www.reactome.org/download/current/Ensembl2Reactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | grep -Ev '^ENST' | sort -k 1,1 > $outputDir/aux.Ensembl2Reactome
+curl -s -X GET "https://reactome.org/download/current/Ensembl2Reactome_All_Levels.txt" | awk -F"\t" '{print $1"\t"$6"\t"$2"\t"$4}' | grep -Ev '^ENST' | sort -k 1,1 > $outputDir/aux.Ensembl2Reactome
 
 pushd $outputDir
 
 for file in Ensembl2Reactome UniProt2Reactome UniProt2PlantReactome Ensembl2PlantReactome; do
-  # Lower-case and replace space with underscore in all organism names; create files with headers for each organism
+  # extract organism names in each file
   awk -F"\t" '{print $2}' aux.$file | sort -u > aux.$file.organisms
+  # Lower-case and replace space with underscore in all organism names; create files with headers for each organism
   for organism in $(cat aux.$file.organisms); do
      lcOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`
      perl -pi -e "s|$organism|$lcOrganism|g" aux.$file
   done
 done
 
+# common plants organisms existing in Ensembl2Reactome and UniProt2Reactome which needs to removed
+comm -12 <(sort -u aux.Ensembl2Reactome.organisms) <(sort -u aux.Ensembl2PlantReactome.organisms) | tr '[A-Z]' '[a-z]' | sed 's/\s/_/g' > aux.PlantSpeciesInReactome
+comm -12 <(sort -u aux.UniProt2Reactome.organisms) <(sort -u aux.UniProt2PlantReactome.organisms) | tr '[A-Z]' '[a-z]' | sed 's/\s/_/g' >> aux.PlantSpeciesInReactome
+
+# removing plant species from Reactome files - organism, Reactome pathway accession, Reactome Pathway name from Ensembl2Reactome and UniProt2Reactome
+# The rationale is reactome files for plants gets populated using Ensembl2PlantReactome and UniProt2PlantReactome 
+# and we dont need plant experiments coming from Reactome as they have been corrupted for plant experiments
+for file in Ensembl2Reactome UniProt2Reactome; do
+	cat aux.$file.organisms | tr '[A-Z]' '[a-z]' | sed 's/\s/_/g' > aux.$file.organisms.NoPlants
+	for organism in $(cat aux.PlantSpeciesInReactome); do
+    	sed -i '/'$organism'/d' aux.$file
+    	sed -i '/'$organism'/d' aux.$file.organisms.NoPlants
+  	done
+done  
+
 #columns are meant to be in order: ensembl gene identifier, organism, Reactome pathway accession, Reactome Pathway name
-for file in Ensembl2Reactome Ensembl2PlantReactome;do
+for file in Ensembl2Reactome Ensembl2PlantReactome ;do
   # Append data retrieved from REACTOME into each of the species-specific files
   # (each file contains the portion of the original data for the species in that file's name)
-  awk -F"\t" '{print $1"\t"$3"\t"$4>>$2".reactome.tsv.tmp"}' aux.$file
+  ## Non-Plants
+  if [ $file == "Ensembl2Reactome" ]; then
+  	awk -F"\t" '{print $1"\t"$3"\t"$4>>$2".reactome.tsv.tmp"}' aux.$file
+  	
+  ## Plants
+  elif [ $file == "Ensembl2PlantReactome" ]; then
+  	awk -F"\t" '{print $1"\t"$3"\t"$4>>$2".reactome.tsv.tmp"}' aux.$file
+  fi
 done
 
 #columns are meant to be in order: Uniprot accession, organism, Reactome pathway accession, Reactome Pathway name
 for file in UniProt2Reactome UniProt2PlantReactome; do
   # For UniProt file we first need to map UniProt accessions to Ensembl identifiers,
   # before appending the data to ${lcOrganism}.reactome.tsv.tmp
-  for organism in $(cat aux.$file.organisms); do
-    lcOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`
-    # First prepare the ${lcOrganism} portion of file
-    grep "\b$lcOrganism\b" aux.$file | awk -F"\t" '{print $1"\t"$3"\t"$4}' | sort -k1,1 | uniq > aux.${lcOrganism}.$file.tsv.tmp
-    uniprotMappingFile=$(find_properties_file $lcOrganism "uniprot")
-    if [ -e "$uniprotMappingFile" ]; then
-      # Now prepare Ensembl's UniProt to Ensembl mapping file - in the right order, ready for joining with the $lcOrganism portion of Ensembl2Reactome
-      grep -E '^\w+\W\w+$' $uniprotMappingFile | awk -F"\t" '{print $2"\t"$1}' | sort -u -k1,1 > aux.${lcOrganism}.ensembl.tsv.tmp
-      # Join to Ensmebl mapping file, then remove protein accessions before appending the UniProt only-annotated pathways to ${lcOrganism}.reactome.tsv
-      join -t $'\t' -1 1 -2 1 aux.${lcOrganism}.ensembl.tsv.tmp aux.${lcOrganism}.$file.tsv.tmp | awk -F"\t" '{print $2"\t"$3"\t"$4}' >> ${lcOrganism}.reactome.tsv.tmp
-    fi
-  done
+  
+    ## Non-Plants
+    if [ $file == "UniProt2Reactome" ]; then
+  		for organism in $(cat aux.$file.organisms.NoPlants); do
+    		# First prepare the ${lcOrganism} portion of file
+    		grep "\b$organism\b" aux.$file | awk -F"\t" '{print $1"\t"$3"\t"$4}' | sort -k1,1 | uniq > aux.${organism}.$file.tsv.tmp
+    		uniprotMappingFile=$(find_properties_file $organism "uniprot")
+    		if [ -e "$uniprotMappingFile" ]; then
+      		# Now prepare Ensembl's UniProt to Ensembl mapping file - in the right order, ready for joining with the $organism portion of Ensembl2Reactome
+      		grep -E '^\w+\W\w+$' $uniprotMappingFile | awk -F"\t" '{print $2"\t"$1}' | sort -u -k1,1 > aux.${organism}.ensembl.tsv.tmp
+      		# Join to Ensmebl mapping file, then remove protein accessions before appending the UniProt only-annotated pathways to ${lcOrganism}.reactome.tsv
+      		join -t $'\t' -1 1 -2 1 aux.${organism}.ensembl.tsv.tmp aux.${organism}.$file.tsv.tmp | awk -F"\t" '{print $2"\t"$3"\t"$4}' >> ${organism}.reactome.tsv.tmp
+      		fi
+      	done
+    	
+    ## Plants
+    elif [ $file == "UniProt2PlantReactome" ]; then	
+    	for organism in $(cat aux.$file.organisms); do
+    		lcOrganism=`echo $organism | tr '[A-Z]' '[a-z]' | tr ' ' '_'`
+    		# First prepare the ${lcOrganism} portion of file
+    		grep "\b$lcOrganism\b" aux.$file | awk -F"\t" '{print $1"\t"$3"\t"$4}' | sort -k1,1 | uniq > aux.${lcOrganism}.$file.tsv.tmp
+    		uniprotMappingFile=$(find_properties_file $lcOrganism "uniprot")
+    		if [ -e "$uniprotMappingFile" ]; then
+      		# Now prepare Ensembl's UniProt to Ensembl mapping file - in the right order, ready for joining with the $lcOrganism portion of Ensembl2PlantReactome
+      		grep -E '^\w+\W\w+$' $uniprotMappingFile | awk -F"\t" '{print $2"\t"$1}' | sort -u -k1,1 > aux.${lcOrganism}.ensembl.tsv.tmp
+      		# Join to Ensmebl mapping file, then remove protein accessions before appending the UniProt only-annotated pathways to ${lcOrganism}.reactome.tsv
+      		join -t $'\t' -1 1 -2 1 aux.${lcOrganism}.ensembl.tsv.tmp aux.${lcOrganism}.$file.tsv.tmp | awk -F"\t" '{print $2"\t"$3"\t"$4}' >> ${lcOrganism}.reactome.tsv.tmp
+    		fi
+  		done
+	fi
 done
+
+
 for outFile in $(ls *reactome.tsv.tmp); do
   resultFile=$(echo $outFile | sed 's/tsv.tmp/tsv/')
   cat <(echo -e "ensgene\tpathwayid\tpathwayname") <(sort -k1,1 -t$'\t' $outFile | uniq) > $resultFile
