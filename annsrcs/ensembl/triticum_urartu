@@ -19,3 +19,5 @@ property.interproterm=interpro_description
 property.refseq=refseq_peptide
 property.symbol=wikigene_name
 property.uniprot=uniprotsptrembl
+property.symbol=external_gene_name
+
