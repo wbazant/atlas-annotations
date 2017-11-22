@@ -1,0 +1,23 @@
+software.name=plants
+software.version=37
+url=http://plants.ensembl.org/biomart/martservice?
+organism=musa acuminata
+databaseName=plants
+datasetName=macuminata_eg_gene
+mySqlDbName=musa_acuminata
+mySqlDbUrl=mysql-eg-mirror.ebi.ac.uk:4157
+types=ensgene,enstranscript,ensprotein
+property.gene_biotype=gene_biotype
+property.description=description
+property.ensgene=ensembl_gene_id
+property.ensprotein=ensembl_peptide_id
+property.enstranscript=ensembl_transcript_id
+property.go=go_id
+property.goterm=name_1006
+property.interpro=interpro
+property.interproterm=interpro_description
+property.refseq=refseq_peptide
+property.symbol=wikigene_name
+property.uniprot=uniprotsptrembl
+property.symbol=external_gene_name
+
