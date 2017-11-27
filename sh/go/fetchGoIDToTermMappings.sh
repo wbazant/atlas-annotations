@@ -30,8 +30,36 @@ amm -s $PROJECT_ROOT/src/go/PropertiesFromOwlFile.sc alternativeIds $outputDir/g
 
 
 # This is just for GO (i.e. not PO)
+# GO Consortium no longer publish a MySQL version of their data;
+# using EBI's GOA database for GO graph distance between any two GO terms is used for mapping depth for any GO term
 get_ontology_id2Depth_mappings() {
-    echo "SELECT term.acc, term.term_type, min(graph_path.distance) FROM term INNER JOIN graph_path ON (term.id=graph_path.term2_id) INNER JOIN term AS ancestor ON (ancestor.id=graph_path.term1_id) AND ancestor.is_root=1 group by term.acc, term.term_type" | mysql --silent -hmysql-amigo.ebi.ac.uk -ugo_select -pamigo -P4085 go_latest | grep '^GO:'  | sort -t$'\t' -k1,1
+echo "select
+    go_id, min(distance) min_distance
+from
+    (
+        select
+            level distance, connect_by_root child_id go_id, parent_id ancestor_id
+        from
+            (
+                select
+                    child_id, parent_id
+                from
+                    go.relations
+                where
+                    --relation_type in ('I', 'P', 'O')
+                    relation_type = 'I'
+            )
+        connect by
+            child_id = prior parent_id
+    union all
+        select
+            0 distance, go_id, go_id ancestor_id
+        from
+            go.terms
+        where
+            is_obsolete = 'N'
+    )
+group by go_id, ancestor_id;" | sqlplus goselect/selectgo@goapro | grep '^GO:'  | sort -t$'\t' -rk2,2  | awk -F"\t" '{ print $1"\t"$2+1 }' | sort -buk1,1
 }
 
 get_ontology_id2Depth_mappings > $outputDir/goIDToDepth.tsv
