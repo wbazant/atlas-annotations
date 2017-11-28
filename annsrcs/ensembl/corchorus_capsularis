@@ -12,12 +12,10 @@ property.description=description
 property.ensgene=ensembl_gene_id
 property.ensprotein=ensembl_peptide_id
 property.enstranscript=ensembl_transcript_id
-property.go=go_id
-property.goterm=name_1006
+property.go=goslim_goa_accession
+property.goterm=goslim_goa_description
 property.interpro=interpro
 property.interproterm=interpro_description
-property.refseq=refseq_peptide
 property.symbol=wikigene_name
-property.uniprot=uniprotsptrembl
 property.symbol=external_gene_name
 
