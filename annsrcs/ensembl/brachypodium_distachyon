@@ -1,5 +1,5 @@
 software.name=plants
-software.version=37
+software.version=38
 url=http://plants.ensembl.org/biomart/martservice?
 organism=brachypodium distachyon
 databaseName=plants
