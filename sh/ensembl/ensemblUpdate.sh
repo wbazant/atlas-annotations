@@ -26,6 +26,7 @@ function symlinkAndArchive() {
 echo "Shifting the symlinks to new versions of Ensembl, Ensembl Genomes and WBPS"
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/ensembl $ATLAS_PROD/bioentity_properties/archive/ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/reactome $ATLAS_PROD/bioentity_properties/archive/reactome_ens${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
+symlinkAndArchive $ATLAS_PROD/bioentity_properties/go $ATLAS_PROD/bioentity_properties/archive/go_ens${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/wbps $ATLAS_PROD/bioentity_properties/archive/wbps_${NEW_WBPS_REL}
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/array_designs/current $ATLAS_PROD/bioentity_properties/archive/array_designs_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}_${NEW_WBPS_REL}
 symlinkAndArchive $ATLAS_PROD/bioentity_properties/annotations/ensembl $ATLAS_PROD/bioentity_properties/archive/annotations_ensembl_${NEW_ENSEMBL_REL}_${NEW_ENSEMBLGENOMES_REL}
