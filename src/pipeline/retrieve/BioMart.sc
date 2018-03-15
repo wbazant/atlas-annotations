@@ -13,7 +13,7 @@ def request(databaseName: String,properties: Map[String, String]) : HttpRequest 
     case "metazoa" => "http://metazoa.ensembl.org"
     case "plants" => "http://plants.ensembl.org"
     case "fungi" => "http://fungi.ensembl.org"
-    case "parasite" => "http://parasite.wormbase.org"
+    case "parasite" => "http://test.parasite.wormbase.org"
     case _ => "http://www.ensembl.org"
   }
   Http(base+"/biomart/martservice").params(properties).timeout(connTimeoutMs = 5000, readTimeoutMs = 1000000)
